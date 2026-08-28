@@ -1,0 +1,63 @@
+name: chatplatform-sonarqube
+
+# One SonarQube server for the whole monorepo - every service analyzes into
+# it under its own project key (see AGENTS.md for the convention). Start with:
+#   docker compose -f code-quality/docker-compose.yml up -d
+# Web UI / API: http://localhost:9000 (default login admin/admin, changed on
+# first web login).
+
+services:
+  sonarqube:
+    image: sonarqube:community
+    container_name: chatplatform-sonarqube
+    depends_on:
+      sonar-db:
+        condition: service_healthy
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    ports:
+      - "9000:9000"
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_extensions:/opt/sonarqube/extensions
+      - sonar_logs:/opt/sonarqube/logs
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"'"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+  sonar-db:
+    image: postgres:16-alpine
+    container_name: chatplatform-sonar-db
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - sonar_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+# Explicit names pinned to what the volumes are ALREADY called on disk (they
+# were created under this file's own project name). Without the pins, using
+# this file from another compose project - e.g. localrun's aggregate include -
+# would create fresh empty volumes under that project's prefix and silently
+# lose SonarQube's projects, tokens, and admin password.
+volumes:
+  sonar_data:
+    name: chatplatform-sonarqube_sonar_data
+  sonar_extensions:
+    name: chatplatform-sonarqube_sonar_extensions
+  sonar_logs:
+    name: chatplatform-sonarqube_sonar_logs
+  sonar_db_data:
+    name: chatplatform-sonarqube_sonar_db_data

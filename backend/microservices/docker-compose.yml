@@ -1,0 +1,85 @@
+# The three microservices as containers. An ALTERNATIVE to localrun's
+# spring-boot:run processes, not an addition - both bind the same host ports
+# (8080/8081, 8090/8091/9095, 8100/8101), so run one or the other.
+#
+# Postgres and the observability stack stay in their own compose projects
+# (infrastructure/, observability/) and are reached via host.docker.internal -
+# no cross-compose network wiring, matches how the host-run services reach
+# them, and Docker Desktop resolves it on Windows/Mac. The BFF reaches
+# accountservice by service name over this compose's own network.
+#
+#   docker compose -f backend/microservices/docker-compose.yml up -d --build
+#   docker compose -f backend/microservices/docker-compose.yml down
+#
+# Management/actuator ports: the yamls bind them to 127.0.0.1, which inside a
+# container netns is unreachable from anywhere - MANAGEMENT_SERVER_ADDRESS
+# overrides to 0.0.0.0, and the host-side publish keeps them loopback-only on
+# the host (127.0.0.1:PORT:PORT), preserving the yamls' security posture.
+#
+# Healthchecks are bash TCP-connect probes (/dev/tcp) because the temurin JRE
+# image ships no curl/wget - good enough for startup ordering; the real health
+# semantics live in the actuator/gRPC health endpoints.
+name: chatplatform-services
+
+services:
+  chatservice:
+    build: ./chatservice
+    image: chatplatform/chatservice:local
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/postgres
+      MANAGEMENT_SERVER_ADDRESS: 0.0.0.0
+      MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/traces
+      MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
+    ports:
+      - "8080:8080"
+      - "127.0.0.1:8081:8081"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8081"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  accountservice:
+    build: ./accountservice
+    image: chatplatform/accountservice:local
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://host.docker.internal:5432/postgres
+      MANAGEMENT_SERVER_ADDRESS: 0.0.0.0
+      MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/traces
+      MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
+    ports:
+      - "9095:9095"
+      - "8090:8090"
+      - "127.0.0.1:8091:8091"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8091"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
+  chatdashboardbff:
+    build: ./chatdashboardbff
+    image: chatplatform/chatdashboardbff:local
+    environment:
+      # Container-to-container over this compose's network, not the host.
+      SPRING_GRPC_CLIENT_CHANNEL_ACCOUNTSERVICE_TARGET: static://accountservice:9095
+      MANAGEMENT_SERVER_ADDRESS: 0.0.0.0
+      MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/traces
+      MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
+    ports:
+      - "8100:8100"
+      - "127.0.0.1:8101:8101"
+    depends_on:
+      accountservice:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8101"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s

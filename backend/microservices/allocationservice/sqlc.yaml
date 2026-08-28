@@ -1,0 +1,14 @@
+version: "2"
+sql:
+  - engine: "postgresql"
+    schema: "sql/schema"
+    queries: "sql/queries"
+    gen:
+      go:
+        package: "generated"
+        out: "internal/adapters/postgres/generated"
+        sql_package: "pgx/v5"
+        emit_pointers_for_null_types: false
+        overrides:
+          - db_type: "uuid"
+            go_type: "github.com/google/uuid.UUID"

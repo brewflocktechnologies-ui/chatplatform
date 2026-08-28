@@ -1,0 +1,11 @@
+{
+  "name": "chatdashboardbff-e2etests",
+  "private": true,
+  "description": "Black-box E2E API tests for chatdashboardbff (needs the live stack: BFF + accountservice + Postgres)",
+  "scripts": {
+    "test": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.49.0"
+  }
+}

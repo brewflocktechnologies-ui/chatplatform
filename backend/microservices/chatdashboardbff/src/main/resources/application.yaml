@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: chatdashboardbff
+  # In-flight dashboard requests get this long to finish on shutdown
+  # (pairs with server.shutdown: graceful below).
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  profiles:
+    # dev by default so BootUI is on with zero extra flags locally - override
+    # SPRING_PROFILES_ACTIVE for any real deployment (same convention as the
+    # other services).
+    active: dev
+  grpc:
+    client:
+      channel:
+        accountservice:
+          # accountservice's gRPC server (spring.grpc.server.port in its yaml).
+          target: static://localhost:9095
+
+server:
+  port: 8100
+  # Finish in-flight requests before closing instead of cutting them mid-response.
+  shutdown: graceful
+
+# Keeps BootUI's own /bootui/api/** controllers out of the generated OpenAPI
+# contract - same lesson chatservice learned (244 -> 7803 lines without it).
+springdoc:
+  paths-to-match: /api/**
+
+management:
+  server:
+    port: 8101
+    address: 127.0.0.1
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      # Kubernetes-style probe groups. Readiness stays app-internal on
+      # purpose: accountservice being down should NOT mark the BFF unready
+      # (gRPC channels reconnect lazily; requests fail fast to 503/504 with
+      # the deadline) - cascading downstream health into readiness just
+      # amplifies outages.
+      probes:
+        enabled: true
+  # The long property names are load-bearing - the shorter management.otlp.
+  # {tracing,logging}.* variants are a silent no-op (see AGENTS.md's
+  # Observability section).
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/logs
+  otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics
+  tracing:
+    sampling:
+      probability: 1.0

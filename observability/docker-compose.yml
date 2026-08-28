@@ -1,0 +1,51 @@
+name: chatplatform-observability
+
+# One open-source, OTel-native observability stack for the whole monorepo -
+# every service exports traces/metrics/logs here over OTLP, the same way
+# every service points at the one shared SonarQube (../code-quality/docker-compose.yml)
+# and the one shared Postgres. Start with:
+#   docker compose -f observability/docker-compose.yml up -d
+#
+# grafana/otel-lgtm is Grafana Labs' official all-in-one dev/demo bundle:
+# an OpenTelemetry Collector receiving OTLP, fanning out to Prometheus
+# (metrics), Tempo (traces), and Loki (logs), all pre-wired as Grafana
+# datasources. It's the "LGTM stack" (Loki, Grafana, Tempo, Mimir/Prometheus)
+# in one container - the pragmatic way to get a real, cloud-native, fully
+# open-source stack running without hand-wiring five separate services and
+# their configs. Swap in split services (their own Collector + Prometheus +
+# Tempo + Loki + Grafana containers) if/when this needs to scale past one
+# host or retain data past a container restart.
+
+services:
+  otel-lgtm:
+    image: grafana/otel-lgtm:latest
+    container_name: chatplatform-otel-lgtm
+    ports:
+      - "3000:3000"   # Grafana UI (default login admin/admin, change on first login)
+      - "4317:4317"   # OTLP gRPC receiver
+      - "4318:4318"   # OTLP HTTP receiver
+    volumes:
+      - otel_lgtm_grafana:/data/grafana
+      - otel_lgtm_prometheus:/data/prometheus
+      - otel_lgtm_loki:/data/loki
+      - otel_lgtm_tempo:/data/tempo
+    healthcheck:
+      test: ["CMD", "curl", "-sf", "http://localhost:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    restart: unless-stopped
+
+# Explicit names pinned to what the volumes are ALREADY called on disk - same
+# reasoning as code-quality/docker-compose.yml: keeps the data when this file
+# is used from another compose project (localrun's aggregate include).
+volumes:
+  otel_lgtm_grafana:
+    name: chatplatform-observability_otel_lgtm_grafana
+  otel_lgtm_prometheus:
+    name: chatplatform-observability_otel_lgtm_prometheus
+  otel_lgtm_loki:
+    name: chatplatform-observability_otel_lgtm_loki
+  otel_lgtm_tempo:
+    name: chatplatform-observability_otel_lgtm_tempo

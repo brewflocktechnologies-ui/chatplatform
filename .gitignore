@@ -38,6 +38,15 @@ testem.log
 .DS_Store
 Thumbs.db
 
+# secrets - SONAR_TOKEN and friends; never commit tokens/credentials
+.env
+.env.*
+!.env.example
+
+# localrun/start.sh output - regenerated every run
+localrun/*.log
+localrun/.*.pid
+
 .nx/cache
 .nx/workspace-data
 .cursor/rules/nx-rules.mdc
@@ -48,3 +57,7 @@ Thumbs.db
 .nx/polygraph
 .nx/self-healing
 .nx/migrate-runs
+# build outputs
+**/target/
+backend/microservices/allocationservice/bin/
+.scannerwork/

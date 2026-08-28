@@ -1,0 +1,131 @@
+syntax = "proto3";
+
+package allocation.v1;
+
+import "buf/validate/validate.proto";
+import "google/protobuf/timestamp.proto";
+
+option go_package = "github.com/chatplatform/allocationservice/gen/proto/allocation/v1;allocationv1";
+
+// AllocationService is the domain API for the Allocation aggregate.
+//
+// Deliberately command-oriented (Allocate / Release / Complete), not generic
+// CRUD: state transitions are domain behavior with invariants, and an
+// UpdateAllocation would push those rules onto every caller.
+//
+// Tenant identity is NOT part of request messages - it comes from
+// authenticated request metadata (x-tenant-id today, a verified token later)
+// so a client cannot address another tenant's data by editing a field.
+service AllocationService {
+  // Idempotent: request_id is the idempotency key within a tenant. Repeating
+  // a create with the same request_id returns the existing allocation
+  // instead of creating a duplicate.
+  rpc CreateAllocation(CreateAllocationRequest) returns (CreateAllocationResponse);
+
+  rpc GetAllocation(GetAllocationRequest) returns (GetAllocationResponse);
+
+  // Cursor-paginated, ordered created_at DESC, id DESC.
+  rpc ListAllocations(ListAllocationsRequest) returns (ListAllocationsResponse);
+
+  // PENDING -> ALLOCATED. Requires the caller's last-seen version
+  // (optimistic concurrency); a stale version fails with ABORTED.
+  rpc Allocate(AllocateRequest) returns (AllocateResponse);
+
+  // ALLOCATED -> RELEASED.
+  rpc ReleaseAllocation(ReleaseAllocationRequest) returns (ReleaseAllocationResponse);
+
+  // ALLOCATED -> COMPLETED.
+  rpc CompleteAllocation(CompleteAllocationRequest) returns (CompleteAllocationResponse);
+}
+
+// Field numbers are append-only; never reuse a removed number.
+enum AllocationStatus {
+  ALLOCATION_STATUS_UNSPECIFIED = 0;
+  ALLOCATION_STATUS_PENDING = 1;
+  ALLOCATION_STATUS_ALLOCATED = 2;
+  ALLOCATION_STATUS_RELEASED = 3;
+  ALLOCATION_STATUS_COMPLETED = 4;
+  ALLOCATION_STATUS_EXPIRED = 5;
+  ALLOCATION_STATUS_FAILED = 6;
+}
+
+message Allocation {
+  string id = 1;
+  string tenant_id = 2;
+  string request_id = 3;
+  string resource_id = 4;
+  AllocationStatus status = 5;
+  int32 priority = 6;
+  google.protobuf.Timestamp created_at = 7;
+  google.protobuf.Timestamp updated_at = 8;
+  // Absent when the allocation does not expire.
+  google.protobuf.Timestamp expires_at = 9;
+  int64 version = 10;
+}
+
+message CreateAllocationRequest {
+  // Client-chosen logical identity of this request; the idempotency key
+  // within the tenant.
+  string request_id = 1 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  string resource_id = 2 [(buf.validate.field).string = {min_len: 1, max_len: 128}];
+  int32 priority = 3 [(buf.validate.field).int32 = {gte: 0, lte: 1000}];
+  // Optional; must be in the future when set (checked in the domain).
+  google.protobuf.Timestamp expires_at = 4;
+}
+
+message CreateAllocationResponse {
+  Allocation allocation = 1;
+  // True when this call was an idempotent replay of an earlier create.
+  bool replayed = 2;
+}
+
+message GetAllocationRequest {
+  string allocation_id = 1 [(buf.validate.field).string.uuid = true];
+}
+
+message GetAllocationResponse {
+  Allocation allocation = 1;
+}
+
+message ListAllocationsRequest {
+  // 0 means the server default (50). Hard max 200.
+  int32 page_size = 1 [(buf.validate.field).int32 = {gte: 0, lte: 200}];
+  // Opaque cursor from a previous response; empty for the first page.
+  string page_token = 2 [(buf.validate.field).string.max_len = 512];
+  // Optional status filter.
+  AllocationStatus status = 3 [(buf.validate.field).enum.defined_only = true];
+}
+
+message ListAllocationsResponse {
+  repeated Allocation allocations = 1;
+  // Empty when there are no further pages.
+  string next_page_token = 2;
+}
+
+message AllocateRequest {
+  string allocation_id = 1 [(buf.validate.field).string.uuid = true];
+  // Last version observed by the caller; optimistic-concurrency guard.
+  int64 version = 2 [(buf.validate.field).int64.gte = 1];
+}
+
+message AllocateResponse {
+  Allocation allocation = 1;
+}
+
+message ReleaseAllocationRequest {
+  string allocation_id = 1 [(buf.validate.field).string.uuid = true];
+  int64 version = 2 [(buf.validate.field).int64.gte = 1];
+}
+
+message ReleaseAllocationResponse {
+  Allocation allocation = 1;
+}
+
+message CompleteAllocationRequest {
+  string allocation_id = 1 [(buf.validate.field).string.uuid = true];
+  int64 version = 2 [(buf.validate.field).int64.gte = 1];
+}
+
+message CompleteAllocationResponse {
+  Allocation allocation = 1;
+}

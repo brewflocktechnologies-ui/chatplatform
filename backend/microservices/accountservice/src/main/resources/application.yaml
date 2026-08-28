@@ -1,0 +1,110 @@
+spring:
+  application:
+    name: accountservice
+  profiles:
+    # Default to dev locally so BootUI's own AUTO mode (bootui.enabled=auto)
+    # activates without extra flags, and application-dev.yaml's overrides below
+    # apply. Override with SPRING_PROFILES_ACTIVE once this service has a real
+    # prod deployment - AUTO mode then leaves BootUI off (loopback-only access
+    # is a second safety net regardless).
+    active: dev
+  # In-flight work gets timeout-per-shutdown-phase to finish before the
+  # context closes (pairs with server.shutdown/grpc shutdown.grace-period).
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  r2dbc:
+    # Same tenant table chatservice's JDBC connection reads/writes - see
+    # AGENTS.md's "accountservice" section for why two services share it.
+    url: r2dbc:postgresql://localhost:5432/postgres
+    username: chatuser
+    password: chatpass
+    properties:
+      # Postgres-side cap on any single statement - a hung query can't pin a
+      # pooled connection forever (r2dbc-postgresql's statementTimeout option).
+      statementTimeout: 10s
+    pool:
+      # Explicit instead of r2dbc-pool's implicit defaults, and fail-fast:
+      # when the pool is exhausted, callers get an error after 5s instead of
+      # queueing unboundedly behind a stalled database.
+      initial-size: 5
+      max-size: 20
+      max-idle-time: 10m
+      max-acquire-time: 5s
+      acquire-retry: 1
+      validation-query: SELECT 1
+  grpc:
+    server:
+      port: 9095
+      reflection:
+        enabled: true
+      # Let in-flight RPCs drain on shutdown instead of being cut mid-call.
+      shutdown:
+        grace-period: 15s
+      # Tenant RPCs carry tiny payloads - a tight cap is cheap DoS hygiene
+      # (gRPC's default is 4MiB).
+      inbound:
+        message:
+          max-size: 64KB
+      # Reap idle client connections so half-dead peers don't accumulate.
+      keepalive:
+        connection:
+          max-idle-time: 5m
+      # Push actuator health (which includes the R2DBC/Postgres indicator)
+      # into the auto-registered grpc.health.v1.Health service on a schedule
+      # - Postgres down flips Health/Check to NOT_SERVING so gRPC-aware load
+      # balancers and clients can eject this instance, instead of the health
+      # service saying SERVING forever regardless.
+      health:
+        include-overall-health: true
+        schedule:
+          enabled: true
+          period: 10s
+
+server:
+  port: 8090
+  # Finish in-flight HTTP requests (BootUI/actuator side) before closing.
+  shutdown: graceful
+
+# Shared stack: observability/docker-compose.yml (grafana/otel-lgtm), OTLP
+# HTTP receiver on 4318. Tracing/logging deliberately use
+# management.opentelemetry.*.export.otlp.*, NOT management.otlp.{tracing,logging}.*
+# - see chatservice's application.yaml / AGENTS.md for why the shorter names
+# are a silent no-op on this Spring Boot line.
+management:
+  server:
+    port: 8091
+    address: 127.0.0.1
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      # Kubernetes-style probe groups: /actuator/health/liveness (process
+      # alive, never includes the DB - a dead DB must not get the pod
+      # restarted) and /actuator/health/readiness (fit to receive traffic).
+      probes:
+        enabled: true
+      group:
+        readiness:
+          # Boot's default readiness group is only the app's internal state.
+          # Every RPC this service serves needs Postgres, so a dead DB means
+          # not-ready (matches what the gRPC health bridge already reports).
+          include: readinessState,r2dbc
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/logs
+  otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics
+  tracing:
+    sampling:
+      probability: 1.0

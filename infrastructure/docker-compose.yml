@@ -1,0 +1,31 @@
+name: chatplatform-infrastructure
+
+# chatservice's Postgres. Previously a bare `docker run` container (no
+# compose file, anonymous volume) - moved here with its data intact via a
+# volume-to-volume copy, not a fresh initdb (see AGENTS.md's "Infrastructure"
+# section for why that mattered: the live DB had migrations V2-V6 applied
+# that were never committed to database/microservices/chatservice_db/migrations/
+# - a fresh recreate would have silently dropped that schema).
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: chatplatform-postgres
+    environment:
+      POSTGRES_USER: chatuser
+      POSTGRES_PASSWORD: chatpass
+      POSTGRES_DB: chatservice
+    ports:
+      - "5432:5432"
+    volumes:
+      - chatplatform_postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U chatuser"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  chatplatform_postgres_data:
+    name: chatplatform_postgres_data

@@ -1,0 +1,98 @@
+spring:
+  application:
+    name: chatservice
+  profiles:
+    # Default to dev locally so BootUI's own AUTO mode (bootui.enabled=auto)
+    # activates without extra flags, and application-dev.yaml's overrides below
+    # apply. Override with SPRING_PROFILES_ACTIVE once this service has a real
+    # prod deployment - AUTO mode then leaves BootUI off (loopback-only access
+    # is a second safety net regardless).
+    active: dev
+  datasource:
+    url: jdbc:postgresql://localhost:5432/postgres
+    username: chatuser
+    password: chatpass
+  jpa:
+    hibernate:
+      ddl-auto: none
+    # Open Session in View defaults to enabled and holds a DB connection open
+    # for the whole request (including view rendering); off, so services fetch
+    # what they need inside their own transactional boundary.
+    open-in-view: false
+    show-sql: false
+    properties:
+      hibernate:
+        # Deterministic timestamp binding across hosts, regardless of JVM
+        # default zone (entity timestamps are already stamped in UTC in code).
+        jdbc.time_zone: UTC
+        # Combine multiple writes into one JDBC round trip, grouped by table
+        # so same-table statements batch together instead of interleaving.
+        jdbc.batch_size: 20
+        order_inserts: true
+        order_updates: true
+        # Fail fast instead of risking an OOM if a future paginated query adds
+        # a collection JOIN FETCH that would otherwise silently pull everything.
+        query.fail_on_pagination_over_collection_fetch: true
+  threads:
+    virtual:
+      enabled: true
+
+server:
+  compression:
+    enabled: true
+
+springdoc:
+  # Without this, springdoc scans every @RestController on the classpath,
+  # including BootUI's own /bootui/api/** internals - the public contract
+  # should only ever be chatservice's own API.
+  paths-to-match: /api/**
+
+management:
+  server:
+    # Actuator on its own port, off the publicly-reachable app port. There's
+    # no spring-security dependency yet, so this is the mitigation instead of
+    # an auth layer: health/info/metrics move off 8080 entirely rather than
+    # sitting there unauthenticated. Bound to loopback only - an unset address
+    # defaults to all interfaces, which would defeat the point of splitting
+    # the port out in the first place.
+    port: 8081
+    address: 127.0.0.1
+  endpoints:
+    web:
+      exposure:
+        # beans/env/loggers/mappings are left out on purpose: env would leak
+        # the datasource password above. Add spring-security + endpoint-level
+        # auth before exposing them even on the management port.
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+  # Shared stack: observability/docker-compose.yml (grafana/otel-lgtm), OTLP
+  # HTTP receiver on 4318. Same three endpoints, one collector.
+  #
+  # Tracing and logging deliberately use management.opentelemetry.*.export.otlp.*,
+  # NOT management.otlp.{tracing,logging}.* - Spring Boot 4.0.8 still documents
+  # the latter in its config metadata, but OtlpTracingConfigurations.ConnectionDetails
+  # and OtlpLoggingConfigurations.ConnectionDetails are @ConditionalOnProperty on
+  # the management.opentelemetry.* names only; the shorter names are silently a
+  # no-op (confirmed via --debug's condition evaluation report: metrics exported
+  # correctly on management.otlp.metrics.export.url, traces/logs didn't move
+  # until switched to this namespace).
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/logs
+  otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics
+  tracing:
+    sampling:
+      # 100%: this service has negligible traffic right now and every trace
+      # is worth keeping. Turn down for real production volume.
+      probability: 1.0

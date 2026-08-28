@@ -1,0 +1,63 @@
+# The whole platform in one compose project: Postgres, SonarQube, the
+# observability stack, and the three microservices. This is what start.sh /
+# stop.sh drive - one command up, one command down.
+#
+# No duplicated config: the infra pieces are include'd from their own compose
+# files (which still work standalone - their volumes carry explicit names so
+# data is shared either way), and the app services extend the definitions in
+# backend/microservices/docker-compose.yml, overriding only what changes when
+# everything shares one network:
+#   - Postgres via the service name (postgres:5432) instead of host.docker.internal
+#   - OTLP to the otel-lgtm container instead of host.docker.internal
+#   - depends_on (extends deliberately does not inherit it): chatservice's JPA
+#     bootstrap fails fast without a live DB, so both DB-backed services gate
+#     on postgres being healthy; the BFF gates on accountservice.
+#
+# The apps deliberately do NOT gate on SonarQube or the observability stack -
+# Sonar takes ~60s to boot and the apps need neither to serve traffic (OTLP
+# export just retries).
+name: chatplatform
+
+include:
+  - ../infrastructure/docker-compose.yml
+  - ../code-quality/docker-compose.yml
+  - ../observability/docker-compose.yml
+
+services:
+  chatservice:
+    extends:
+      file: ../backend/microservices/docker-compose.yml
+      service: chatservice
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/postgres
+      MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://otel-lgtm:4318/v1/traces
+      MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://otel-lgtm:4318/v1/logs
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-lgtm:4318/v1/metrics
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  accountservice:
+    extends:
+      file: ../backend/microservices/docker-compose.yml
+      service: accountservice
+    environment:
+      SPRING_R2DBC_URL: r2dbc:postgresql://postgres:5432/postgres
+      MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://otel-lgtm:4318/v1/traces
+      MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://otel-lgtm:4318/v1/logs
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-lgtm:4318/v1/metrics
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  chatdashboardbff:
+    extends:
+      file: ../backend/microservices/docker-compose.yml
+      service: chatdashboardbff
+    environment:
+      MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://otel-lgtm:4318/v1/traces
+      MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://otel-lgtm:4318/v1/logs
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://otel-lgtm:4318/v1/metrics
+    depends_on:
+      accountservice:
+        condition: service_healthy

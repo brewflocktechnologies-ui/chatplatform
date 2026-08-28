@@ -1,0 +1,77 @@
+syntax = "proto3";
+
+package chatplatform.accountservice.v1;
+
+option java_multiple_files = true;
+option java_package = "com.chatplatform.accountservice.grpc";
+option java_outer_classname = "TenantProto";
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+// Mirrors chatservice's REST Tenant resource - same `tenant` table, same
+// entity, different transport. See AGENTS.md's "accountservice" section for
+// why two services share one table.
+enum TenantStatus {
+  TENANT_STATUS_UNSPECIFIED = 0;
+  TENANT_STATUS_ACTIVE = 1;
+  TENANT_STATUS_SUSPENDED = 2;
+}
+
+message Tenant {
+  string tenant_id = 1;
+  string slug = 2;
+  string name = 3;
+  TenantStatus status = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp updated_at = 6;
+  string created_by = 7;
+  string updated_by = 8;
+  int64 version = 9;
+}
+
+message CreateTenantRequest {
+  // Globally unique, lowercase, 3-32 chars [a-z0-9-] - becomes a NATS
+  // subject segment (see the V1 migration's tenant_slug_format check).
+  string slug = 1;
+  string name = 2;
+  // Optional - defaults to TENANT_STATUS_ACTIVE when unspecified.
+  TenantStatus status = 3;
+}
+
+message GetTenantRequest {
+  string tenant_id = 1;
+}
+
+message ListTenantsRequest {
+  // Both optional; default page=0, size=20 (same default as chatservice's REST API).
+  int32 page = 1;
+  int32 size = 2;
+}
+
+message ListTenantsResponse {
+  repeated Tenant tenants = 1;
+  int32 page = 2;
+  int32 size = 3;
+  int64 total_elements = 4;
+  int32 total_pages = 5;
+}
+
+message UpdateTenantRequest {
+  // Slug is deliberately absent - immutable after creation, same as the REST API.
+  string tenant_id = 1;
+  string name = 2;
+  TenantStatus status = 3;
+}
+
+message DeleteTenantRequest {
+  string tenant_id = 1;
+}
+
+service TenantService {
+  rpc CreateTenant(CreateTenantRequest) returns (Tenant);
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+  rpc ListTenants(ListTenantsRequest) returns (ListTenantsResponse);
+  rpc UpdateTenant(UpdateTenantRequest) returns (Tenant);
+  rpc DeleteTenant(DeleteTenantRequest) returns (google.protobuf.Empty);
+}

@@ -1,0 +1,227 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.1.1</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.chatplatform</groupId>
+	<artifactId>chatdashboardbff</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name>chatdashboardbff</name>
+	<description>Chat dashboard BFF - reactive REST facade over accountservice's gRPC API</description>
+	<url/>
+	<licenses>
+		<license/>
+	</licenses>
+	<developers>
+		<developer/>
+	</developers>
+	<scm>
+		<connection/>
+		<developerConnection/>
+		<tag/>
+		<url/>
+	</scm>
+	<properties>
+		<java.version>25</java.version>
+		<!-- SonarQube: one server for the whole monorepo (code-quality/docker-compose.yml
+		     at the repo root). sonar.token is intentionally NOT set here - pass it via
+		     -Dsonar.token or the SONAR_TOKEN env var at scan time, never commit it. -->
+		<sonar.host.url>http://localhost:9000</sonar.host.url>
+		<sonar.projectKey>chatplatform-chatdashboardbff</sonar.projectKey>
+		<sonar.projectName>chatplatform-chatdashboardbff</sonar.projectName>
+		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<!-- Same reasoning as the JaCoCo excludes below: protoc-generated
+		     message/stub classes aren't code we wrote. -->
+		<sonar.exclusions>target/generated-sources/**</sonar.exclusions>
+		<sonar.coverage.exclusions>target/generated-sources/**,**/ChatdashboardbffApplication.java</sonar.coverage.exclusions>
+	</properties>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-grpc-client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux</artifactId>
+		</dependency>
+		<dependency>
+			<!-- Same shared observability stack as chatservice/accountservice
+			     (observability/docker-compose.yml). -->
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-opentelemetry</artifactId>
+		</dependency>
+		<dependency>
+			<!-- spring-boot-starter-opentelemetry builds the OTel-side logging SDK
+			     but doesn't bridge Logback into it - same gap as the other two
+			     services, same fix (logback-spring.xml + @PostConstruct install). -->
+			<groupId>io.opentelemetry.instrumentation</groupId>
+			<artifactId>opentelemetry-logback-appender-1.0</artifactId>
+			<version>2.16.0-alpha</version>
+		</dependency>
+		<dependency>
+			<!-- OpenAPI 3 contract + Swagger UI from the live reactive controllers.
+			     3.x is the Spring Boot 4 line (2.x targets Boot 3 - chatservice's
+			     2.8.5 is on Boot 4.0.8, this needs the newer line for 4.1). -->
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webflux-ui</artifactId>
+			<version>3.1.0</version>
+		</dependency>
+		<dependency>
+			<!-- https://www.julien-dubois.com/boot-ui/ - reactive/WebFlux variant,
+			     dev-only console, dormant unless the dev profile is active or
+			     spring-boot-devtools is on the classpath. -->
+			<groupId>com.julien-dubois.bootui</groupId>
+			<artifactId>bootui-spring-boot-starter-reactive</artifactId>
+			<version>1.15.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-grpc-client-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-opentelemetry-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webflux-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>io.github.ascopes</groupId>
+				<artifactId>protobuf-maven-plugin</artifactId>
+			</plugin>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.13</version>
+				<configuration>
+					<!-- 100% protoc-generated client stubs (compiled from
+					     src/main/proto/tenant.proto, a copy of accountservice's
+					     contract - hence the accountservice package name). Same
+					     package-placement rule as accountservice: hand-written code
+					     never goes in this package. -->
+					<excludes>
+						<exclude>com/chatplatform/accountservice/grpc/**</exclude>
+						<!-- One SpringApplication.run() line, untestable outside a real
+						     launch; mirrored in sonar.coverage.exclusions. -->
+						<exclude>com/chatplatform/chatdashboardbff/ChatdashboardbffApplication.class</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.95</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>5.1.0.4751</version>
+			</plugin>
+			<plugin>
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>2.44.5</version>
+				<configuration>
+					<java>
+						<googleJavaFormat>
+							<!-- Pinned: the plugin's default bundled version breaks on
+							     JDK 25 (NoSuchMethodError against javac internals). -->
+							<version>1.27.0</version>
+						</googleJavaFormat>
+					</java>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>12.1.3</version>
+				<configuration>
+					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+					<failBuildOnCVSS>7</failBuildOnCVSS>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>

@@ -1,0 +1,60 @@
+# Reference Deployment - the application itself is Kubernetes-independent;
+# this only maps its existing contract (env config, HTTP probes, SIGTERM
+# graceful shutdown) onto K8s primitives.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: allocationservice
+spec:
+  replicas: 2 # stateless: scale freely
+  selector:
+    matchLabels: { app: allocationservice }
+  template:
+    metadata:
+      labels: { app: allocationservice }
+    spec:
+      # Exceeds SHUTDOWN_TIMEOUT (20s) so the drain always finishes first.
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile: { type: RuntimeDefault }
+      containers:
+        - name: allocationservice
+          image: allocationservice:local
+          ports:
+            - { name: grpc, containerPort: 9096 }
+            - { name: http, containerPort: 9097 }
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef: { name: allocationservice-db, key: url }
+            - { name: ENVIRONMENT, value: production }
+            - { name: TELEMETRY_ENABLED, value: "true" }
+            - { name: OTLP_ADDRESS, value: otel-collector:4317 }
+          resources:
+            requests: { cpu: 100m, memory: 64Mi }
+            limits: { memory: 256Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          startupProbe:
+            httpGet: { path: /healthz, port: http }
+            failureThreshold: 30
+            periodSeconds: 2
+          livenessProbe: # process-alive only; never DB-dependent
+            httpGet: { path: /healthz, port: http }
+            periodSeconds: 10
+          readinessProbe: # DB-dependent: unready when Postgres is down
+            httpGet: { path: /readyz, port: http }
+            periodSeconds: 5
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: allocationservice
+spec:
+  selector: { app: allocationservice }
+  ports:
+    - { name: grpc, port: 9096, targetPort: grpc }
+    - { name: http, port: 9097, targetPort: http }

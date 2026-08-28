@@ -1,0 +1,48 @@
+# Self-contained local environment: the service + its own Postgres.
+#   docker compose up
+# Postgres publishes on 5433 (5432 is the platform's shared instance);
+# migrations run automatically on service start (DB_MIGRATE_ON_START).
+name: allocationservice
+
+services:
+  allocationservice:
+    build: .
+    image: allocationservice:local
+    environment:
+      DATABASE_URL: postgres://alloc:alloc@postgres:5432/allocation?sslmode=disable
+      DB_MIGRATE_ON_START: "true"
+      GRPC_ADDRESS: ":9096"
+      HTTP_ADDRESS: ":9097"
+      LOG_LEVEL: info
+      ENVIRONMENT: local
+      # Point at any OTLP gRPC receiver to enable tracing, e.g. the
+      # platform's otel-lgtm: host.docker.internal:4317
+      TELEMETRY_ENABLED: "false"
+    ports:
+      - "9096:9096"
+      - "9097:9097"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    # distroless has no shell: probe the HTTP liveness endpoint from the
+    # compose host side instead of an in-container command in production;
+    # locally, wget is absent so rely on service logs + /healthz from host.
+
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: alloc
+      POSTGRES_PASSWORD: alloc
+      POSTGRES_DB: allocation
+    ports:
+      - "5433:5432"
+    volumes:
+      - allocation_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alloc -d allocation"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  allocation_pg_data:

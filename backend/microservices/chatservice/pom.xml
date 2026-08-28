@@ -1,0 +1,280 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>org.springframework.boot</groupId>
+		<artifactId>spring-boot-starter-parent</artifactId>
+		<version>4.0.8</version>
+		<relativePath/> <!-- lookup parent from repository -->
+	</parent>
+	<groupId>com.chatplatform</groupId>
+	<artifactId>chatservice</artifactId>
+	<version>0.0.1-SNAPSHOT</version>
+	<name/>
+	<description/>
+	<url/>
+	<licenses>
+		<license/>
+	</licenses>
+	<developers>
+		<developer/>
+	</developers>
+	<scm>
+		<connection/>
+		<developerConnection/>
+		<tag/>
+		<url/>
+	</scm>
+	<properties>
+		<java.version>25</java.version>
+		<!-- SonarQube: one server for the whole monorepo (code-quality/docker-compose.yml
+		     at the repo root). sonar.token is intentionally NOT set here - pass it via
+		     -Dsonar.token or the SONAR_TOKEN env var at scan time, never commit it. -->
+		<sonar.host.url>http://localhost:9000</sonar.host.url>
+		<sonar.projectKey>chatplatform-chatservice</sonar.projectKey>
+		<sonar.projectName>chatplatform-chatservice</sonar.projectName>
+		<sonar.coverage.jacoco.xmlReportPaths>${project.build.directory}/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+		<!-- Mirrors the JaCoCo exclude: the bootstrap class is one
+		     SpringApplication.run() line, untestable outside a real launch. -->
+		<sonar.coverage.exclusions>**/ChatserviceApplication.java</sonar.coverage.exclusions>
+	</properties>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<!-- Override Spring Boot 4.0.8's managed 1.55.0: fixes GHSA-rcgg-9c38-7xpx /
+				     CVE-2026-45292 (unbounded memory allocation in W3C Baggage propagation),
+				     which hit opentelemetry-api and opentelemetry-extension-trace-propagators,
+				     pulled in transitively via BootUI's OTel bridge. The BOM keeps every
+				     io.opentelemetry:* artifact on one coordinated, mutually-compatible release
+				     instead of bumping just the two flagged ones. -->
+				<groupId>io.opentelemetry</groupId>
+				<artifactId>opentelemetry-bom</artifactId>
+				<version>1.62.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+	<dependencies>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-validation</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-actuator</artifactId>
+		</dependency>
+		<dependency>
+			<!-- OTLP exporters for traces + logs, to the shared observability
+			     stack (observability/docker-compose.yml). Activates Spring Boot's
+			     own OtlpTracingAutoConfiguration / OtlpLoggingAutoConfiguration,
+			     which build the OTel SDK side (LoggerProvider + exporter) - but
+			     that's not the whole path for logs, see opentelemetry-logback-appender-1.0
+			     below. -->
+			<groupId>io.opentelemetry</groupId>
+			<artifactId>opentelemetry-exporter-otlp</artifactId>
+		</dependency>
+		<dependency>
+			<!-- OTLP push for metrics (activates OtlpMetricsExportAutoConfiguration). -->
+			<groupId>io.micrometer</groupId>
+			<artifactId>micrometer-registry-otlp</artifactId>
+		</dependency>
+		<dependency>
+			<!-- spring-boot-opentelemetry only builds the OTel-side logging SDK
+			     (LoggerProvider + OTLP exporter); it doesn't bridge Logback into it.
+			     This is that bridge - config/OpenTelemetryLoggingConfig.java installs
+			     it onto the Spring-managed OpenTelemetry bean, logback-spring.xml wires
+			     the appender in. Without both, log records are built and exported to
+			     nothing: confirmed empty at the OTel Collector's receiver metrics. -->
+			<groupId>io.opentelemetry.instrumentation</groupId>
+			<artifactId>opentelemetry-logback-appender-1.0</artifactId>
+			<version>2.16.0-alpha</version>
+		</dependency>
+		<dependency>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.8.5</version>
+		</dependency>
+		<dependency>
+			<!-- https://www.julien-dubois.com/boot-ui/ - dev-only console, dormant unless the
+			     dev profile is active or spring-boot-devtools is on the classpath. -->
+			<groupId>com.julien-dubois.bootui</groupId>
+			<artifactId>bootui-spring-boot-starter</artifactId>
+			<version>1.15.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.postgresql</groupId>
+			<artifactId>postgresql</artifactId>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-data-jpa-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-webmvc-test</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- Consumer-side: defines the contract chatservice's API must honor
+			     and generates the pact file (target/pacts/). There's no separate
+			     consumer service/repo yet (frontend/chatdashboard is unscaffolded),
+			     so this stands in for it - see contract/README or AGENTS.md. -->
+			<groupId>au.com.dius.pact.consumer</groupId>
+			<artifactId>junit5</artifactId>
+			<version>4.6.17</version>
+			<scope>test</scope>
+		</dependency>
+		<dependency>
+			<!-- Provider-side: replays the pact file's interactions against a real
+			     running chatservice and fails if a response doesn't match. -->
+			<groupId>au.com.dius.pact.provider</groupId>
+			<artifactId>junit5spring</artifactId>
+			<version>4.6.17</version>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
+
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.springframework.boot</groupId>
+				<artifactId>spring-boot-maven-plugin</artifactId>
+				<executions>
+					<execution>
+						<!-- Populates /actuator/info (name/version/build time) from this build. -->
+						<goals>
+							<goal>build-info</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<!-- Coverage data for Sonar - without this, Sonar shows 0% coverage
+				     since nothing produces jacoco.xml. -->
+				<groupId>org.jacoco</groupId>
+				<artifactId>jacoco-maven-plugin</artifactId>
+				<version>0.8.13</version>
+				<configuration>
+					<!-- The bootstrap class is one SpringApplication.run() line - the
+					     context-load test proves the app boots, but main() itself only
+					     runs in a real launch, and faking a test around it adds nothing.
+					     Mirrored in sonar.coverage.exclusions so both gates agree. -->
+					<excludes>
+						<exclude>com/chatplatform/chatservice/ChatserviceApplication.class</exclude>
+					</excludes>
+				</configuration>
+				<executions>
+					<execution>
+						<goals>
+							<goal>prepare-agent</goal>
+						</goals>
+					</execution>
+					<execution>
+						<id>report</id>
+						<phase>test</phase>
+						<goals>
+							<goal>report</goal>
+						</goals>
+					</execution>
+					<execution>
+						<!-- Turns the report into a gate: `mvn verify` fails below 95% line
+						     coverage (raised from 60% once unit tests covered the service,
+						     entity lifecycle, and exception-handler layers directly). -->
+						<id>check</id>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+						<configuration>
+							<rules>
+								<rule>
+									<element>BUNDLE</element>
+									<limits>
+										<limit>
+											<counter>LINE</counter>
+											<value>COVEREDRATIO</value>
+											<minimum>0.95</minimum>
+										</limit>
+									</limits>
+								</rule>
+							</rules>
+						</configuration>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+				<version>5.1.0.4751</version>
+			</plugin>
+			<plugin>
+				<!-- Runs *IT.java (the pact provider verification) in the
+				     integration-test/verify phases - strictly after surefire's
+				     test phase, where the consumer test already generated the
+				     pact file the provider test reads. That ordering guarantee
+				     is the whole reason this is Failsafe and not Surefire. -->
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-failsafe-plugin</artifactId>
+				<executions>
+					<execution>
+						<goals>
+							<goal>integration-test</goal>
+							<goal>verify</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<!-- Formatting gate: `mvn verify` fails on unformatted code, `mvn
+				     spotless:apply` fixes it. google-java-format, since nothing else
+				     in this module established a style yet. -->
+				<groupId>com.diffplug.spotless</groupId>
+				<artifactId>spotless-maven-plugin</artifactId>
+				<version>2.44.5</version>
+				<configuration>
+					<java>
+						<googleJavaFormat>
+							<version>1.27.0</version>
+						</googleJavaFormat>
+					</java>
+				</configuration>
+				<executions>
+					<execution>
+						<phase>verify</phase>
+						<goals>
+							<goal>check</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+			<plugin>
+				<!-- CVE gate. NOT bound to a lifecycle phase - it hits NVD over the
+				     network (needs an NVD API key, or it's severely rate-limited),
+				     so this shouldn't be able to break an offline/local `mvn verify`.
+				     Run explicitly: mvn dependency-check:check. Wire into CI, where
+				     network access and an NVD_API_KEY secret are actually available. -->
+				<groupId>org.owasp</groupId>
+				<artifactId>dependency-check-maven</artifactId>
+				<version>12.1.3</version>
+				<configuration>
+					<nvdApiKey>${env.NVD_API_KEY}</nvdApiKey>
+					<failBuildOnCVSS>7</failBuildOnCVSS>
+				</configuration>
+			</plugin>
+		</plugins>
+	</build>
+
+</project>
