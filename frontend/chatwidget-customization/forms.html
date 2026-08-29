@@ -1,0 +1,177 @@
+<!-- FORMS COMPONENT UI -->
+<div class="forms-management-wrapper">
+  <div class="settings-header">
+    <h2>Forms</h2>
+  </div>
+
+  <!-- 1. LIVE CHAT FORM ACCORDION CARD -->
+  <div class="form-section-card active" id="card-live-chat-form">
+    <div class="form-section-header" onclick="toggleFormSectionCard('card-live-chat-form')">
+      <div class="form-section-title-group" style="flex: 1;">
+        <div class="form-section-title">Live Chat Form</div>
+      </div>
+      <div class="sub-accordion-chevron">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </div>
+    </div>
+
+    <div class="form-section-collapse">
+      <div class="form-section-body">
+        
+        <!-- PRE CHAT FORM ITEM -->
+        <div class="form-config-item">
+          <div class="form-config-top">
+            <div class="form-config-info">
+              <span class="form-config-title">Pre Chat Form</span>
+              <p class="form-config-desc">
+                Select a form to quickly gather visitor details, ensuring a smoother chat experience and faster, more personalized support.
+              </p>
+            </div>
+            <div class="form-config-toggle">
+              <label class="switch">
+                <input type="checkbox" id="prechat-form-toggle" checked data-path="forms.preChat.enabled">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-config-select-wrapper" id="prechat-select-container">
+            <select class="form-control-select" id="prechat-form-select" data-path="forms.preChat.selectedForm">
+              <option value="prechat-default" selected>Pre chat form</option>
+              <option value="lead-gen">Custom Lead Form</option>
+              <option value="tech-support">Support Intake Form</option>
+            </select>
+            <div class="select-arrow-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <!-- POST CHAT FORM ITEM -->
+        <div class="form-config-item">
+          <div class="form-config-top">
+            <div class="form-config-info">
+              <span class="form-config-title">Post Chat Form</span>
+              <p class="form-config-desc">
+                Select a post-chat survey to gather feedback and improve future support experiences.
+              </p>
+            </div>
+            <div class="form-config-toggle">
+              <label class="switch">
+                <input type="checkbox" id="postchat-form-toggle" data-path="forms.postChat.enabled">
+                <span class="slider"></span>
+              </label>
+            </div>
+          </div>
+          <div class="form-config-select-wrapper" id="postchat-select-container" style="display: none; margin-top: 12px;">
+            <select class="form-control-select" id="postchat-form-select" data-path="forms.postChat.selectedForm">
+              <option value="postchat-csat" selected>Post chat survey</option>
+              <option value="feedback-detailed">Detailed Feedback Form</option>
+              <option value="nps-rating">NPS Rating Survey</option>
+            </select>
+            <div class="select-arrow-icon">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-divider"></div>
+
+        <!-- CREATE FORM ACTION LINK -->
+        <div class="form-create-action-row">
+          <span class="action-text">Design personalized forms tailored to your business needs</span>
+          <button type="button" class="btn-create-form-link" id="btn-open-form-builder">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            Create form
+          </button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+
+  <!-- 2. TICKET FORMS ACCORDION CARD -->
+  <div class="form-section-card active" id="card-ticket-forms">
+    <div class="form-section-header" onclick="toggleFormSectionCard('card-ticket-forms')">
+      <div class="form-section-title-group" style="flex: 1;">
+        <div class="form-section-title">Ticket Forms</div>
+      </div>
+      <div class="sub-accordion-chevron">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="18 15 12 9 6 15"></polyline>
+        </svg>
+      </div>
+    </div>
+
+    <div class="form-section-collapse">
+      <div class="form-section-body">
+
+        <!-- FORM HEADING FIELD -->
+        <div class="form-input-group">
+          <label class="form-label-title" for="ticket-form-heading-input">Form Heading</label>
+          <div class="input-with-counter-wrapper">
+            <input type="text" id="ticket-form-heading-input" class="form-text-input" placeholder="Enter form heading" maxlength="65" data-path="forms.ticket.heading">
+            <span class="char-count-indicator" id="heading-char-count">0/65</span>
+          </div>
+          <span class="form-field-subtext">Displayed as a header of the form</span>
+        </div>
+
+        <!-- FORM SUB-HEADING FIELD -->
+        <div class="form-input-group">
+          <label class="form-label-title" for="ticket-form-subheading-input">Form Sub-Heading</label>
+          <div class="input-with-counter-wrapper">
+            <input type="text" id="ticket-form-subheading-input" class="form-text-input" placeholder="Enter form sub-heading" maxlength="65" data-path="forms.ticket.subheading">
+            <span class="char-count-indicator" id="subheading-char-count">0/65</span>
+          </div>
+          <span class="form-field-subtext">Displayed as a subtitle of the form</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FORM BUILDER MODAL (Personalized Form Generator) -->
+<div class="modal-backdrop" id="modal-form-builder" style="display: none;">
+  <div class="modal-dialog">
+    <div class="modal-header">
+      <h3>Design Personalized Form</h3>
+      <button type="button" class="btn-modal-close" id="btn-close-form-builder">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="field-group">
+        <label>Form Name</label>
+        <input type="text" class="form-text-input" id="new-form-name" placeholder="e.g. VIP Customer Inquiry Form">
+      </div>
+      <div class="field-group" style="margin-top: 14px;">
+        <label>Form Type</label>
+        <select class="form-control-select" id="new-form-type">
+          <option value="prechat">Pre-Chat Form</option>
+          <option value="postchat">Post-Chat Form</option>
+          <option value="ticket">Ticket Form</option>
+        </select>
+      </div>
+      <div class="field-group" style="margin-top: 14px;">
+        <label>Included Fields</label>
+        <div class="checkbox-group" style="display: flex; flex-direction: column; gap: 8px; margin-top: 6px;">
+          <label><input type="checkbox" checked disabled> Name (Required)</label>
+          <label><input type="checkbox" checked disabled> Email (Required)</label>
+          <label><input type="checkbox" checked id="field-phone-toggle"> Phone Number</label>
+          <label><input type="checkbox" checked id="field-dept-toggle"> Department Selector</label>
+          <label><input type="checkbox" id="field-company-toggle"> Company Name</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="header-btn" id="btn-cancel-form-builder">Cancel</button>
+      <button type="button" class="header-btn header-btn-primary" id="btn-save-custom-form">Create Form</button>
+    </div>
+  </div>
+</div>

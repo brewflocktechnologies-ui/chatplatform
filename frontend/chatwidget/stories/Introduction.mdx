@@ -1,0 +1,70 @@
+import { Meta, Title, Subtitle, Heading } from '@storybook/addon-docs/blocks';
+
+<Meta title="Introduction" />
+
+<Title>Zotly Chat Widget — Design System</Title>
+
+<Subtitle>An atomic design system for the chat widget, built with Lit web components.</Subtitle>
+
+This Storybook documents the widget's component library, organised using **atomic design**:
+a strict 5-layer hierarchy from tiny atoms up to the live page container.
+
+<Heading as="h2">The 5-layer hierarchy</Heading>
+
+- **Atoms** — the smallest building blocks (icon, badge, status dot, typing dots…). No business logic.
+- **Molecules** — groups of atoms that form a meaningful UI unit (avatar, composer, message bubble, chat footer, emoji picker, attach menu, chat menu…).
+- **Organisms** — sections composed of molecules (chat panel, header, floating trigger, greet window…).
+- **Templates** — pure layout skeletons (`cw-widget-layout`). Structure only, props in, zero store dependency.
+- **Pages** — the live smart container (`cw-widget-root`). Handles store subscriptions, event bus, config merging, and renders the template.
+
+<Heading as="h2">Atoms</Heading>
+
+| Component | Purpose | Docs |
+| --- | --- | --- |
+| `cw-icon` | Central SVG icon registry | [docs](?path=/docs/atoms-icon--docs) |
+| `cw-status-dot` | Status indicator dot (online/offline) | [docs](?path=/docs/atoms-statusdot--docs) |
+| `cw-badge` | Unread count pill with animations | [docs](?path=/docs/atoms-badge--docs) |
+| `cw-typing-dots` | Typing indicator dots | [docs](?path=/docs/atoms-typingdots--docs) |
+
+<Heading as="h2">Molecules</Heading>
+
+| Component | Purpose | Docs |
+| --- | --- | --- |
+| `cw-avatar` | Avatar with initials / image + status dot | [docs](?path=/docs/molecules-avatar--docs) |
+| `cw-composer` | Attach + input + emoji + send | [docs](?path=/docs/molecules-composer--docs) |
+| `cw-message-bubble` | Single chat message (avatar + bubble + time + tick) | [docs](?path=/docs/molecules-messagebubble--docs) |
+| `cw-welcome-card` | Welcome / hero surface | [docs](?path=/docs/molecules-welcomecard--docs) |
+| `cw-greet-input` | Greet window input box | [docs](?path=/docs/molecules-greetinput--docs) |
+| `cw-chat-footer` | Powered-by widget footer | [docs](?path=/docs/molecules-chatfooter--docs) |
+| `cw-emoji-picker` | Emoji selection popup grid | [docs](?path=/docs/molecules-emojipicker--docs) |
+| `cw-attach-menu` | Attachment options popup menu | [docs](?path=/docs/molecules-attachmenu--docs) |
+| `cw-chat-menu` | Options popup menu | [docs](?path=/docs/molecules-chatmenu--docs) |
+
+<Heading as="h2">Organisms</Heading>
+
+| Component | Purpose | Docs |
+| --- | --- | --- |
+| `cw-bubble` | Floating circular trigger (glass/neon/tooltip/badge) | [docs](?path=/docs/organisms-bubble--docs) |
+| `cw-chatbar` | Floating bar / card trigger | [docs](?path=/docs/organisms-chatbar--docs) |
+| `cw-greet-window` | Floating greet card + input | [docs](?path=/docs/organisms-greetwindow--docs) |
+| `cw-chat-body` | Chat surface (states, messages, composer) | [docs](?path=/docs/organisms-chatbody--docs) |
+| `cw-chat-panel` | Panel shell (header + body + modal) | [docs](?path=/docs/organisms-chatpanel--docs) |
+
+<Heading as="h2">Templates</Heading>
+
+| Component | Purpose | Docs |
+| --- | --- | --- |
+| `cw-widget-layout` | Pure presentational layout skeleton — structure only, zero store dependency | [docs](?path=/docs/templates-widgetlayout--docs) |
+
+<Heading as="h2">Pages</Heading>
+
+| Component | Purpose | Docs |
+| --- | --- | --- |
+| `cw-widget-root` | Live page container — store subscriptions, event bus, config merging | [comprehensive docs](?path=/docs/pages-widgetroot--docs) |
+
+<Heading as="h2">Guiding rules</Heading>
+
+1. **Templates are structural** — `cw-widget-layout` accepts pure props and lays out triggers, greet window, and panel.
+2. **Pages wire live state** — `cw-widget-root` owns store subscriptions, event bus, and config merging.
+3. **Data flows down** — properties are passed down the 5-layer hierarchy.
+4. **Events flow up** — leaves emit composed `cw:*` events up to the root page container.

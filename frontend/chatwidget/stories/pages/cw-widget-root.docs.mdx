@@ -1,0 +1,93 @@
+import { Meta, Title, Subtitle, Heading, Canvas, Controls, Stories, ArgTypes } from '@storybook/addon-docs/blocks';
+import * as WidgetRootStories from './cw-widget-root.stories';
+
+<Meta of={WidgetRootStories} />
+
+<Title>cw-widget-root — Page</Title>
+
+<Subtitle>The live page container that owns state, wires events, and renders the widget layout.</Subtitle>
+
+The widget root page component is the top smart container of the atomic hierarchy. It subscribes to the stores,
+merges configuration overrides, handles focus traps, and delegates structural rendering to `<cw-widget-layout>`.
+
+<Heading as="h2">Component tree</Heading>
+
+```
+cw-widget-root                              ← Page (store-aware container)
+└── cw-widget-layout                        ← Template (pure layout skeleton)
+    ├── cw-chatbar  OR  cw-bubble               ← Floating trigger (config decides which)
+    ├── cw-greet-window                         ← Floating greet card
+    │   └── cw-greet-input
+    └── cw-chat-panel                           ← Main chat surface
+        ├── cw-chat-header
+        └── cw-chat-body
+            ├── cw-welcome-card
+            ├── cw-message-bubble
+            ├── cw-composer
+            ├── cw-chat-footer
+            ├── cw-emoji-picker
+            ├── cw-attach-menu
+            ├── cw-chat-menu
+            └── cw-forms-preview
+```
+
+<Heading as="h2">How it works</Heading>
+
+1. On connect, the root calls `initStore()` and subscribes to every store slice
+   (`bubble`, `chatbar`, `greetWindow`, `chatWindow`, `features`, `chat`).
+2. Each store notification bumps a local `rev` counter, forcing presentational children
+   to re-render even when config objects are mutated in place.
+3. Leaf components dispatch composed `cw:*` events. The root listens and translates each
+   event into the matching store action — leaves never touch the store directly.
+
+<Heading as="h2">Event wiring</Heading>
+
+| Event | Detail | Store action |
+| --- | --- | --- |
+| `cw:toggle` | — | Toggle panel open/closed |
+| `cw:close-panel` | — | Close the panel |
+| `cw:start-chat` | — | `chatStore.startFromWelcome()` |
+| `cw:greet-dismiss` | — | `chatStore.dismissGreetWindow()` |
+| `cw:greet-input` | `string` | Set the greeting draft |
+| `cw:greet-submit` | `string` | Open panel, start chat, send draft |
+| `cw:draft-change` | `string` | Set the composer draft |
+| `cw:send` | — | `chatStore.send()` |
+| `cw:toggle-attach` | — | Toggle the attach popup |
+| `cw:toggle-emoji` | — | Toggle the emoji picker |
+| `cw:attach-files` | `HTMLInputElement` | `chatStore.uploadImage()` |
+| `cw:capture-screenshot` | — | `chatStore.captureScreenshot()` |
+| `cw:dismiss-consent` | — | `chatStore.dismissConsent()` |
+| `cw:download-transcript` | — | `chatStore.downloadTranscript()` |
+| `cw:toggle-sounds` | — | `chatStore.toggleSounds()` |
+| `cw:insert-emoji` | `string` | `chatStore.insertEmoji()` |
+| `cw:submit-offline` | `{ name, email, message }` | `chatStore.submitOffline()` |
+| `cw:start-new` | — | `chatStore.startNew()` |
+| `cw:toggle-expand` | — | Expand/collapse the panel |
+| `cw:open-menu` | — | Toggle the chat options menu |
+| `cw:close-popups` | — | Close active popups |
+| `cw:end-chat` | — | `chatStore.askEndChat()` |
+| `cw:confirm-end` | — | `chatStore.confirmEnd()` |
+| `cw:confirm-cancel` | — | `chatStore.cancelEndChat()` |
+
+<Heading as="h2">Live example</Heading>
+
+<Canvas of={WidgetRootStories.Default} />
+
+<Heading as="h2">Embedding the widget</Heading>
+
+Script-tag usage:
+
+```html
+<script src="/path/to/chatwidget_components_lit/dist/index.js"></script>
+<cw-widget-root></cw-widget-root>
+```
+
+Or mount programmatically:
+
+```js
+import { mountChatWidget } from 'chatwidget-components-lit';
+
+const root = mountChatWidget(document.body);
+```
+
+<Stories />

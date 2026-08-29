@@ -1,0 +1,16 @@
+import { Meta, Title, Subtitle, Heading, Canvas, Stories } from '@storybook/addon-docs/blocks';
+import * as WidgetLayoutStories from './cw-widget-layout.stories';
+
+<Meta of={WidgetLayoutStories} />
+
+<Title>cw-widget-layout — Template</Title>
+
+<Subtitle>Pure presentational layout template component for the chat widget surface.</Subtitle>
+
+`cw-widget-layout` is the Template layer component in the Atomic Design hierarchy. It accepts pure configuration properties and lays out the floating trigger (bubble/chatbar), proactive greet window, and main chat panel without subscribing to any store.
+
+<Heading as="h2">Live example</Heading>
+
+<Canvas of={WidgetLayoutStories.DefaultLayout} />
+
+<Stories />

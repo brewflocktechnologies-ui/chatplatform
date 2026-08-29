@@ -1,0 +1,464 @@
+{
+  "clientId": "amber",
+  "clientName": "Vortex Studio Amber",
+  "accentColor": "#d97706",
+    "features": {
+    "voiceCallMaster": false,
+    "voiceCallAgents": false,
+    "voiceCallVisitors": false,
+    "videoCallMaster": false,
+    "videoCallAgents": false,
+    "videoCallVisitors": false,
+    "disableVisitorCamera": false,
+        "closeChatVisitor": true,
+    "averageQueueTime": 1,
+    "chatAcceptanceTime": 5,
+    "prechatEnabled": true,
+    "postchatEnabled": true
+  },
+
+  "messages": [
+    {
+      "key": "welcome",
+      "senderType": "AGENT",
+      "body": "Welcome! How can we assist you today?"
+    },
+    {
+      "key": "queueing",
+      "senderType": "SYSTEM",
+      "body": "You are currently in queue. An agent will be with you shortly."
+    },
+    {
+      "key": "waiting",
+      "senderType": "SYSTEM",
+      "body": "Connecting your chat request... Please stay on this page."
+    },
+    {
+      "key": "busy",
+      "senderType": "SYSTEM",
+      "body": "All of our agents are currently engaged. Please hold on, and we'll connect you shortly."
+    },
+    {
+      "key": "offline",
+      "senderType": "SYSTEM",
+      "body": "We are currently offline. Please leave us a message and we'll get back to you soon."
+    }
+  ],
+    "//_greetWindow_section": "--- FLOATING GREET PREVIEW AND INPUT ---",
+  "greetWindow": {
+    "enabled": true,
+    "openingTimeAfterInitialLoadSec": 6.0,
+    "animationOpeningSec": 0.8,
+    "animationClosingSec": 0.4,
+    "useWebsiteTheme": true,
+    "width": 280,
+    "spacing": 16,
+    "backgroundColor": "#ffffff",
+    "borderRadius": 16,
+    "padding": "12px 16px",
+    "boxShadow": "0 12px 28px -6px rgba(0,0,0,0.15), 0 8px 14px -4px rgba(0,0,0,0.1)",
+    "imageUrl": "https://preview.revechat.com/files/fcec74d2-f01c-4c28-93e7-afd28c00d5e8.gif",
+    "imageHeight": 120,
+    "imageWidth": "",
+    "iconAlign": "center",
+    "imagePadding": "0px",
+    "iconType": "lucide",
+    "lucideIcon": "Sparkles",
+    "iconSize": 52,
+    "iconColor": "#d97706",
+    "iconAnimation": "wiggle",
+    "iconAnimationDuration": "2.5s",
+    "title": "Hi there! 👋 Need help growing your business using AI?",
+    "titleColor": "#1e293b",
+    "titleFontSize": "15px",
+    "description": "Let's chat & find the right solution for you!",
+    "descriptionColor": "#475569",
+    "descriptionFontSize": "14px",
+    "inputBox": {
+      "enabled": true,
+      "openingTimeAfterInitialLoadSec": 6.0,
+      "animationOpeningSec": 0.8,
+      "layout":"",
+      "placeholder": "Write your message...",
+      "backgroundColor": "#ffffff",
+      "textColor": "#1e293b",
+      "borderRadius": 24,
+      "boxShadow": "0 6px 16px rgba(0,0,0,0.12)",
+      "buttonColor": "#d97706",
+      "buttonIconColor": "#ffffff"
+    }
+  },
+  "//_bubble_section": "--- FLOATING BUBBLE TRIGGER BUTTON ---",
+  "bubble": {
+    "offsetRight": 24,
+    "offsetBottom": 24,
+    "useWebsiteTheme": true,
+    "width": 60,
+    "height": 60,
+    "borderRadius": {
+      "tl": 50,
+      "tr": 50,
+      "bl": 50,
+      "br": 50
+    },
+    "backgroundColor": "#1E40AF",
+    "gradientType": "linear",
+    "gradientAngle": 135,
+    "gradientStops": [
+      {
+        "color": "#1E40AF",
+        "pos": 0
+      },
+      {
+        "color": "#9333EA",
+        "pos": 100
+      }
+    ],
+    "backgroundOverlayType": "none",
+    "backgroundLucideColor": "#FFFFFF",
+    "backgroundLucideSize": 24,
+    "backgroundLucideOpacity": 1,
+    "backgroundLucideIcon": "MessageCircle",
+    "backgroundImageUrl": "",
+    "backgroundImageSize": "contain",
+    "backgroundImageOpacity": 0.25,
+    "backgroundBlendMode": "normal",
+    "border": {
+      "width": 0,
+      "color": "#3B82F6",
+      "style": "solid"
+    },
+    "borderGradientEnabled": true,
+    "borderGradientAngle": 90,
+    "borderGradientStops": [
+      {
+        "color": "#60A5FA",
+        "pos": 0
+      },
+      {
+        "color": "#A78BFA",
+        "pos": 100
+      }
+    ],
+    "borderOffsetAnim": false,
+    "outlineRing": {
+      "enabled": false,
+      "width": 0,
+      "color": "#22D3EE",
+      "opacity": 0.4
+    },
+    "boxShadowBlur": 0,
+    "boxShadowSpread": 0,
+    "boxShadowOffsetX": 0,
+    "boxShadowOffsetY": 0,
+    "boxShadowOpacity": 0,
+    "innerShadow": {
+      "enabled": false,
+      "blur": 12,
+      "opacity": 0.25
+    },
+    "glass": {
+      "enabled": false,
+      "blur": 10,
+      "bgOpacity": 0.3
+    },
+    "neon": {
+      "enabled": false,
+      "color": "#22D3EE",
+      "intensity": 0.8
+    },
+    "animation": {
+      "type": "fadeIn",
+      "duration": 350,
+      "delay": 0
+    },
+    "hoverScale": 1,
+    "idleAnim": {
+      "enabled": true,
+      "type": "none",
+      "amplitude": 6,
+      "duration": 3200
+    },
+    "dots": {
+      "color": "#F8FAFC",
+      "size": 6,
+      "spacing": 6,
+      "animation": "bounce"
+    },
+    "badge": {
+      "position": "top-right",
+      "offsetX": -6,
+      "offsetY": -6,
+      "size": 20,
+      "fontSize": 11,
+      "backgroundColor": "#dc2626",
+      "textColor": "#ffffff",
+      "borderWidth": 2,
+      "borderColor": "#ffffff",
+      "boxShadow": "0 1px 3px rgba(0,0,0,0.15)",
+      "borderRadius": "9999px",
+      "fontWeight": "700",
+      "padding": "0px",
+      "animation": "pulse 1.5s infinite"
+    },
+    "hideOnOpen": true,
+    "tooltip": {
+      "enabled": true,
+      "text": "Chat with us",
+      "position": "left",
+      "backgroundColor": "#D3D3D3",
+      "textColor": "#374151",
+      "fontSize": 14,
+      "borderRadius": {
+        "tl": 20,
+        "tr": 0,
+        "br": 20,
+        "bl": 20
+      },
+      "padding": "8px 16px",
+      "boxShadow": "0 4px 12px rgba(0,0,0,0.1)",
+      "arrowEnabled": false,
+      "borderColor": "transparent",
+      "borderWidth": 0
+    }
+  },
+
+  "//_chatWindow_section": "--- CHAT WINDOW LAYOUT AND THEME ---",
+
+  "chatWindow": {
+    "useWebsiteTheme": true,
+    "offsetRight": null,
+    "offsetBottom": null,
+    "animationOpeningSec": 0.3,
+    "animationClosingSec": 0.2,
+    "clientName": "Vortex Studio Support",
+    "agentName": "Alex (Vortex)",
+
+    "//_dimensions": "Dimensions of the chat widget window",
+
+    "widgetWidth": 400,
+    "widgetHeight": 950,
+    "expandedWidth": 550,
+
+    "//_borders_and_shadows": "Styles for widget card borders and shadow values",
+
+    "widgetBorderRadius": 28,
+    "widgetShadow": true,
+    "widgetShadowBlur": 20,
+    "widgetShadowColor": "rgba(0,0,0,0.15)",
+    "widgetBorderEnabled": false,
+    "widgetBorderWidth": 1,
+    "widgetBorderColor": "#e5e7eb",
+    "modernUi": true,
+    "typingIndicator": true,
+    "attachmentsEnabled": true,
+
+    "ticksEnabled": true,
+    "sentTickColor": "",
+    "deliveredTickColor": "",
+    "readTickColor": "#34B7F1",
+
+    "//_header_styling": "Top title header colors, sizes, padding, and borders",
+
+    "headerBg": "#f4f4f5",
+    "headerTextColor": "#18181b",
+    "headerBorderColor": "rgba(0,0,0,0.08)",
+    "headerPadding": "14px 16px",
+    "headerTitleFontSize": "14px",
+    "headerSubtitleFontSize": "11px",
+    "headerAvatarBg": "#e4e4e7",
+    "headerAvatarColor": "#18181b",
+
+    "//_active_dot": "Online status indicator shown on the avatar",
+
+    "activeDot": {
+      "color": "#22c55e",
+      "animate": true,
+      "borderWidth": 0,
+      "borderColor": "transparent",
+      "size": 8
+    },
+  
+    "//_close_chat": "Close chat popup in header",
+
+    "endChatConfirmMessage": "Are you sure you want to end this chat session?",
+    "endChatConfirmLabel": "End chat",
+    "endChatCancelLabel": "Cancel",
+    "modalCardBg": "#ffffff",
+    "modalMessageColor": "#101828",
+    "modalBorderRadius": 28,
+    "endChatConfirmBg": "#d97706",
+    "endChatConfirmTextColor": "#ffffff",
+    "endChatCancelBg": "#ffffff",
+    "endChatCancelTextColor": "#667085",
+    "endChatCancelBorderColor": "#e9ecf1",
+
+    "//_chat_body_styling": "Chat screen backdrop color",
+
+    "bodyBg": "#f4f4f5",
+
+    "//_visitor_bubbles": "Text size, color, background, and padding for visitor messages",
+
+    "visitorBubbleBg": "#d97706",
+    "visitorBubbleColor": "#ffffff",
+    "visitorBubbleFontSize": "14px",
+    "visitorBubblePadding": "10px 14px",
+    "visitorBubbleBorderRadius": "16px",
+
+    "//_agent_bubbles": "Text size, color, background, and padding for agent messages",
+
+    "agentBubbleBg": "#ffffff",
+    "agentBubbleColor": "#111827",
+    "agentBubbleBorderColor": "#d1d5db",
+    "agentBubbleFontSize": "14px",
+    "agentBubblePadding": "10px 14px",
+    "agentBubbleBorderRadius": "16px",
+
+    "//_agent_avatar": "Agent avatar icon initials backing color and profile picture image override",
+
+    "agentAvatarBg": "#d97706",
+    "agentAvatarColor": "#ffffff",
+    "agentAvatarUrl": "",
+
+    "//_composer_input_box": "Background, text, border focus color, and spacing of the bottom message box",
+
+    "inputBg": "#ffffff",
+    "inputTextColor": "#18181b",
+    "inputPlaceholderColor": "#6b7280",
+    "inputBorderColor": "#d1d5db",
+    "inputFocusBorderColor": "#d97706",
+    "inputFocusShadow": "0 0 0 3px rgba(217,119,6,0.15)",
+    "inputBorderRadius": "9999px",
+    "inputPadding": "6px 8px",
+    "inputMargin": "12px 16px",
+    "textareaFontSize": "14px",
+
+    "//_composer_buttons": "Colors and icons for attachment, emoji, and send buttons",
+
+    "attachButtonBg": "#ffffff",
+    "attachButtonColor": "#6b7280",
+    "emojiButtonColor": "#6b7280",
+    "sendButtonBgActive": "#d97706",
+    "sendButtonColorActive": "#ffffff",
+    "sendButtonBgInactive": "#e5e7eb",
+    "sendButtonColorInactive": "#9ca3af",
+    "sendIconType": "arrow",
+
+    "//_footer_branding": "Powered By branding row, link alignment, and logo SVG config",
+
+    "footerBg": "#f9fafb",
+    "footerTextColor": "#6b7280",
+    "footerFontSize": "12px",
+    "footerPaddingBottom": "16px",
+    "poweredByText": "vainateya.ai",
+    "poweredByLink": "",
+    "poweredByColor": "#d97706",
+    "poweredByLogo": "",
+    "welcome": {
+      "enabled": true,
+      "useWebsiteTheme": false,
+      "cardLayout": "glassy",
+      "cardBg": "rgba(255, 255, 255, 0.08)",
+      "cardBorder": "",
+      "cardAlign": "center",
+      "textAlign": "center",
+      "logoAlign": "left",
+      "avatarAlign": "center",
+      "cardBorderRadius": 24,
+      "cardPadding": "32px 24px",
+      "cardBlur": 22,
+      "cardShadow": "0 8px 32px 0 rgba(0, 0, 0, 0.05)",
+      "title": "Hi there! 👋 How can we help you today?",
+      "titleFontSize": "26px",
+      "description": "Our support heroes are here to assist you.",
+      "descriptionFontSize": "15px",
+      "bgGradient": "linear-gradient(145deg, #f59e0b 0%, #d97706 55%, #92400e 100%)",
+      "headerTextColor": "#ffffff",
+      "subtextColor": "rgba(255, 255, 255, 0.85)",
+      "padding": "32px 20px 10px 20px",
+      "footerPaddingBottom": "0px",
+      "avatarBorderColor": "rgba(255, 255, 255, 0.2)",
+      "avatars": [
+        "https://png.pngtree.com/png-vector/20230831/ourmid/pngtree-man-avatar-image-for-profile-png-image_9197908.png",
+        "https://png.pngtree.com/png-vector/20230831/ourmid/pngtree-man-avatar-image-for-profile-png-image_9197908.png",
+        "https://png.pngtree.com/png-vector/20230831/ourmid/pngtree-man-avatar-image-for-profile-png-image_9197908.png"
+      ],
+      "buttonText": "Start Conversation",
+      "buttonSubtext": "Typically replies in 5 minutes",
+      "buttonBg": "#ffffff",
+      "buttonTextColor": "#111827",
+      "buttonPadding": "16px 20px",
+      "buttonBorderRadius": 16,
+      "buttonIconBg": "transparent",
+      "buttonIconColor": "#d97706"
+    }
+  },
+  "chatbar": {
+    "enabled": false,
+    "useWebsiteTheme": true,
+    "layout": "bar",
+    "cardText": "Questions about PhonePe\nfor business?",
+    "text": "Chat with us",
+    "bgColor": "#d97706",
+    "textColor": "#ffffff",
+    "textSize": 14,
+    "letterSpacing": 0,
+    "gradientEnabled": false,
+    "gradientStops": [
+      {
+        "color": "#d97706",
+        "pos": 0
+      },
+      {
+        "color": "#a855f7",
+        "pos": 100
+      }
+    ],
+    "gradientType": "linear",
+    "gradientAngle": 90,
+    "iconType": "lucide",
+    "iconColor": "#ffffff",
+    "lucideIcon": "MessageCircle",
+    "iconImageUrl": "",
+    "customSvg": "",
+    "iconFit": "contain",
+    "iconOpacity": 1,
+    "iconBlend": "normal",
+    "iconWidth": 20,
+    "iconHeight": 20,
+    "width": 255,
+    "height": 40,
+    "borderRadius": {
+      "tl": 20,
+      "tr": 20,
+      "bl": 20,
+      "br": 20
+    },
+    "shadow": true,
+    "hideOnOpen": true,
+    "offsetBottom": 12,
+    "offsetRight": 16,
+    "cardOffsetRight": null,
+    "cardOffsetBottom": null,
+    "barOffsetRight": null,
+    "barOffsetBottom": null,
+    "stackGap": 12,
+    "padding": "0px 16px",
+    "gap": 0
+  },
+  "notification": {
+    "enabled": true,
+    "icon": "building",
+    "iconUrl": "",
+    "headline": "Notifications Head",
+    "description": "Would you like to receive notifications on latest updates?",
+    "approveText": "OK",
+    "cancelText": "Not Yet",
+    "delayValue": 5,
+    "delayUnit": "Seconds",
+    "promptStyle": "box2",
+    "animationStyle": "drop-in",
+    "position": "top",
+    "repromptDelay": 1
+  }
+}

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CDN Playwright E2E Validation Tester</title>
+  <style>
+    :root {
+      --primary-color: #0b5fff;
+      --secondary-color: #8b5cf6;
+    }
+    body {
+      font-family: Inter, system-ui, sans-serif;
+      margin: 0;
+      padding: 24px;
+      background: #f8fafc;
+      min-height: 100vh;
+    }
+    cw-widget-root {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>CDN Customization E2E Host Tester</h1>
+
+  <div id="widget-container"></div>
+
+  <script type="module">
+    import {
+      mountChatWidget,
+      injectStoreConfig,
+      initStore,
+      chatStore,
+      greetWindowStore,
+      chatWindowStore,
+      bubbleStore,
+      chatbarStore,
+      featuresStore,
+      updateStoreConfig
+    } from './index.ts';
+
+    window.injectStoreConfig = injectStoreConfig;
+    window.updateStoreConfig = updateStoreConfig;
+    window.mountChatWidget = mountChatWidget;
+    window.initStore = initStore;
+    window.chatStore = chatStore;
+    window.greetWindowStore = greetWindowStore;
+    window.chatWindowStore = chatWindowStore;
+    window.bubbleStore = bubbleStore;
+    window.chatbarStore = chatbarStore;
+    window.featuresStore = featuresStore;
+
+    mountChatWidget();
+  </script>
+</body>
+</html>
