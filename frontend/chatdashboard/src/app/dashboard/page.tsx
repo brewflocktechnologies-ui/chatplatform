@@ -1,12 +1,12 @@
-import { auth } from '@clerk/nextjs/server';
-import { redirect } from 'next/navigation';
+'use client';
 
-export default async function Dashboard() {
-  const { userId } = await auth();
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-  if (!userId) {
-    return redirect('/auth/sign-in');
-  } else {
-    redirect('/dashboard/overview');
-  }
+export default function Dashboard() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/dashboard/overview');
+  }, [router]);
+  return null;
 }

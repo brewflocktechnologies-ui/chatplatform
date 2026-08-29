@@ -3,7 +3,7 @@
 /**
  * Fully client-side hook for filtering navigation items based on RBAC
  *
- * This hook uses Clerk's client-side hooks to check permissions, roles, and organization
+ * This hook uses the mock auth context to check permissions, roles, and organization
  * without any server calls. This is perfect for navigation visibility (UX only).
  *
  * Performance:
@@ -17,7 +17,7 @@
  */
 
 import { useMemo } from 'react';
-import { useOrganization, useUser } from '@clerk/nextjs';
+import { useMockAuth } from '@/features/auth/mock-auth';
 import type { NavItem, NavGroup } from '@/types';
 
 /**
@@ -27,23 +27,19 @@ import type { NavItem, NavGroup } from '@/types';
  * @returns Filtered items
  */
 export function useFilteredNavItems(items: NavItem[]) {
-  const { organization, membership } = useOrganization();
-  const { user } = useUser();
+  const { user } = useMockAuth();
 
-  // Memoize context and permissions
+  // The demo runs as a single always-present organization (admin), so every
+  // role/permission/org-gated item is visible. Swap this for real checks later.
   const accessContext = useMemo(() => {
-    const permissions = membership?.permissions || [];
-    const role = membership?.role;
-
     return {
-      organization: organization ?? undefined,
+      organization: { id: 'demo-org', name: 'Demo Workspace' },
       user: user ?? undefined,
-      permissions: permissions as string[],
-      role: role ?? undefined,
-      hasOrg: !!organization
+      permissions: [] as string[],
+      role: 'admin',
+      hasOrg: true
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- using stable primitives to avoid infinite re-renders from unstable Clerk object refs
-  }, [organization?.id, user?.id, membership?.permissions, membership?.role]);
+  }, [user?.id]);
 
   // Filter items synchronously (all client-side)
   const filteredItems = useMemo(() => {
