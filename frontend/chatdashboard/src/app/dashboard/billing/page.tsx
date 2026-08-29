@@ -2,55 +2,80 @@
 
 import PageContainer from '@/components/layout/page-container';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { useOrganization } from '@clerk/nextjs';
-import { PricingTable } from '@clerk/nextjs';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { billingInfoContent } from '@/config/infoconfig';
 
-export default function BillingPage() {
-  const { organization, isLoaded } = useOrganization();
+const PLANS = [
+  {
+    name: 'Free',
+    price: '$0',
+    description: 'For trying things out.',
+    features: ['1 workspace', 'Up to 5 members', 'Community support']
+  },
+  {
+    name: 'Pro',
+    price: '$29',
+    description: 'For growing teams.',
+    features: ['Unlimited workspaces', 'Unlimited members', 'Priority support', 'Exclusive area access'],
+    highlighted: true
+  },
+  {
+    name: 'Team',
+    price: '$99',
+    description: 'For larger organizations.',
+    features: ['Everything in Pro', 'SSO', 'Audit logs', 'Dedicated manager']
+  }
+];
 
+export default function BillingPage() {
   return (
     <PageContainer
-      isLoading={!isLoaded}
-      access={!!organization}
-      accessFallback={
-        <div className='flex min-h-[400px] items-center justify-center'>
-          <div className='space-y-2 text-center'>
-            <h2 className='text-2xl font-semibold'>No Organization Selected</h2>
-            <p className='text-muted-foreground'>
-              Please select or create an organization to view billing information.
-            </p>
-          </div>
-        </div>
-      }
-      infoContent={billingInfoContent}
       pageTitle='Billing & Plans'
-      pageDescription={`Manage your subscription and usage limits for ${organization?.name}`}
+      pageDescription='Manage your subscription and usage limits (demo)'
+      infoContent={billingInfoContent}
     >
       <div className='space-y-6'>
-        {/* Info Alert */}
         <Alert>
           <Icons.info className='h-4 w-4' />
           <AlertDescription>
-            Plans and subscriptions are managed through Clerk Billing. Subscribe to a plan to unlock
-            features and higher limits.
+            This is a demo billing page. Plan management is not connected to a real provider.
           </AlertDescription>
         </Alert>
 
-        {/* Clerk Pricing Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Available Plans</CardTitle>
-            <CardDescription>Choose a plan that fits your organization's needs</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className='mx-auto max-w-4xl'>
-              <PricingTable for='organization' />
-            </div>
-          </CardContent>
-        </Card>
+        <div className='grid gap-4 md:grid-cols-3'>
+          {PLANS.map((plan) => (
+            <Card key={plan.name} className={plan.highlighted ? 'border-primary' : ''}>
+              <CardHeader>
+                <CardTitle className='flex items-center justify-between'>
+                  {plan.name}
+                  {plan.highlighted && (
+                    <span className='text-xs font-normal text-primary'>Popular</span>
+                  )}
+                </CardTitle>
+                <CardDescription>{plan.description}</CardDescription>
+                <div className='pt-2 text-3xl font-bold'>
+                  {plan.price}
+                  <span className='text-muted-foreground text-sm font-normal'>/mo</span>
+                </div>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <ul className='space-y-2 text-sm'>
+                  {plan.features.map((feature) => (
+                    <li key={feature} className='flex items-center gap-2'>
+                      <Icons.check className='text-primary size-4' />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Button className='w-full' variant={plan.highlighted ? 'default' : 'outline'}>
+                  Choose {plan.name}
+                </Button>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
     </PageContainer>
   );

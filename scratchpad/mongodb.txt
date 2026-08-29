@@ -1,0 +1,509 @@
+Users 
+
+{
+  email: 'user@demo.com',
+  role: 'AGENT',
+  passwordHash: 'demo',
+  firstName: 'kishanth',
+  lastName: 'm',
+  jobTitle: '1',
+  department: '',
+  companyId: NumberInt('1'),
+  simultaneousChatLimit: NumberInt('1'),
+  createdAt: ISODate('2026-07-06T09:14:34.403Z'),
+  updatedAt: '2026-07-06T09:14:34',
+  deletedAt: null
+}
+
+Customers 
+
+{
+  _id: ObjectId('6a8954401414ed899126ff36'),
+  name: 'Brewflock Technologies',
+  email: 'brewflocktechnologies@gmail.com',
+  country: 'india',
+  dateAdded: '2026-08-22T13:17:31',
+  integrations: '{"crm":"no","analytics":"no"}',
+  activePlanName: 'Premium',
+  status: 'inactive',
+  createdAt: '2026-08-22T07:48:16.325Z',
+  updatedAt: '2026-08-22T07:47:05'
+}
+
+Websites 
+
+{
+  _id: ObjectId('6a897bc51414ed899126ff38'),
+  protocol: 'HTTPS',
+  domain: 'brewflock.com',
+  companyId: '6a8954401414ed899126ff36',
+  customerId: '6a8954401414ed899126ff36',
+  customerName: 'Brewflock Technologies',
+  businessCategory: 'Retail',
+  dateAdded: '2026-08-22T16:06:47',
+  isActive: true,
+  isVerified: true,
+  createdAt: '2026-08-22T10:36:53.989Z',
+  updatedAt: '2026-08-28T09:29:52.569Z',
+  configName: 'Orange',
+  configId: '6a8ff3eca047da47f4a23a53',
+  message: 'Website updated successfully'
+}
+
+
+Configs
+{
+  configName: 'Orange',
+  cdnConfig: {
+    clientName: 'BrewFlock',
+    agentName: 'Support Agent',
+    accentColor: '#FF6B00',
+    features: {
+      voiceCallMaster: false,
+      voiceCallAgents: false,
+      voiceCallVisitors: false,
+      videoCallMaster: false,
+      videoCallAgents: false,
+      videoCallVisitors: false,
+      disableVisitorCamera: false,
+      closeChatVisitor: true,
+      averageQueueTime: NumberInt('1'),
+      chatAcceptanceTime: NumberInt('5'),
+      prechatEnabled: false,
+      postchatEnabled: false
+    },
+    messages: [
+      {
+        key: 'welcome',
+        senderType: 'AGENT',
+        body: 'Welcome! How can we assist you today?'
+      },
+      {
+        key: 'queueing',
+        senderType: 'SYSTEM',
+        body: 'You are currently in queue. An agent will be with you shortly.'
+      },
+      {
+        key: 'waiting',
+        senderType: 'SYSTEM',
+        body: 'Connecting your chat request... Please stay on this page.'
+      },
+      {
+        key: 'busy',
+        senderType: 'SYSTEM',
+        body: 'All of our agents are currently engaged. Please hold on, and we\'ll connect you shortly.'
+      },
+      {
+        key: 'offline',
+        senderType: 'SYSTEM',
+        body: 'We are currently offline. Please leave us a message and we\'ll get back to you soon.'
+      }
+    ],
+    greetWindow: {
+      enabled: true,
+      openingTimeAfterInitialLoadSec: NumberInt('2'),
+      animationOpeningSec: Double('0.5'),
+      animationClosingSec: Double('0.3'),
+      useWebsiteTheme: false,
+      width: NumberInt('320'),
+      spacing: NumberInt('16'),
+      backgroundColor: '#ffffff',
+      borderRadius: NumberInt('16'),
+      padding: '24px 20px',
+      boxShadow: '0 12px 28px -6px rgba(0, 0, 0, 0.08), 0 8px 14px -4px rgba(0, 0, 0, 0.08)',
+      imageUrl: '',
+      imageHeight: NumberInt('70'),
+      imageWidth: '',
+      iconAlign: 'center',
+      imagePadding: '0px',
+      iconType: 'lucide',
+      lucideIcon: 'Sparkles',
+      iconSize: NumberInt('52'),
+      iconColor: '#FF6B00',
+      iconAnimation: 'wiggle',
+      iconAnimationDuration: '2.5s',
+      title: 'Hi there! 👋 Need help growing your business using AI?',
+      titleColor: '#1e293b',
+      titleFontSize: '15px',
+      description: 'Let\'s chat & find the right solution for you!',
+      descriptionColor: '#475569',
+      descriptionFontSize: '14px',
+      inputBox: {
+        enabled: true,
+        openingTimeAfterInitialLoadSec: NumberInt('4'),
+        animationOpeningSec: Double('0.5'),
+        layout: 'integrated',
+        placeholder: 'Write your message...',
+        backgroundColor: '#ffffff',
+        textColor: '#1e293b',
+        borderRadius: NumberInt('24'),
+        boxShadow: '0 6px 16px rgba(0,0,0,0.12)',
+        buttonColor: '#FF6B00',
+        buttonIconColor: '#ffffff'
+      }
+    },
+    bubble: {
+      offsetRight: NumberInt('16'),
+      offsetLeft: NumberInt('16'),
+      offsetBottom: NumberInt('12'),
+      useWebsiteTheme: false,
+      width: NumberInt('60'),
+      height: NumberInt('60'),
+      borderRadius: {
+        tl: NumberInt('50'),
+        tr: NumberInt('50'),
+        bl: NumberInt('50'),
+        br: NumberInt('50')
+      },
+      backgroundColor: '#FF6B00',
+      gradientType: 'none',
+      gradientAngle: NumberInt('135'),
+      gradientStops: [
+        {
+          color: '#1E40AF',
+          pos: NumberInt('0')
+        },
+        {
+          color: '#9333EA',
+          pos: NumberInt('100')
+        }
+      ],
+      backgroundOverlayType: 'none',
+      backgroundLucideColor: '#FFFFFF',
+      backgroundLucideSize: NumberInt('24'),
+      backgroundLucideOpacity: NumberInt('1'),
+      backgroundLucideIcon: 'MessageCircle',
+      backgroundImageUrl: '',
+      backgroundImageSize: 'contain',
+      backgroundImageOpacity: Double('0.25'),
+      backgroundBlendMode: 'normal',
+      border: {
+        width: NumberInt('0'),
+        color: '#3B82F6',
+        style: 'solid'
+      },
+      borderGradientEnabled: true,
+      borderGradientAngle: NumberInt('90'),
+      borderGradientStops: [
+        {
+          color: '#60A5FA',
+          pos: NumberInt('0')
+        },
+        {
+          color: '#A78BFA',
+          pos: NumberInt('100')
+        }
+      ],
+      borderOffsetAnim: false,
+      outlineRing: {
+        enabled: false,
+        width: NumberInt('0'),
+        color: '#22D3EE',
+        opacity: Double('0.4')
+      },
+      boxShadowBlur: NumberInt('0'),
+      boxShadowSpread: NumberInt('0'),
+      boxShadowOffsetX: NumberInt('0'),
+      boxShadowOffsetY: NumberInt('0'),
+      boxShadowOpacity: NumberInt('0'),
+      innerShadow: {
+        enabled: false,
+        blur: NumberInt('12'),
+        opacity: Double('0.25')
+      },
+      glass: {
+        enabled: false,
+        blur: NumberInt('10'),
+        bgOpacity: Double('0.3')
+      },
+      neon: {
+        enabled: false,
+        color: '#22D3EE',
+        intensity: Double('0.8')
+      },
+      animation: {
+        type: 'fadeIn',
+        duration: NumberInt('350'),
+        delay: NumberInt('0')
+      },
+      hoverScale: NumberInt('1'),
+      idleAnim: {
+        enabled: true,
+        type: 'none',
+        amplitude: NumberInt('6'),
+        duration: NumberInt('3200')
+      },
+      dots: {
+        color: '#F8FAFC',
+        size: NumberInt('6'),
+        spacing: NumberInt('6'),
+        animation: 'bounce'
+      },
+      badge: {
+        position: 'top-right',
+        offsetX: NumberInt('-6'),
+        offsetY: NumberInt('-6'),
+        size: NumberInt('20'),
+        fontSize: NumberInt('11'),
+        backgroundColor: '#dc2626',
+        textColor: '#ffffff',
+        borderWidth: NumberInt('2'),
+        borderColor: '#ffffff',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
+        borderRadius: '9999px',
+        fontWeight: '700',
+        padding: '0px',
+        animation: 'pulse 1.5s infinite'
+      },
+      hideOnOpen: true,
+      tooltip: {
+        enabled: true,
+        text: 'Chat with us',
+        position: 'left',
+        backgroundColor: '#D3D3D3',
+        textColor: '#374151',
+        fontSize: NumberInt('14'),
+        borderRadius: {
+          tl: NumberInt('20'),
+          tr: NumberInt('0'),
+          br: NumberInt('20'),
+          bl: NumberInt('20')
+        },
+        padding: '8px 16px',
+        boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+        arrowEnabled: false,
+        borderColor: 'transparent',
+        borderWidth: NumberInt('0')
+      }
+    },
+    chatWindow: {
+      useWebsiteTheme: false,
+      offsetRight: null,
+      offsetBottom: null,
+      animationOpeningSec: Double('0.3'),
+      animationClosingSec: Double('0.2'),
+      widgetWidth: NumberInt('400'),
+      widgetHeight: NumberInt('950'),
+      expandedWidth: NumberInt('550'),
+      widgetBorderRadius: NumberInt('28'),
+      widgetShadow: true,
+      widgetShadowBlur: NumberInt('20'),
+      widgetShadowColor: 'rgba(0,0,0,0.15)',
+      widgetBorderEnabled: false,
+      widgetBorderWidth: NumberInt('1'),
+      widgetBorderColor: '#e5e7eb',
+      modernUi: true,
+      typingIndicator: true,
+      attachmentsEnabled: true,
+      ticksEnabled: true,
+      sentTickColor: '',
+      deliveredTickColor: '',
+      readTickColor: '#34b7f1',
+      headerBg: '#FF6B00',
+      headerTextColor: '#ffffff',
+      headerBorderColor: 'rgba(0,0,0,0.08)',
+      headerPadding: '14px 16px',
+      headerTitleFontSize: '14px',
+      headerSubtitleFontSize: '11px',
+      headerAvatarBg: '#e4e4e7',
+      headerAvatarColor: '#18181b',
+      activeDot: {
+        color: '#22c55e',
+        animate: true,
+        borderWidth: NumberInt('0'),
+        borderColor: 'transparent',
+        size: NumberInt('8')
+      },
+      endChatConfirmMessage: 'Are you sure you want to end this chat session?',
+      endChatConfirmLabel: 'End chat',
+      endChatCancelLabel: 'Cancel',
+      modalCardBg: '#ffffff',
+      modalMessageColor: '#101828',
+      modalBorderRadius: NumberInt('28'),
+      endChatConfirmBg: '#FF6B00',
+      endChatConfirmTextColor: '#ffffff',
+      endChatCancelBg: '#ffffff',
+      endChatCancelTextColor: '#667085',
+      endChatCancelBorderColor: '#e9ecf1',
+      bodyBg: '#f4f4f5',
+      visitorBubbleBg: '#FF6B00',
+      visitorBubbleColor: '#ffffff',
+      visitorBubbleFontSize: '14px',
+      visitorBubblePadding: '10px 14px',
+      visitorBubbleBorderRadius: '16px',
+      agentBubbleBg: '#ffffff',
+      agentBubbleColor: '#111827',
+      agentBubbleBorderColor: '#d1d5db',
+      agentBubbleFontSize: '14px',
+      agentBubblePadding: '10px 14px',
+      agentBubbleBorderRadius: '16px',
+      agentAvatarBg: '#FF6B00',
+      agentAvatarColor: '#ffffff',
+      agentAvatarUrl: '',
+      inputBg: '#ffffff',
+      inputTextColor: '#18181b',
+      inputPlaceholderColor: '#6b7280',
+      inputBorderColor: '#d1d5db',
+      inputFocusBorderColor: '#FF6B00',
+      inputFocusShadow: '0 0 0 3px rgba(11,95,255,0.15)',
+      inputBorderRadius: '9999px',
+      inputPadding: '6px 8px',
+      inputMargin: '12px 16px',
+      textareaFontSize: '14px',
+      attachButtonBg: '#ffffff',
+      attachButtonColor: '#6b7280',
+      emojiButtonColor: '#6b7280',
+      sendButtonBgActive: '#FF6B00',
+      sendButtonColorActive: '#ffffff',
+      sendButtonBgInactive: '#e5e7eb',
+      sendButtonColorInactive: '#9ca3af',
+      sendIconType: 'send',
+      footerBg: '#f9fafb',
+      footerTextColor: '#6b7280',
+      footerFontSize: '12px',
+      footerPaddingBottom: '16px',
+      poweredByText: 'vainateya.ai',
+      poweredByLink: '',
+      poweredByColor: '#FF6B00',
+      poweredByLogo: '',
+      welcome: {
+        enabled: true,
+        useWebsiteTheme: false,
+        cardLayout: 'glassy',
+        cardAlign: 'center',
+        textAlign: 'center',
+        logoAlign: 'left',
+        avatarAlign: 'center',
+        cardBg: 'rgba(255, 255, 255, 0.12)',
+        cardBorder: '1px solid rgba(255, 255, 255, 0.22)',
+        cardBorderRadius: NumberInt('24'),
+        cardPadding: '28px 24px',
+        cardBlur: NumberInt('16'),
+        cardShadow: '0 12px 40px 0 rgba(0, 0, 0, 0.15)',
+        title: 'Hi there! 👋 How can we help you today?',
+        titleFontSize: '26px',
+        description: 'Our support heroes are here to assist you.',
+        descriptionFontSize: '15px',
+        bgGradient: 'linear-gradient(135deg, #FF6B00, #d1af00)',
+        headerTextColor: '#ffffff',
+        subtextColor: 'rgba(255, 255, 255, 0.85)',
+        padding: '32px 20px 10px 20px',
+        footerPaddingBottom: '0px',
+        avatarBorderColor: 'rgba(255, 255, 255, 0.2)',
+        avatars: [
+          'https://png.pngtree.com/png-vector/20230831/ourmid/pngtree-man-avatar-image-for-profile-png-image_9197908.png',
+          'https://png.pngtree.com/png-vector/20230831/ourmid/pngtree-man-avatar-image-for-profile-png-image_9197908.png',
+          'https://png.pngtree.com/png-vector/20230831/ourmid/pngtree-man-avatar-image-for-profile-png-image_9197908.png'
+        ],
+        buttonText: 'Start Conversation',
+        buttonSubtext: 'Typically replies in 5 minutes',
+        buttonBg: '#ffffff',
+        buttonTextColor: '#111827',
+        buttonPadding: '16px 20px',
+        buttonBorderRadius: NumberInt('16'),
+        buttonIconBg: 'transparent',
+        buttonIconColor: '#FF6B00'
+      },
+      features: {
+        voiceCallMaster: false,
+        voiceCallAgents: false,
+        voiceCallVisitors: false,
+        videoCallMaster: false,
+        videoCallAgents: false,
+        videoCallVisitors: false,
+        disableVisitorCamera: false,
+        closeChatVisitor: true,
+        averageQueueTime: NumberInt('1'),
+        chatAcceptanceTime: NumberInt('5'),
+        prechatEnabled: true,
+        postchatEnabled: false
+      },
+      accentColor: '#FF6B00'
+    },
+    chatbar: {
+      enabled: false,
+      useWebsiteTheme: false,
+      layout: 'bar',
+      cardText: 'Questions about PhonePe\nfor business?',
+      text: 'Chat with us',
+      bgColor: '#FF6B00',
+      textColor: '#ffffff',
+      textSize: NumberInt('14'),
+      letterSpacing: NumberInt('0'),
+      gradientEnabled: false,
+      gradientStops: [
+        {
+          color: '#0b5fff',
+          pos: NumberInt('0')
+        },
+        {
+          color: '#a855f7',
+          pos: NumberInt('100')
+        }
+      ],
+      gradientType: 'linear',
+      gradientAngle: NumberInt('90'),
+      iconType: 'lucide',
+      iconColor: '#ffffff',
+      lucideIcon: 'MessageCircle',
+      iconImageUrl: '',
+      customSvg: '',
+      iconFit: 'contain',
+      iconOpacity: NumberInt('1'),
+      iconBlend: 'normal',
+      iconWidth: NumberInt('20'),
+      iconHeight: NumberInt('20'),
+      width: NumberInt('255'),
+      height: NumberInt('40'),
+      borderRadius: {
+        tl: NumberInt('20'),
+        tr: NumberInt('20'),
+        bl: NumberInt('20'),
+        br: NumberInt('20')
+      },
+      shadow: true,
+      hideOnOpen: true,
+      offsetBottom: NumberInt('12'),
+      offsetRight: NumberInt('16'),
+      cardOffsetRight: null,
+      cardOffsetBottom: null,
+      barOffsetRight: null,
+      barOffsetBottom: null,
+      stackGap: NumberInt('12'),
+      padding: '0px 16px',
+      gap: NumberInt('0')
+    },
+    notification: {
+      enabled: true,
+      icon: 'building',
+      iconUrl: '',
+      headline: 'Notifications Head',
+      description: 'Would you like to receive notifications on latest updates?',
+      approveText: 'OK',
+      cancelText: 'Not Yet',
+      delayValue: NumberInt('5'),
+      delayUnit: 'Seconds',
+      promptStyle: 'box2',
+      animationStyle: 'drop-in',
+      position: 'top',
+      repromptDelay: NumberInt('1')
+    },
+    clientId: 'blue',
+    useWebsiteTheme: false,
+    forms: {
+      preChat: {
+        enabled: false,
+        selectedForm: 'prechat-default'
+      },
+      postChat: {
+        enabled: false,
+        selectedForm: 'postchat-csat'
+      }
+    },
+    prechatEnabled: false,
+    postchatEnabled: false
+  },
+  createdAt: '2026-08-27T08:23:08.414Z',
+  updatedAt: '2026-08-28T11:45:52.600Z',
+  name: 'Orange'
+}
