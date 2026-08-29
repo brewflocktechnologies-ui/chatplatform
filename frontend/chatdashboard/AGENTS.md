@@ -86,7 +86,6 @@ The project follows a feature-based folder structure designed for scalability in
 │   ├── dashboard/         # Dashboard routes
 │   │   ├── overview/      # Parallel routes (@area_stats, @bar_stats, etc.)
 │   │   ├── product/       # Product management pages
-│   │   ├── kanban/        # Kanban board page
 │   │   ├── chat/          # Messaging page
 │   │   ├── ai-chat/       # AI chat streaming demo
 │   │   ├── notifications/ # Notifications page
@@ -124,7 +123,6 @@ The project follows a feature-based folder structure designed for scalability in
 │   │   ├── api/           # Same pattern: types.ts → service.ts → queries.ts
 │   │   └── components/    # Listing, table components
 │   ├── react-query-demo/  # React Query showcase (Pokemon API)
-│   ├── kanban/            # Kanban board with dnd-kit
 │   ├── chat/              # Messaging UI (conversations, bubbles, composer)
 │   ├── ai-chat/           # Scripted useChat streaming demo
 │   ├── notifications/     # Notification center & store
@@ -591,7 +589,6 @@ node scripts/cleanup.js --interactive
 
 # Remove specific features
 node scripts/cleanup.js clerk           # Remove auth/org/billing
-node scripts/cleanup.js kanban          # Remove kanban board
 node scripts/cleanup.js chat            # Remove messaging UI
 node scripts/cleanup.js ai-chat         # Remove AI chat demo
 node scripts/cleanup.js notifications   # Remove notification center

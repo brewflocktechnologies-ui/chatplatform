@@ -69,18 +69,26 @@ export const navGroups: NavGroup[] = [
         items: []
       },
       {
-        title: 'Users',
-        url: '/dashboard/users',
-        icon: 'teams',
+        title: 'Customers',
+        url: '/dashboard/customers',
+        icon: 'customers',
         shortcut: ['u', 'u'],
         isActive: false,
         items: []
       },
       {
-        title: 'Kanban',
-        url: '/dashboard/kanban',
-        icon: 'kanban',
-        shortcut: ['k', 'k'],
+        title: 'Websites',
+        url: '/dashboard/websites',
+        icon: 'globe',
+        shortcut: ['w', 'w'],
+        isActive: false,
+        items: []
+      },
+      {
+        title: 'Widget Modifier',
+        url: '/dashboard/widget-modifier',
+        icon: 'adjustments',
+        shortcut: ['w', 'm'],
         isActive: false,
         items: []
       },

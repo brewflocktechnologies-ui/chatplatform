@@ -16,7 +16,7 @@ const actionRoutes: Record<string, string> = {
   view: '/dashboard/workspaces',
   'view-product': '/dashboard/product',
   billing: '/dashboard/billing',
-  open: '/dashboard/kanban',
+  open: '/dashboard/overview',
   'open-chat': '/dashboard/chat'
 };
 

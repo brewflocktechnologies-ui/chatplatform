@@ -1,3 +1,4 @@
+import { TeamIconGif } from '@/components/gif-icon';
 import {
   IconAdjustmentsHorizontal,
   IconAlertCircle,
@@ -33,6 +34,7 @@ import {
   IconDotsVertical,
   IconEdit,
   IconExternalLink,
+  IconEye,
   IconEyeOff,
   IconFile,
   IconFileText,
@@ -46,7 +48,10 @@ import {
   IconInfoCircle,
   IconItalic,
   IconLayoutDashboard,
+  IconArrowBackUp,
+  IconRefresh,
   IconLayoutKanban,
+  IconWorld,
   IconLayoutSidebar,
   IconLoader2,
   IconLock,
@@ -126,6 +131,10 @@ export const Icons = {
   // Layout
   dashboard: IconLayoutDashboard,
   kanban: IconLayoutKanban,
+  undo: IconArrowBackUp,
+  refresh: IconRefresh,
+  customers: TeamIconGif,
+  globe: IconWorld,
   panelLeft: IconLayoutSidebar,
 
   // User
@@ -196,6 +205,7 @@ export const Icons = {
   // Data / Charts
   trendingDown: IconTrendingDown,
   trendingUp: IconTrendingUp,
+  eye: IconEye,
   eyeOff: IconEyeOff,
   adjustments: IconAdjustmentsHorizontal,
 

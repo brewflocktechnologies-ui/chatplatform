@@ -47,10 +47,10 @@ A production-ready admin dashboard base. Every feature is a working implementati
 | `/dashboard/overview`         | Cards and Recharts graphs. Parallel routes give each section its own loading and error state.                          |
 | `/dashboard/product`          | TanStack Table plus React Query (server prefetch, client cache) with nuqs URL state for search, filter, and pagination. |
 | `/dashboard/product/new`      | TanStack Form and Zod with `useMutation` for create and update. Cache is invalidated on success.                       |
-| `/dashboard/users`            | Same setup as Products: React Query with nuqs, server prefetch, and client-side pagination and filtering.              |
+| `/dashboard/customers`        | Customers stored in MongoDB with full CRUD: server-action queries, React Query cache, nuqs URL state.                  |
+| `/dashboard/websites`         | Websites running the chat widget (MongoDB CRUD) with embed-code and live widget preview dialogs.                       |
 | `/dashboard/react-query`      | A demo showing the server prefetch, `HydrationBoundary`, and `useSuspenseQuery` pattern with client-side cache.        |
 | `/dashboard/profile`          | Clerk's account management UI for profile and security settings.                                                       |
-| `/dashboard/kanban`           | Drag-and-drop task board built with dnd-kit and Zustand. Column sorting, priority badges, assignees, and due dates.    |
 | `/dashboard/chat`             | Messaging UI with a conversation list, message bubbles, quick replies, and attachments. Multi-panel layout.            |
 | `/dashboard/ai-chat`          | Scripted AI chat that streams a predefined conversation through the real `useChat` lifecycle — no model or key needed. |
 | `/dashboard/notifications`    | Notification center with a header badge, popover preview, and All / Unread / Read tabs.                                |
@@ -68,9 +68,9 @@ src/
 │   ├── dashboard/                 # Dashboard route group
 │   │   ├── overview/              # Analytics with parallel routes
 │   │   ├── product/               # Product CRUD pages (React Query)
-│   │   ├── users/                 # Users table (React Query + nuqs)
+│   │   ├── customers/             # Customers table (MongoDB CRUD)
+│   │   ├── websites/              # Websites table (MongoDB CRUD)
 │   │   ├── react-query/           # React Query demo page
-│   │   ├── kanban/                # Task board page
 │   │   ├── chat/                  # Messaging page
 │   │   ├── ai-chat/               # AI chat streaming demo
 │   │   ├── notifications/         # Notifications page
@@ -89,9 +89,9 @@ src/
 ├── features/                      # Feature-based modules
 │   ├── overview/                  # Dashboard analytics (charts, cards)
 │   ├── products/                  # Product listing, form, tables (React Query)
-│   ├── users/                     # User management table (React Query)
+│   ├── customers/                 # Customer management (MongoDB CRUD)
+│   ├── websites/                  # Website management (MongoDB CRUD)
 │   ├── react-query-demo/          # React Query demo
-│   ├── kanban/                    # Drag-drop task board
 │   ├── chat/                      # Messaging (conversations, bubbles, composer)
 │   ├── ai-chat/                   # Scripted useChat streaming demo
 │   ├── notifications/             # Notification center & store

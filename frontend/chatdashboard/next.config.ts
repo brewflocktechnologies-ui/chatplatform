@@ -4,6 +4,11 @@ import { withSentryConfig } from '@sentry/nextjs';
 // Define the base Next.js configuration
 const baseConfig: NextConfig = {
   output: process.env.BUILD_STANDALONE === 'true' ? 'standalone' : undefined,
+  // The repo is a monorepo with a root lockfile — pin Turbopack to this app
+  // so Next doesn't infer C:\...\chatplatform as the workspace root.
+  turbopack: {
+    root: __dirname
+  },
   images: {
     remotePatterns: [
       {
