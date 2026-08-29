@@ -1,0 +1,24 @@
+meta {
+  name: 01 List Tenants
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{chatUrl}}/api/v1/tenants
+  body: none
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  chatservice reads the tenant table directly (JPA). Requires a valid
+  platform JWT - run "authservice / 01 Get Access Token" first.
+}

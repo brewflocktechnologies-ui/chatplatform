@@ -5,14 +5,17 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.jwt;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.cookie;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import com.chatplatform.chatservice.config.SecurityConfig;
 import com.chatplatform.chatservice.entity.Tenant;
 import com.chatplatform.chatservice.entity.TenantStatus;
 import com.chatplatform.chatservice.exception.TenantNotFoundException;
@@ -23,9 +26,11 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,11 +39,25 @@ import org.springframework.test.web.servlet.MockMvc;
  * contract's runnable check.
  */
 @WebMvcTest(TenantController.class)
+@Import(SecurityConfig.class)
 class TenantControllerTest {
 
   @Autowired private MockMvc mockMvc;
 
   @MockitoBean private TenantService tenantService;
+
+  // The chain needs a decoder bean to build; jwt() post-processors below
+  // inject the authentication directly, so it is never invoked.
+  @MockitoBean private JwtDecoder jwtDecoder;
+
+  private static org.springframework.security.test.web.servlet.request
+          .SecurityMockMvcRequestPostProcessors.JwtRequestPostProcessor
+      platformJwt() {
+    return jwt()
+        .jwt(
+            token ->
+                token.claim("tenant_id", "tenant-1").claim("roles", java.util.List.of("ADMIN")));
+  }
 
   private Tenant sampleTenant() {
     OffsetDateTime now = OffsetDateTime.now();
@@ -61,6 +80,7 @@ class TenantControllerTest {
     mockMvc
         .perform(
             post("/api/v1/tenants")
+                .with(platformJwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -79,6 +99,7 @@ class TenantControllerTest {
     mockMvc
         .perform(
             post("/api/v1/tenants")
+                .with(platformJwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -95,6 +116,7 @@ class TenantControllerTest {
     mockMvc
         .perform(
             post("/api/v1/tenants")
+                .with(platformJwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -108,7 +130,9 @@ class TenantControllerTest {
     UUID missing = UUID.randomUUID();
     given(tenantService.get(missing)).willThrow(new TenantNotFoundException(missing));
 
-    mockMvc.perform(get("/api/v1/tenants/{id}", missing)).andExpect(status().isNotFound());
+    mockMvc
+        .perform(get("/api/v1/tenants/{id}", missing).with(platformJwt()))
+        .andExpect(status().isNotFound());
   }
 
   @Test
@@ -117,7 +141,7 @@ class TenantControllerTest {
     given(tenantService.get(tenant.getTenantId())).willReturn(tenant);
 
     mockMvc
-        .perform(get("/api/v1/tenants/{id}", tenant.getTenantId()))
+        .perform(get("/api/v1/tenants/{id}", tenant.getTenantId()).with(platformJwt()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.name", is("Acme Corp")));
   }
@@ -129,7 +153,7 @@ class TenantControllerTest {
         .willReturn(new PageImpl<>(java.util.List.of(tenant)));
 
     mockMvc
-        .perform(get("/api/v1/tenants"))
+        .perform(get("/api/v1/tenants").with(platformJwt()))
         .andExpect(status().isOk())
         .andExpect(jsonPath("$.content[0].slug", is("acme-corp")));
   }
@@ -144,6 +168,7 @@ class TenantControllerTest {
     mockMvc
         .perform(
             put("/api/v1/tenants/{id}", tenant.getTenantId())
+                .with(platformJwt())
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(
                     """
@@ -157,8 +182,54 @@ class TenantControllerTest {
   void deleteReturns204() throws Exception {
     UUID id = UUID.randomUUID();
 
-    mockMvc.perform(delete("/api/v1/tenants/{id}", id)).andExpect(status().isNoContent());
+    mockMvc
+        .perform(delete("/api/v1/tenants/{id}", id).with(platformJwt()))
+        .andExpect(status().isNoContent());
 
     verify(tenantService).delete(id);
+  }
+
+  @Test
+  void requestWithoutTokenIs401() throws Exception {
+    mockMvc.perform(get("/api/v1/tenants")).andExpect(status().isUnauthorized());
+  }
+
+  @Test
+  void responsesCarryHardeningHeaders() throws Exception {
+    mockMvc
+        .perform(get("/api/v1/tenants"))
+        .andExpect(status().isUnauthorized())
+        .andExpect(header().exists("Content-Security-Policy"))
+        .andExpect(header().string("Referrer-Policy", "strict-origin-when-cross-origin"))
+        .andExpect(header().exists("Permissions-Policy"))
+        .andExpect(header().string("Cross-Origin-Opener-Policy", "same-origin"));
+  }
+
+  @Test
+  void bootUiChainPermitsUnauthenticatedAndWritesCsrfCookie() throws Exception {
+    // The point is the request passes the permit-all BootUI chain (never a
+    // 401/403 like the API chain would give) and the CsrfCookieFilter forces
+    // the XSRF-TOKEN cookie the SPA reads back on mutating calls.
+    mockMvc
+        .perform(get("/bootui/"))
+        .andExpect(
+            result -> {
+              int status = result.getResponse().getStatus();
+              if (status == 401 || status == 403) {
+                throw new AssertionError("expected the permit-all BootUI chain, got " + status);
+              }
+            })
+        .andExpect(cookie().exists("XSRF-TOKEN"))
+        .andExpect(header().exists("Content-Security-Policy"));
+  }
+
+  @Test
+  void tokenWithoutTenantClaimIs403() throws Exception {
+    mockMvc
+        .perform(
+            get("/api/v1/tenants")
+                .with(jwt().jwt(token -> token.claim("roles", java.util.List.of("ADMIN")))))
+        .andExpect(status().isForbidden())
+        .andExpect(jsonPath("$.title", is("Missing tenant")));
   }
 }

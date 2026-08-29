@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    # In-memory Postgres-mode H2 - the repo deliberately has no Testcontainers
+    # so `mvn verify` passes offline. schema.sql (same tables as the Flyway
+    # migrations, minus Postgres-only index/check syntax) initializes it.
+    url: jdbc:h2:mem:auth;MODE=PostgreSQL;DATABASE_TO_LOWER=TRUE;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ''
+    driver-class-name: org.h2.Driver
+  sql:
+    init:
+      mode: always
+
+management:
+  server:
+    # Random management port so parallel test contexts never collide on 8111.
+    port: 0

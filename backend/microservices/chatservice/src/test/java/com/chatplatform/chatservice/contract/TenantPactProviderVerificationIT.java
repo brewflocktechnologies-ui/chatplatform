@@ -17,6 +17,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
+import org.springframework.context.annotation.Import;
 
 /**
  * Provider side: replays every interaction in target/pacts/ against a real, fully-booted
@@ -29,6 +30,7 @@ import org.springframework.boot.test.web.server.LocalServerPort;
 @Provider("chatservice")
 @PactFolder("target/pacts")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@Import(PermitAllTestSecurityConfig.class)
 class TenantPactProviderVerificationIT {
 
   private static final UUID KNOWN_TENANT_ID =

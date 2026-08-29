@@ -1,0 +1,26 @@
+meta {
+  name: 04 Update Tenant
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{chatUrl}}/api/v1/tenants/{{chat_tenant_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "name": "Bruno E2E Tenant (renamed)",
+    "status": "SUSPENDED"
+  }
+}
+
+assert {
+  res.status: eq 200
+}

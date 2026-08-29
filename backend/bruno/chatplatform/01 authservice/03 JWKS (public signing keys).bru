@@ -1,0 +1,19 @@
+meta {
+  name: 03 JWKS (public signing keys)
+  type: http
+  seq: 3
+}
+
+get {
+  url: {{authUrl}}/oauth2/jwks
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  The RSA public keys resource servers use to verify token signatures.
+  Keys are persisted in the auth_signing_key table, so the kid stays
+  stable across restarts.
+}

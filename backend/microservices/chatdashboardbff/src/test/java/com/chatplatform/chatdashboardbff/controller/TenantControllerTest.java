@@ -9,13 +9,18 @@ import com.chatplatform.accountservice.grpc.ListTenantsResponse;
 import com.chatplatform.accountservice.grpc.Tenant;
 import com.chatplatform.accountservice.grpc.TenantStatus;
 import com.chatplatform.chatdashboardbff.client.TenantGrpcClient;
+import com.chatplatform.chatdashboardbff.config.SecurityConfig;
 import com.google.protobuf.Empty;
 import com.google.protobuf.Timestamp;
 import io.grpc.Status;
 import java.util.UUID;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webflux.test.autoconfigure.WebFluxTest;
+import org.springframework.context.annotation.Import;
+import org.springframework.security.oauth2.jwt.ReactiveJwtDecoder;
+import org.springframework.security.test.web.reactive.server.SecurityMockServerConfigurers;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.reactive.server.WebTestClient;
 import reactor.core.publisher.Mono;
@@ -26,6 +31,7 @@ import reactor.core.publisher.Mono;
  * codes, validation, and the gRPC-Status-to-ProblemDetail translation, no server/network/upstream.
  */
 @WebFluxTest(TenantController.class)
+@Import(SecurityConfig.class)
 class TenantControllerTest {
 
   private static final UUID TENANT_ID = UUID.fromString("11111111-1111-1111-1111-111111111111");
@@ -33,6 +39,30 @@ class TenantControllerTest {
   @Autowired private WebTestClient webTestClient;
 
   @MockitoBean private TenantGrpcClient tenantClient;
+
+  // The chain needs a decoder bean to build; mockJwt() below injects the
+  // authentication directly, so it is never invoked.
+  @MockitoBean private ReactiveJwtDecoder reactiveJwtDecoder;
+
+  @BeforeEach
+  void authenticateAllRequests() {
+    // Every existing case exercises mapping/validation, not auth - run them
+    // as an authenticated platform user; dedicated tests below cover 401.
+    // Bound explicitly with springSecurity() applied so the mockJwt() mutator
+    // can inject the authentication.
+    webTestClient =
+        org.springframework.test.web.reactive.server.WebTestClient.bindToApplicationContext(
+                applicationContext)
+            .apply(SecurityMockServerConfigurers.springSecurity())
+            .configureClient()
+            .build()
+            .mutateWith(
+                SecurityMockServerConfigurers.mockJwt()
+                    .jwt(token -> token.claim("tenant_id", "tenant-1"))
+                    .authorities(
+                        new org.springframework.security.core.authority.SimpleGrantedAuthority(
+                            "ROLE_ADMIN")));
+  }
 
   private static Tenant sampleProtoTenant() {
     Timestamp now = Timestamp.newBuilder().setSeconds(1735689600).build();
@@ -212,4 +242,18 @@ class TenantControllerTest {
         .expectStatus()
         .isNoContent();
   }
+
+  @Test
+  void requestWithoutTokenIs401() {
+    // A fresh, unauthenticated client (no mockJwt mutation).
+    org.springframework.test.web.reactive.server.WebTestClient bare =
+        org.springframework.test.web.reactive.server.WebTestClient.bindToApplicationContext(
+                applicationContext)
+            .apply(SecurityMockServerConfigurers.springSecurity())
+            .configureClient()
+            .build();
+    bare.get().uri("/api/v1/tenants").exchange().expectStatus().isUnauthorized();
+  }
+
+  @Autowired private org.springframework.context.ApplicationContext applicationContext;
 }

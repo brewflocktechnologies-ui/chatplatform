@@ -1,0 +1,67 @@
+spring:
+  application:
+    name: authservice
+  lifecycle:
+    timeout-per-shutdown-phase: 20s
+  profiles:
+    # dev by default so the seeded dev-cli client / admin user exist with zero
+    # extra flags locally - override SPRING_PROFILES_ACTIVE for any real
+    # deployment (same convention as the other services).
+    active: dev
+  datasource:
+    # Shared platform Postgres (infrastructure/docker-compose.yml). All
+    # authservice tables live in their own schema so credential/token tables
+    # stay isolated from app tables without SQL qualification.
+    url: jdbc:postgresql://localhost:5432/postgres?currentSchema=authservice&options=-c%20timezone=Asia/Kolkata
+    username: chatuser
+    password: chatpass
+  security:
+    oauth2:
+      authorizationserver:
+        # Fixed issuer: browser redirects happen from the host, so tokens
+        # always carry iss=http://localhost:8110. Resource servers validate
+        # this string but fetch keys via their own (env-overridable)
+        # jwk-set-uri, so container networking never breaks iss validation.
+        issuer: http://localhost:8110
+
+server:
+  port: 8110
+  shutdown: graceful
+
+# Keeps the OAuth2/OIDC and login endpoints out of the generated OpenAPI
+# contract - only the user-management API is ours to document.
+springdoc:
+  paths-to-match: /api/**
+
+management:
+  server:
+    port: 8111
+    address: 127.0.0.1
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: when-authorized
+      probes:
+        enabled: true
+  # The long property names are load-bearing - the shorter management.otlp.
+  # {tracing,logging}.* variants are a silent no-op (see AGENTS.md's
+  # Observability section).
+  opentelemetry:
+    tracing:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/traces
+    logging:
+      export:
+        otlp:
+          endpoint: http://localhost:4318/v1/logs
+  otlp:
+    metrics:
+      export:
+        url: http://localhost:4318/v1/metrics
+  tracing:
+    sampling:
+      probability: 1.0

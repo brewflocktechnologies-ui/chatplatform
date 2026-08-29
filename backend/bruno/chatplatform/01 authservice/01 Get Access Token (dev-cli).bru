@@ -1,0 +1,41 @@
+meta {
+  name: 01 Get Access Token (dev-cli)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{authUrl}}/oauth2/token
+  body: formUrlEncoded
+  auth: basic
+}
+
+auth:basic {
+  username: dev-cli
+  password: dev-secret
+}
+
+body:form-urlencoded {
+  grant_type: client_credentials
+  scope: chat.read chat.write account.read account.write allocation.write users.admin
+}
+
+assert {
+  res.status: eq 200
+  res.body.access_token: isDefined
+}
+
+script:post-response {
+  if (res.status === 200) {
+    bru.setEnvVar("access_token", res.body.access_token);
+  }
+}
+
+docs {
+  Mints a platform JWT via client_credentials using the dev-profile-only
+  dev-cli client. RUN THIS FIRST - the token is stored in the environment
+  as {{access_token}} and every other request uses it as Bearer auth.
+  Access tokens live 15 minutes; just re-run this when calls start
+  returning 401. The token carries tenant_id, roles and the requested
+  scopes (decode it at jwt.io to look inside).
+}

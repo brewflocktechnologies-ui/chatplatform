@@ -17,6 +17,9 @@ RUN useradd -r -u 1001 spring
 USER spring
 WORKDIR /app
 COPY --from=build /app/target/*.jar app.jar
+# BootUI's developer-local store (accepted-risk rule dismissals). Owned by the
+# runtime user because BootUI persists changes back to it atomically.
+COPY --chown=spring:spring .bootui .bootui
 # 8100 REST API + Swagger UI + BootUI, 8101 actuator (loopback in yaml -
 # override MANAGEMENT_SERVER_ADDRESS=0.0.0.0 in the container for reachable
 # health probes).

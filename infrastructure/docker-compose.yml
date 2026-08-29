@@ -9,18 +9,24 @@ name: chatplatform-infrastructure
 
 services:
   postgres:
-    image: postgres:16
+    # postgres:16 + tzdata-legacy (see postgres.Dockerfile) so JDBC clients
+    # whose JVM reports a legacy zone name (Asia/Calcutta on Windows) can
+    # connect.
+    build:
+      context: .
+      dockerfile: postgres.Dockerfile
+    image: chatplatform-postgres:16
     container_name: chatplatform-postgres
     environment:
       POSTGRES_USER: chatuser
       POSTGRES_PASSWORD: chatpass
       POSTGRES_DB: chatservice
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - chatplatform_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chatuser"]
+      test: ['CMD-SHELL', 'pg_isready -U chatuser']
       interval: 5s
       timeout: 5s
       retries: 10

@@ -1,0 +1,53 @@
+meta {
+  name: 02 Create Allocation
+  type: grpc
+  seq: 2
+}
+
+grpc {
+  url: {{allocGrpcUrl}}
+  method: /allocation.v1.AllocationService/CreateAllocation
+  body: grpc
+  auth: none
+  methodType: unary
+}
+
+metadata {
+  x-tenant-id: {{dev_tenant_id}}
+  authorization: Bearer {{access_token}}
+}
+
+body:grpc {
+  name: message 1
+  content: '''
+  {
+    "requestId": "bruno-e2e-001",
+    "resourceId": "resource-a",
+    "priority": 10
+  }
+  '''
+}
+
+script:post-response {
+  const alloc = res.body && res.body.allocation;
+  if (alloc && alloc.id) {
+    bru.setEnvVar("allocation_id", alloc.id);
+    bru.setEnvVar("allocation_version", alloc.version);
+  }
+}
+
+docs {
+  Creates an allocation. BOTH identity headers are sent so the request works
+  in either auth mode: trusted-header mode (compose default) reads
+  x-tenant-id and ignores authorization; jwt mode
+  (AUTH_MODE=jwt docker compose up -d) verifies the Bearer token - run
+  "01 authservice / 01 Get Access Token" first - and ignores x-tenant-id.
+
+  The created allocation id/version are stored as {{allocation_id}} /
+  {{allocation_version}} for the follow-up requests. If the post-response
+  script doesn't fire in your Bruno version, copy them from the response
+  into the Local environment manually.
+
+  requestId is an idempotency key: re-running with the same value returns
+  the SAME allocation with "replayed": true (see request 03).
+}

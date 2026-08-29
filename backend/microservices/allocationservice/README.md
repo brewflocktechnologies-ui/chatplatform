@@ -88,17 +88,20 @@ Keyset over `(created_at DESC, id DESC)`, opaque versioned tokens, default
 
 ## Configuration (env)
 
-| Variable | Default | |
-|---|---|---|
-| `DATABASE_URL` | — | **required**, fails fast |
-| `GRPC_ADDRESS` / `HTTP_ADDRESS` | `:9096` / `:9097` | |
-| `DB_MIN_CONNS` / `DB_MAX_CONNS` | 2 / 10 | pool sizing (see db.go guidance) |
-| `DB_MAX_CONN_LIFETIME` / `DB_MAX_CONN_IDLE_TIME` / `DB_HEALTH_CHECK_PERIOD` | 1h / 30m / 1m | |
-| `DB_QUERY_TIMEOUT` / `DB_TX_TIMEOUT` | 5s / 10s | per-query / per-transaction caps |
-| `DB_MIGRATE_ON_START` | false | compose/local convenience |
-| `TELEMETRY_ENABLED` / `OTLP_ADDRESS` | false / `localhost:4317` | any OTLP gRPC receiver |
-| `LOG_LEVEL` / `LOG_FORMAT` | info / json | |
-| `SHUTDOWN_TIMEOUT` | 20s | graceful drain window |
+| Variable                                                                    | Default                                     |                                                                                                           |
+| --------------------------------------------------------------------------- | ------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`                                                              | —                                           | **required**, fails fast                                                                                  |
+| `GRPC_ADDRESS` / `HTTP_ADDRESS`                                             | `:9096` / `:9097`                           |                                                                                                           |
+| `DB_MIN_CONNS` / `DB_MAX_CONNS`                                             | 2 / 10                                      | pool sizing (see db.go guidance)                                                                          |
+| `DB_MAX_CONN_LIFETIME` / `DB_MAX_CONN_IDLE_TIME` / `DB_HEALTH_CHECK_PERIOD` | 1h / 30m / 1m                               |                                                                                                           |
+| `DB_QUERY_TIMEOUT` / `DB_TX_TIMEOUT`                                        | 5s / 10s                                    | per-query / per-transaction caps                                                                          |
+| `DB_MIGRATE_ON_START`                                                       | false                                       | compose/local convenience                                                                                 |
+| `TELEMETRY_ENABLED` / `OTLP_ADDRESS`                                        | false / `localhost:4317`                    | any OTLP gRPC receiver                                                                                    |
+| `AUTH_MODE`                                                                 | `trusted-header`                            | `trusted-header` (x-tenant-id metadata) or `jwt` (verified platform JWT from authservice)                 |
+| `AUTH_ISSUER` / `AUTH_JWKS_URL`                                             | `http://localhost:8110` / `.../oauth2/jwks` | jwt mode: expected `iss` claim / where signing keys are fetched (use host.docker.internal in a container) |
+| `AUTH_SKEW`                                                                 | 60s                                         | jwt mode: accepted clock skew                                                                             |
+| `LOG_LEVEL` / `LOG_FORMAT`                                                  | info / json                                 |                                                                                                           |
+| `SHUTDOWN_TIMEOUT`                                                          | 20s                                         | graceful drain window                                                                                     |
 
 ## Local development
 

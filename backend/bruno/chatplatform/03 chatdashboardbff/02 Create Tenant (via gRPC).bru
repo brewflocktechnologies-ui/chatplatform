@@ -1,0 +1,39 @@
+meta {
+  name: 02 Create Tenant (via gRPC)
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{bffUrl}}/api/v1/tenants
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "slug": "bruno-bff-e2e",
+    "name": "Bruno BFF E2E Tenant",
+    "status": "ACTIVE"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("bff_tenant_id", res.body.tenantId);
+  }
+}
+
+docs {
+  Write path: needs the account.write scope (or ADMIN role) - enforced by
+  accountservice's gRPC interceptor, not by the BFF. Id saved as
+  {{bff_tenant_id}}. Re-running returns 409 until deleted (request 05).
+}

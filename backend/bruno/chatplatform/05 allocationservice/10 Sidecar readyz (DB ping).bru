@@ -1,0 +1,18 @@
+meta {
+  name: 10 Sidecar readyz (DB ping)
+  type: http
+  seq: 10
+}
+
+get {
+  url: {{allocHttpUrl}}/readyz
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  Readiness pings the service's own Postgres (published on host port 5433)
+  with a 2s timeout - 503 "database unavailable" when the DB is down.
+}

@@ -260,4 +260,44 @@ class TenantGrpcClientTest {
                     && sre.getStatus().getCode() == Status.Code.NOT_FOUND)
         .verify();
   }
+
+  @Test
+  void forwardsCallerJwtAsBearerMetadata() {
+    // With an authenticated reactive context, the client must derive a
+    // metadata-attaching stub (withInterceptors) before stamping the deadline.
+    org.mockito.BDDMockito.given(stub.withInterceptors(any())).willReturn(stub);
+    Tenant tenant = Tenant.newBuilder().setSlug("acme-corp").build();
+    doAnswer(
+            invocation -> {
+              StreamObserver<Tenant> observer = invocation.getArgument(1);
+              observer.onNext(tenant);
+              observer.onCompleted();
+              return null;
+            })
+        .when(stub)
+        .getTenant(any(), any());
+
+    org.springframework.security.oauth2.jwt.Jwt jwt =
+        new org.springframework.security.oauth2.jwt.Jwt(
+            "raw-token",
+            java.time.Instant.now(),
+            java.time.Instant.now().plusSeconds(60),
+            java.util.Map.of("alg", "RS256"),
+            java.util.Map.of("sub", "user", "tenant_id", "t1"));
+    org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken
+        authentication =
+            new org.springframework.security.oauth2.server.resource.authentication
+                .JwtAuthenticationToken(jwt);
+
+    reactor.test.StepVerifier.create(
+            client
+                .get("id")
+                .contextWrite(
+                    org.springframework.security.core.context.ReactiveSecurityContextHolder
+                        .withAuthentication(authentication)))
+        .expectNextMatches(t -> t.getSlug().equals("acme-corp"))
+        .verifyComplete();
+
+    org.mockito.Mockito.verify(stub).withInterceptors(any());
+  }
 }

@@ -52,9 +52,27 @@ type Config struct {
 		Format string
 	}
 
+	// Auth selects how tenant identity is established on incoming RPCs.
+	// "trusted-header" (default this release, for safe rollout) keeps the
+	// phase-1 behaviour of trusting x-tenant-id from the upstream hop;
+	// "jwt" verifies a platform JWT from authservice instead - the token
+	// verification the interceptor comments always promised.
+	Auth struct {
+		Mode    string // "trusted-header" | "jwt"
+		Issuer  string
+		JWKSURL string
+		Skew    time.Duration
+	}
+
 	// ShutdownTimeout bounds the graceful-drain window on SIGTERM/SIGINT.
 	ShutdownTimeout time.Duration
 }
+
+// Auth modes.
+const (
+	AuthModeTrustedHeader = "trusted-header"
+	AuthModeJWT           = "jwt"
+)
 
 // Load reads configuration, applying defaults and validating mandatory
 // values.
@@ -105,6 +123,19 @@ func Load() (Config, error) {
 
 	cfg.Logging.Level = getEnv("LOG_LEVEL", "info")
 	cfg.Logging.Format = getEnv("LOG_FORMAT", "json")
+
+	cfg.Auth.Mode = getEnv("AUTH_MODE", AuthModeTrustedHeader)
+	if cfg.Auth.Mode != AuthModeTrustedHeader && cfg.Auth.Mode != AuthModeJWT {
+		return cfg, fmt.Errorf("AUTH_MODE must be %q or %q, got %q", AuthModeTrustedHeader, AuthModeJWT, cfg.Auth.Mode)
+	}
+	cfg.Auth.Issuer = getEnv("AUTH_ISSUER", "http://localhost:8110")
+	cfg.Auth.JWKSURL = getEnv("AUTH_JWKS_URL", "http://localhost:8110/oauth2/jwks")
+	if cfg.Auth.Skew, err = getEnvDuration("AUTH_SKEW", 60*time.Second); err != nil {
+		return cfg, err
+	}
+	if cfg.Auth.Mode == AuthModeJWT && (cfg.Auth.Issuer == "" || cfg.Auth.JWKSURL == "") {
+		return cfg, errors.New("AUTH_ISSUER and AUTH_JWKS_URL are required when AUTH_MODE=jwt")
+	}
 
 	if cfg.ShutdownTimeout, err = getEnvDuration("SHUTDOWN_TIMEOUT", 20*time.Second); err != nil {
 		return cfg, err

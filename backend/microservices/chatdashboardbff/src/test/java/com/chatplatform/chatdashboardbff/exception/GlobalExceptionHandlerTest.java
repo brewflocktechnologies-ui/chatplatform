@@ -25,6 +25,26 @@ class GlobalExceptionHandlerTest {
   }
 
   @Test
+  void unauthenticatedMapsTo401() {
+    ProblemDetail problem =
+        handler.handleGrpcStatus(
+            Status.UNAUTHENTICATED.withDescription("invalid token").asRuntimeException());
+
+    assertThat(problem.getStatus()).isEqualTo(401);
+  }
+
+  @Test
+  void permissionDeniedMapsTo403() {
+    ProblemDetail problem =
+        handler.handleGrpcStatus(
+            Status.PERMISSION_DENIED
+                .withDescription("requires scope account.write")
+                .asRuntimeException());
+
+    assertThat(problem.getStatus()).isEqualTo(403);
+  }
+
+  @Test
   void deadlineExceededMapsTo504() {
     ProblemDetail problem = handler.handleGrpcStatus(Status.DEADLINE_EXCEEDED.asRuntimeException());
 

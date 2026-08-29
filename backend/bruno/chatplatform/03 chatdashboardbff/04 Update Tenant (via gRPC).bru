@@ -1,0 +1,26 @@
+meta {
+  name: 04 Update Tenant (via gRPC)
+  type: http
+  seq: 4
+}
+
+put {
+  url: {{bffUrl}}/api/v1/tenants/{{bff_tenant_id}}
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "name": "Bruno BFF E2E Tenant (renamed)",
+    "status": "SUSPENDED"
+  }
+}
+
+assert {
+  res.status: eq 200
+}

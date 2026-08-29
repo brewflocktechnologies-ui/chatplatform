@@ -1,0 +1,20 @@
+meta {
+  name: 02 OIDC Discovery
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{authUrl}}/.well-known/openid-configuration
+}
+
+assert {
+  res.status: eq 200
+  res.body.issuer: eq http://localhost:8110
+}
+
+docs {
+  Standard OIDC discovery document. The issuer is the fixed string
+  http://localhost:8110 - every resource server validates tokens against
+  exactly this value.
+}
