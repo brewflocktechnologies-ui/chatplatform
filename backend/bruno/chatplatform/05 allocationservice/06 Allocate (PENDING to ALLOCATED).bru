@@ -1,0 +1,43 @@
+meta {
+  name: 06 Allocate (PENDING to ALLOCATED)
+  type: grpc
+  seq: 6
+}
+
+grpc {
+  url: {{allocGrpcUrl}}
+  method: /allocation.v1.AllocationService/Allocate
+  body: grpc
+  auth: none
+  methodType: unary
+}
+
+metadata {
+  x-tenant-id: {{dev_tenant_id}}
+  authorization: Bearer {{access_token}}
+}
+
+body:grpc {
+  name: message 1
+  content: '''
+  {
+    "allocationId": "{{allocation_id}}",
+    "version": {{allocation_version}}
+  }
+  '''
+}
+
+script:post-response {
+  const alloc = res.body && res.body.allocation;
+  if (alloc && alloc.version) {
+    bru.setEnvVar("allocation_version", alloc.version);
+  }
+}
+
+docs {
+  State transition PENDING -> ALLOCATED with optimistic concurrency: the
+  version must match the current row. Negative cases worth trying:
+  - run it twice -> FAILED_PRECONDITION (invalid transition)
+  - stale version -> ABORTED ("reload and retry with the current version")
+  The new version is saved back into {{allocation_version}}.
+}

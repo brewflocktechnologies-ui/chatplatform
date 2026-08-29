@@ -1,0 +1,10 @@
+# BootUI configuration (developer-local; safe to delete).
+#
+# Accepted-risk dismissal, baked into the container image so it survives
+# rebuilds: SEC-RXF-CSRF-002 (no CsrfWebFilter in any analyzed chain) - the
+# API chain is deliberately stateless (bearer JWT only, no session or cookie
+# auth), which the rule itself lists as the legitimate reason to disable CSRF.
+# BootUI's own /bootui chain does keep cookie CSRF but is excluded from the
+# advisor's analysis by design.
+dismissedRules:
+  - SEC-RXF-CSRF-002

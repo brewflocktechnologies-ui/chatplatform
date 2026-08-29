@@ -1,0 +1,26 @@
+meta {
+  name: 01 List Tenants (via gRPC)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{bffUrl}}/api/v1/tenants?page=0&size=20
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  The BFF validates your JWT, then forwards the SAME token as gRPC
+  metadata to accountservice (port 9095), which re-validates it and
+  checks the account.read scope. A 200 here proves the whole zero-trust
+  chain: browser token -> BFF resource server -> gRPC bearer forwarding
+  -> accountservice JwtServerInterceptor -> R2DBC read.
+}

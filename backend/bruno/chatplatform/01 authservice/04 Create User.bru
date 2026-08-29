@@ -1,0 +1,41 @@
+meta {
+  name: 04 Create User
+  type: http
+  seq: 4
+}
+
+post {
+  url: {{authUrl}}/api/v1/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "email": "agent1@chatplatform.local",
+    "password": "agent1-password",
+    "tenantId": "10000000-0000-0000-0000-000000000001",
+    "roles": ["AGENT"]
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("user_id", res.body.id);
+  }
+}
+
+docs {
+  Admin-only (users.admin scope or ADMIN role). Creates a platform user;
+  the id is stored as {{user_id}} for the follow-up requests. Re-running
+  returns 409 (email already exists) - that is the conflict handling
+  working, not a failure.
+}

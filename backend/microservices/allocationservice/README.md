@@ -97,6 +97,9 @@ Keyset over `(created_at DESC, id DESC)`, opaque versioned tokens, default
 | `DB_QUERY_TIMEOUT` / `DB_TX_TIMEOUT` | 5s / 10s | per-query / per-transaction caps |
 | `DB_MIGRATE_ON_START` | false | compose/local convenience |
 | `TELEMETRY_ENABLED` / `OTLP_ADDRESS` | false / `localhost:4317` | any OTLP gRPC receiver |
+| `AUTH_MODE` | `trusted-header` | `trusted-header` (x-tenant-id metadata) or `jwt` (verified platform JWT from authservice) |
+| `AUTH_ISSUER` / `AUTH_JWKS_URL` | `http://localhost:8110` / `.../oauth2/jwks` | jwt mode: expected `iss` claim / where signing keys are fetched (use host.docker.internal in a container) |
+| `AUTH_SKEW` | 60s | jwt mode: accepted clock skew |
 | `LOG_LEVEL` / `LOG_FORMAT` | info / json | |
 | `SHUTDOWN_TIMEOUT` | 20s | graceful drain window |
 

@@ -1,0 +1,38 @@
+meta {
+  name: 02 Create Tenant
+  type: http
+  seq: 2
+}
+
+post {
+  url: {{chatUrl}}/api/v1/tenants
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "slug": "bruno-e2e",
+    "name": "Bruno E2E Tenant",
+    "status": "ACTIVE"
+  }
+}
+
+assert {
+  res.status: eq 201
+}
+
+script:post-response {
+  if (res.status === 201) {
+    bru.setEnvVar("chat_tenant_id", res.body.tenantId);
+  }
+}
+
+docs {
+  Creates a tenant; its id is stored as {{chat_tenant_id}}. Re-running
+  returns 409 (slug conflict) until you delete it (request 05).
+}

@@ -1,0 +1,7 @@
+# BootUI configuration (developer-local; safe to delete).
+#
+# Accepted-risk dismissal, baked into the container image so it survives
+# rebuilds: PT-A05-041 (/v3/api-docs reachable) - springdoc is intentional dev
+# tooling, permitted only under the dev profile and absent in real deployments.
+dismissedRules:
+  - PT-A05-041

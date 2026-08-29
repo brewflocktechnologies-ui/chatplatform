@@ -22,7 +22,7 @@ done
 
 # Host-JVM leftovers (the pre-container way of running the services) would
 # clash on the published ports - warn instead of silently failing mid-up.
-for port in 8080 8090 8100 9095; do
+for port in 8080 8090 8100 8110 9095; do
   if netstat -ano 2>/dev/null | grep ":$port " | grep -q LISTENING; then
     if ! docker ps --format '{{.Ports}}' | grep -q ":$port->"; then
       echo "WARNING: something non-Docker is already listening on :$port (a host-run service?)." >&2
@@ -37,7 +37,7 @@ docker compose -f localrun/docker-compose.yml up -d --build
 
 echo "== waiting for health (up to 5 min) =="
 for name in chatplatform-postgres chatplatform-otel-lgtm chatplatform-sonarqube \
-            chatplatform-chatservice-1 chatplatform-accountservice-1 chatplatform-chatdashboardbff-1; do
+            chatplatform-authservice-1 chatplatform-chatservice-1 chatplatform-accountservice-1 chatplatform-chatdashboardbff-1; do
   status="starting"
   for i in $(seq 1 60); do
     status="$(docker inspect "$name" --format '{{.State.Health.Status}}' 2>/dev/null || echo missing)"
@@ -50,7 +50,8 @@ done
 cat <<'EOF'
 
 Platform is up:
-  chatservice API          http://localhost:8080/api/v1/tenants
+  authservice OIDC         http://localhost:8110/.well-known/openid-configuration
+  chatservice API          http://localhost:8080/api/v1/tenants (Bearer token required)
   chatservice Swagger      http://localhost:8080/swagger-ui.html
   accountservice gRPC      localhost:9095 (grpcurl -plaintext, see localrun/README.md)
   chatdashboardbff API     http://localhost:8100/api/v1/tenants

@@ -1,0 +1,29 @@
+meta {
+  name: 01 gRPC Health Check
+  type: grpc
+  seq: 1
+}
+
+grpc {
+  url: {{allocGrpcUrl}}
+  method: /grpc.health.v1.Health/Check
+  body: grpc
+  auth: none
+  methodType: unary
+}
+
+body:grpc {
+  name: message 1
+  content: '''
+  {}
+  '''
+}
+
+docs {
+  Standard gRPC health service - deliberately open (no tenant/token needed)
+  so probes and tooling always work. Expect status SERVING.
+
+  Method discovery: the service has server reflection enabled, so Bruno can
+  list methods without proto files - just pick the method from the dropdown
+  after entering the URL.
+}

@@ -1,0 +1,33 @@
+meta {
+  name: 05 List Allocations
+  type: grpc
+  seq: 5
+}
+
+grpc {
+  url: {{allocGrpcUrl}}
+  method: /allocation.v1.AllocationService/ListAllocations
+  body: grpc
+  auth: none
+  methodType: unary
+}
+
+metadata {
+  x-tenant-id: {{dev_tenant_id}}
+  authorization: Bearer {{access_token}}
+}
+
+body:grpc {
+  name: message 1
+  content: '''
+  {
+    "pageSize": 20
+  }
+  '''
+}
+
+docs {
+  Lists the tenant's allocations (cursor pagination via nextPageToken;
+  pageSize max is 200). Optionally filter with
+  "status": "ALLOCATION_STATUS_PENDING" etc.
+}

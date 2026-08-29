@@ -25,6 +25,7 @@ import (
 
 	allocationv1 "github.com/chatplatform/allocationservice/gen/proto/allocation/v1"
 	grpcadapter "github.com/chatplatform/allocationservice/internal/adapters/grpc"
+	"github.com/chatplatform/allocationservice/internal/adapters/grpc/interceptors"
 	"github.com/chatplatform/allocationservice/internal/adapters/postgres"
 	app "github.com/chatplatform/allocationservice/internal/application/allocation"
 	"github.com/chatplatform/allocationservice/internal/observability"
@@ -91,7 +92,9 @@ func newGRPCClient(t *testing.T) allocationv1.AllocationServiceClient {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server, _ := grpcadapter.NewServer(handler, observability.NewMetrics(), logger)
+	// trusted-header mode, matching what the integration suite exercises
+	// (JWT mode is covered by the interceptor's own tests).
+	server, _ := grpcadapter.NewServer(handler, observability.NewMetrics(), logger, interceptors.AuthContext())
 
 	lis := bufconn.Listen(1 << 20)
 	go func() { _ = server.Serve(lis) }()

@@ -1,0 +1,18 @@
+meta {
+  name: 05 Get User
+  type: http
+  seq: 5
+}
+
+get {
+  url: {{authUrl}}/api/v1/users/{{user_id}}
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+assert {
+  res.status: eq 200
+}

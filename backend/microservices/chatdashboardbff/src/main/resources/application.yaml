@@ -1,6 +1,15 @@
 spring:
   application:
     name: chatdashboardbff
+  autoconfigure:
+    # This auto-config contributes a DEFAULT catch-all resource-server chain
+    # whenever a ReactiveJwtDecoder bean exists - its ConditionalOnDefaultWebSecurity
+    # guard only backs off for servlet SecurityFilterChain beans, so our reactive
+    # chains don't suppress it (Boot 4.1). The chain is dead at runtime (ours
+    # registers first and also matches any exchange) but it carries none of our
+    # hardening headers; SecurityConfig owns the real chains.
+    exclude:
+      - org.springframework.boot.security.oauth2.server.resource.autoconfigure.web.reactive.ReactiveOAuth2ResourceServerWebSecurityAutoConfiguration
   # In-flight dashboard requests get this long to finish on shutdown
   # (pairs with server.shutdown: graceful below).
   lifecycle:
@@ -16,6 +25,17 @@ spring:
         accountservice:
           # accountservice's gRPC server (spring.grpc.server.port in its yaml).
           target: static://localhost:9095
+
+# Consumed by ReactiveJwtDecoderConfig (not the
+# spring.security.oauth2.resourceserver properties - the explicit decoder adds
+# the audience check the property-based one can't do). issuer is the iss claim
+# to accept (fixed - tokens always say localhost:8110); only the jwks-uri
+# changes per network (compose overrides it to http://authservice:8110/...).
+authservice:
+  auth:
+    issuer: http://localhost:8110
+    jwks-uri: http://localhost:8110/oauth2/jwks
+    audience: chatplatform-api
 
 server:
   port: 8100

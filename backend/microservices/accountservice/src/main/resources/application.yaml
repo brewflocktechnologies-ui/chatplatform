@@ -108,3 +108,11 @@ management:
   tracing:
     sampling:
       probability: 1.0
+
+# Platform JWT validation for the gRPC auth interceptor (api/JwtServerInterceptor).
+# issuer is the fixed iss string on every token; only the JWKS URI changes per
+# network (compose sets AUTHSERVICE_AUTH_JWKS_URI=http://authservice:8110/oauth2/jwks).
+authservice:
+  auth:
+    issuer: http://localhost:8110
+    jwks-uri: http://localhost:8110/oauth2/jwks

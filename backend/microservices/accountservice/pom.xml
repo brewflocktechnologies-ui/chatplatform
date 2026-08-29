@@ -42,6 +42,19 @@
 	</properties>
 	<dependencies>
 		<dependency>
+			<!-- JWT decoding/validation only (NimbusJwtDecoder + validators) for
+			     the gRPC auth interceptor. Deliberately the plain jars, NOT the
+			     Boot resource-server starter: the starter's auto-config would
+			     also secure the WebFlux side (port 8090, BootUI-only), which
+			     stays as-is this phase. -->
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-jose</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>org.springframework.security</groupId>
+			<artifactId>spring-security-oauth2-resource-server</artifactId>
+		</dependency>
+		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator</artifactId>
 		</dependency>

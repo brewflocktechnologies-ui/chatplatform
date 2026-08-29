@@ -21,12 +21,15 @@ import (
 //
 // Returned health server: main flips it SERVING/NOT_SERVING as readiness
 // changes (dependencies checked there, not here).
-func NewServer(handler *AllocationHandler, metrics *observability.Metrics, logger *slog.Logger) (*grpc.Server, *health.Server) {
+// authInterceptor is either interceptors.AuthContext() (trusted-header mode)
+// or interceptors.JWTAuth(...) (verified platform JWTs) - main picks by
+// AUTH_MODE. Its position in the chain is unchanged and load-bearing.
+func NewServer(handler *AllocationHandler, metrics *observability.Metrics, logger *slog.Logger, authInterceptor grpc.UnaryServerInterceptor) (*grpc.Server, *health.Server) {
 	server := grpc.NewServer(
 		grpc.StatsHandler(otelgrpc.NewServerHandler()),
 		grpc.ChainUnaryInterceptor(
 			interceptors.Recovery(logger),
-			interceptors.AuthContext(),
+			authInterceptor,
 			interceptors.Logging(logger),
 			interceptors.Metrics(metrics),
 		),

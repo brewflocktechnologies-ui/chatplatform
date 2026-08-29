@@ -1,0 +1,28 @@
+meta {
+  name: 08 No Identity (expect UNAUTHENTICATED)
+  type: grpc
+  seq: 8
+}
+
+grpc {
+  url: {{allocGrpcUrl}}
+  method: /allocation.v1.AllocationService/ListAllocations
+  body: grpc
+  auth: none
+  methodType: unary
+}
+
+body:grpc {
+  name: message 1
+  content: '''
+  {
+    "pageSize": 20
+  }
+  '''
+}
+
+docs {
+  Negative case: no x-tenant-id and no Bearer token. Every business RPC
+  requires a tenant, so this returns UNAUTHENTICATED
+  "missing tenant identity" (health and reflection stay open by design).
+}

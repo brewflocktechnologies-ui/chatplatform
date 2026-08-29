@@ -1,0 +1,20 @@
+meta {
+  name: 04 chatdashboardbff health
+  type: http
+  seq: 4
+}
+
+get {
+  url: http://127.0.0.1:8101/actuator/health
+}
+
+assert {
+  res.status: eq 200
+  res.body.status: eq UP
+}
+
+docs {
+  Actuator health for chatdashboardbff. Management ports are published loopback-only
+  on the host (127.0.0.1:8101) - deliberately not part of the public
+  surface, no token required.
+}

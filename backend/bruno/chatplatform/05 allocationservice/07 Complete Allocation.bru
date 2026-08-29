@@ -1,0 +1,37 @@
+meta {
+  name: 07 Complete Allocation
+  type: grpc
+  seq: 7
+}
+
+grpc {
+  url: {{allocGrpcUrl}}
+  method: /allocation.v1.AllocationService/CompleteAllocation
+  body: grpc
+  auth: none
+  methodType: unary
+}
+
+metadata {
+  x-tenant-id: {{dev_tenant_id}}
+  authorization: Bearer {{access_token}}
+}
+
+body:grpc {
+  name: message 1
+  content: '''
+  {
+    "allocationId": "{{allocation_id}}",
+    "version": {{allocation_version}}
+  }
+  '''
+}
+
+docs {
+  ALLOCATED -> COMPLETED (run 06 first). ReleaseAllocation works the same
+  way if you want the RELEASED path instead - completed/released
+  allocations reject further transitions with FAILED_PRECONDITION.
+
+  Tip: to start the flow over, change requestId in request 02 (e.g.
+  bruno-e2e-002) - the old allocation stays in the list as history.
+}

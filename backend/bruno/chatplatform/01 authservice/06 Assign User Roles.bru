@@ -1,0 +1,25 @@
+meta {
+  name: 06 Assign User Roles
+  type: http
+  seq: 6
+}
+
+put {
+  url: {{authUrl}}/api/v1/users/{{user_id}}/roles
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: {{access_token}}
+}
+
+body:json {
+  {
+    "roles": ["AGENT", "VIEWER"]
+  }
+}
+
+assert {
+  res.status: eq 200
+}

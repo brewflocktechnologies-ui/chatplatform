@@ -1,0 +1,18 @@
+meta {
+  name: 09 Sidecar healthz (liveness)
+  type: http
+  seq: 9
+}
+
+get {
+  url: {{allocHttpUrl}}/healthz
+}
+
+assert {
+  res.status: eq 200
+}
+
+docs {
+  HTTP sidecar liveness - 200 with an empty body means the process is
+  alive. /metrics on the same port serves Prometheus metrics.
+}

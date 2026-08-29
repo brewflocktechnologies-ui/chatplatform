@@ -9,9 +9,11 @@ spring:
     # is a second safety net regardless).
     active: dev
   datasource:
-    url: jdbc:postgresql://localhost:5432/postgres
+    url: jdbc:postgresql://localhost:5432/postgres?options=-c%20timezone=Asia/Kolkata
     username: chatuser
-    password: chatpass
+    # Externalized with a dev-only fallback so the checked-in file holds no
+    # literal credential; real deployments set CHATSERVICE_DB_PASSWORD.
+    password: ${CHATSERVICE_DB_PASSWORD:chatpass}
   jpa:
     hibernate:
       ddl-auto: none
@@ -37,9 +39,31 @@ spring:
     virtual:
       enabled: true
 
+# Consumed by JwtDecoderConfig (not the spring.security.oauth2.resourceserver
+# properties - the explicit decoder adds the audience check the property-based
+# one can't do). issuer is the iss claim to accept (fixed - tokens always say
+# localhost:8110); only the jwks-uri changes per network (compose overrides it
+# to http://authservice:8110/...). audience must match the aud claim
+# authservice mints on every access token.
+authservice:
+  auth:
+    issuer: http://localhost:8110
+    jwks-uri: http://localhost:8110/oauth2/jwks
+    audience: chatplatform-api
+
 server:
   compression:
     enabled: true
+  servlet:
+    session:
+      cookie:
+        # The only session cookie here is BootUI's (the API itself is
+        # stateless JWT). Lax stops cross-site sends; Secure is safe even on
+        # http://localhost because browsers treat loopback as trustworthy; the
+        # __Host- prefix makes browsers enforce Secure + path=/ + no Domain.
+        name: __Host-JSESSIONID
+        same-site: lax
+        secure: true
 
 springdoc:
   # Without this, springdoc scans every @RestController on the classpath,

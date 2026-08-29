@@ -1,6 +1,8 @@
 spring:
   jpa:
-    show-sql: true
+    # show-sql stays off even in dev: full statements leak schema/parameter
+    # shapes into logs, and the slow-query threshold below already surfaces
+    # the queries worth looking at.
     properties:
       hibernate:
         generate_statistics: true

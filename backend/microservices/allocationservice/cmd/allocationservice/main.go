@@ -20,6 +20,7 @@ import (
 	healthpb "google.golang.org/grpc/health/grpc_health_v1"
 
 	grpcadapter "github.com/chatplatform/allocationservice/internal/adapters/grpc"
+	"github.com/chatplatform/allocationservice/internal/adapters/grpc/interceptors"
 	"github.com/chatplatform/allocationservice/internal/adapters/postgres"
 	app "github.com/chatplatform/allocationservice/internal/application/allocation"
 	"github.com/chatplatform/allocationservice/internal/config"
@@ -88,7 +89,22 @@ func run() error {
 	if err != nil {
 		return err
 	}
-	server, healthServer := grpcadapter.NewServer(handler, metrics, logger)
+	// Tenant identity: verified platform JWTs (AUTH_MODE=jwt) or the
+	// phase-1 trusted x-tenant-id header (default, for safe rollout).
+	authInterceptor := interceptors.AuthContext()
+	if cfg.Auth.Mode == config.AuthModeJWT {
+		verifier, verr := interceptors.NewJWKSVerifier(ctx, cfg.Auth.Issuer, cfg.Auth.JWKSURL, cfg.Auth.Skew)
+		if verr != nil {
+			logger.Error("jwt verifier init failed", slog.Any("error", verr))
+			os.Exit(1)
+		}
+		authInterceptor = interceptors.JWTAuth(verifier)
+		logger.Info("auth mode: jwt", slog.String("issuer", cfg.Auth.Issuer), slog.String("jwks", cfg.Auth.JWKSURL))
+	} else {
+		logger.Info("auth mode: trusted-header (x-tenant-id)")
+	}
+
+	server, healthServer := grpcadapter.NewServer(handler, metrics, logger, authInterceptor)
 
 	// HTTP sidecar port: Prometheus scrape + K8s-style probes. Liveness is
 	// process-alive only; readiness pings the database (a dead DB must fail

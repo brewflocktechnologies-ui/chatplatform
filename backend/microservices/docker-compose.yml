@@ -1,6 +1,6 @@
 # The three microservices as containers. An ALTERNATIVE to localrun's
 # spring-boot:run processes, not an addition - both bind the same host ports
-# (8080/8081, 8090/8091/9095, 8100/8101), so run one or the other.
+# (8080/8081, 8090/8091/9095, 8100/8101, 8110/8111), so run one or the other.
 #
 # Postgres and the observability stack stay in their own compose projects
 # (infrastructure/, observability/) and are reached via host.docker.internal -
@@ -13,8 +13,11 @@
 #
 # Management/actuator ports: the yamls bind them to 127.0.0.1, which inside a
 # container netns is unreachable from anywhere - MANAGEMENT_SERVER_ADDRESS
-# overrides to 0.0.0.0, and the host-side publish keeps them loopback-only on
-# the host (127.0.0.1:PORT:PORT), preserving the yamls' security posture.
+# overrides to the service's own name (Docker DNS resolves it to the
+# container's eth0 IP), so the port binds exactly one private interface
+# instead of 0.0.0.0. Docker's published-port proxy and the healthchecks both
+# connect via that interface, and the host-side publish keeps them
+# loopback-only on the host (127.0.0.1:PORT:PORT).
 #
 # Healthchecks are bash TCP-connect probes (/dev/tcp) because the temurin JRE
 # image ships no curl/wget - good enough for startup ordering; the real health
@@ -22,20 +25,52 @@
 name: chatplatform-services
 
 services:
+  authservice:
+    build: ./authservice
+    image: chatplatform/authservice:local
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/postgres?currentSchema=authservice&options=-c%20timezone=Asia/Kolkata
+      MANAGEMENT_SERVER_ADDRESS: authservice
+      MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/traces
+      MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
+      MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
+    ports:
+      - "8110:8110"
+      - "127.0.0.1:8111:8111"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "</dev/tcp/authservice/8111"]
+      interval: 10s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
   chatservice:
     build: ./chatservice
     image: chatplatform/chatservice:local
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/postgres
-      MANAGEMENT_SERVER_ADDRESS: 0.0.0.0
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/postgres?options=-c%20timezone=Asia/Kolkata
+      # Keys come from authservice over this compose's network; the token's
+      # iss claim stays http://localhost:8110 (issuer in the yaml), so only
+      # the JWKS location is overridden (authservice.auth.* properties, read
+      # by chatservice's JwtDecoderConfig).
+      AUTHSERVICE_AUTH_JWKS_URI: http://authservice:8110/oauth2/jwks
+      MANAGEMENT_SERVER_ADDRESS: chatservice
+      # BootUI's loopback guard: host-browser requests reach the container via
+      # the Docker gateway, not loopback. AUTO trusts the auto-detected
+      # container gateway only - tighter than allow-non-localhost=true.
+      # Dev-only posture either way (BootUI is dormant outside the dev profile).
+      BOOTUI_TRUST_CONTAINER_GATEWAY: AUTO
       MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/traces
       MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
     ports:
       - "8080:8080"
       - "127.0.0.1:8081:8081"
+    depends_on:
+      authservice:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8081"]
+      test: ["CMD", "bash", "-c", "</dev/tcp/chatservice/8081"]
       interval: 10s
       timeout: 3s
       retries: 12
@@ -46,7 +81,13 @@ services:
     image: chatplatform/accountservice:local
     environment:
       SPRING_R2DBC_URL: r2dbc:postgresql://host.docker.internal:5432/postgres
-      MANAGEMENT_SERVER_ADDRESS: 0.0.0.0
+      AUTHSERVICE_AUTH_JWKS_URI: http://authservice:8110/oauth2/jwks
+      MANAGEMENT_SERVER_ADDRESS: accountservice
+      # BootUI's loopback guard: host-browser requests reach the container via
+      # the Docker gateway, not loopback. AUTO trusts the auto-detected
+      # container gateway only - tighter than allow-non-localhost=true.
+      # Dev-only posture either way (BootUI is dormant outside the dev profile).
+      BOOTUI_TRUST_CONTAINER_GATEWAY: AUTO
       MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/traces
       MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
@@ -54,8 +95,11 @@ services:
       - "9095:9095"
       - "8090:8090"
       - "127.0.0.1:8091:8091"
+    depends_on:
+      authservice:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8091"]
+      test: ["CMD", "bash", "-c", "</dev/tcp/accountservice/8091"]
       interval: 10s
       timeout: 3s
       retries: 12
@@ -67,7 +111,13 @@ services:
     environment:
       # Container-to-container over this compose's network, not the host.
       SPRING_GRPC_CLIENT_CHANNEL_ACCOUNTSERVICE_TARGET: static://accountservice:9095
-      MANAGEMENT_SERVER_ADDRESS: 0.0.0.0
+      AUTHSERVICE_AUTH_JWKS_URI: http://authservice:8110/oauth2/jwks
+      MANAGEMENT_SERVER_ADDRESS: chatdashboardbff
+      # BootUI's loopback guard: host-browser requests reach the container via
+      # the Docker gateway, not loopback. AUTO trusts the auto-detected
+      # container gateway only - tighter than allow-non-localhost=true.
+      # Dev-only posture either way (BootUI is dormant outside the dev profile).
+      BOOTUI_TRUST_CONTAINER_GATEWAY: AUTO
       MANAGEMENT_OPENTELEMETRY_TRACING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/traces
       MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
@@ -77,8 +127,10 @@ services:
     depends_on:
       accountservice:
         condition: service_healthy
+      authservice:
+        condition: service_healthy
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/localhost/8101"]
+      test: ["CMD", "bash", "-c", "</dev/tcp/chatdashboardbff/8101"]
       interval: 10s
       timeout: 3s
       retries: 12

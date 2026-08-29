@@ -26,6 +26,10 @@ public class GlobalExceptionHandler {
           case NOT_FOUND -> HttpStatus.NOT_FOUND;
           case ALREADY_EXISTS -> HttpStatus.CONFLICT;
           case INVALID_ARGUMENT -> HttpStatus.BAD_REQUEST;
+          // accountservice's JWT interceptor: token invalid/missing on the
+          // forwarded hop -> 401; valid token but missing scope -> 403.
+          case UNAUTHENTICATED -> HttpStatus.UNAUTHORIZED;
+          case PERMISSION_DENIED -> HttpStatus.FORBIDDEN;
           case UNAVAILABLE -> HttpStatus.SERVICE_UNAVAILABLE;
           case DEADLINE_EXCEEDED -> HttpStatus.GATEWAY_TIMEOUT;
           default -> HttpStatus.INTERNAL_SERVER_ERROR;

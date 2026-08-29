@@ -1,0 +1,35 @@
+meta {
+  name: 03 Create Again (idempotent replay)
+  type: grpc
+  seq: 3
+}
+
+grpc {
+  url: {{allocGrpcUrl}}
+  method: /allocation.v1.AllocationService/CreateAllocation
+  body: grpc
+  auth: none
+  methodType: unary
+}
+
+metadata {
+  x-tenant-id: {{dev_tenant_id}}
+  authorization: Bearer {{access_token}}
+}
+
+body:grpc {
+  name: message 1
+  content: '''
+  {
+    "requestId": "bruno-e2e-001",
+    "resourceId": "resource-a",
+    "priority": 10
+  }
+  '''
+}
+
+docs {
+  Same requestId as request 02 - the service treats it as an idempotent
+  replay within the tenant: expect the SAME allocation back with
+  "replayed": true and no new row created.
+}

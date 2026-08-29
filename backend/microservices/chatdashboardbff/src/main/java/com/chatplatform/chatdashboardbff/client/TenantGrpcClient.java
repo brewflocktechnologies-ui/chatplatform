@@ -10,12 +10,17 @@ import com.chatplatform.accountservice.grpc.TenantServiceGrpc;
 import com.chatplatform.accountservice.grpc.TenantStatus;
 import com.chatplatform.accountservice.grpc.UpdateTenantRequest;
 import com.google.protobuf.Empty;
+import io.grpc.Metadata;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import io.grpc.stub.MetadataUtils;
 import io.grpc.stub.StreamObserver;
 import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import org.springframework.security.core.context.ReactiveSecurityContextHolder;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationToken;
 import org.springframework.stereotype.Component;
 import reactor.core.publisher.Mono;
 import reactor.util.retry.Retry;
@@ -40,6 +45,8 @@ import reactor.util.retry.Retry;
 public class TenantGrpcClient {
 
   private static final Duration DEADLINE = Duration.ofSeconds(5);
+  private static final Metadata.Key<String> AUTHORIZATION_METADATA =
+      Metadata.Key.of("authorization", Metadata.ASCII_STRING_MARSHALLER);
   private static final Retry READ_RETRY =
       Retry.backoff(1, Duration.ofMillis(200))
           .filter(TenantGrpcClient::isRetryable)
@@ -95,30 +102,59 @@ public class TenantGrpcClient {
   /**
    * Adapts one unary gRPC call (callback-based) into a Mono (single value or error), stamping the
    * per-call deadline. Mono.defer so each retry attempt gets a fresh deadline and a fresh call.
+   *
+   * <p>The caller's platform JWT (validated by SecurityConfig) is forwarded verbatim as {@code
+   * authorization: Bearer} gRPC metadata — accountservice re-validates it against the same JWKS
+   * (zero-trust hop, exercising the seam the platform designed for). When no authentication is in
+   * the reactive context (tests, permitted paths) the call goes out bare and accountservice rejects
+   * it — never a silently-trusted identity.
    */
   private <T> Mono<T> unary(
       BiConsumer<TenantServiceGrpc.TenantServiceStub, StreamObserver<T>> call) {
     return Mono.defer(
         () ->
-            Mono.create(
-                sink ->
-                    call.accept(
-                        stub.withDeadlineAfter(DEADLINE.toMillis(), TimeUnit.MILLISECONDS),
-                        new StreamObserver<T>() {
-                          @Override
-                          public void onNext(T value) {
-                            sink.success(value);
-                          }
+            currentBearerToken()
+                .map(this::stubWithBearer)
+                .defaultIfEmpty(stub)
+                .flatMap(callStub -> callOnce(callStub, call)));
+  }
 
-                          @Override
-                          public void onError(Throwable t) {
-                            sink.error(t);
-                          }
+  private static Mono<String> currentBearerToken() {
+    return ReactiveSecurityContextHolder.getContext()
+        .map(SecurityContext::getAuthentication)
+        .filter(JwtAuthenticationToken.class::isInstance)
+        .map(
+            authentication -> ((JwtAuthenticationToken) authentication).getToken().getTokenValue());
+  }
 
-                          @Override
-                          public void onCompleted() {
-                            sink.success(); // no-op if onNext already completed the sink
-                          }
-                        })));
+  private TenantServiceGrpc.TenantServiceStub stubWithBearer(String token) {
+    Metadata metadata = new Metadata();
+    metadata.put(AUTHORIZATION_METADATA, "Bearer " + token);
+    return stub.withInterceptors(MetadataUtils.newAttachHeadersInterceptor(metadata));
+  }
+
+  private <T> Mono<T> callOnce(
+      TenantServiceGrpc.TenantServiceStub callStub,
+      BiConsumer<TenantServiceGrpc.TenantServiceStub, StreamObserver<T>> call) {
+    return Mono.create(
+        sink ->
+            call.accept(
+                callStub.withDeadlineAfter(DEADLINE.toMillis(), TimeUnit.MILLISECONDS),
+                new StreamObserver<T>() {
+                  @Override
+                  public void onNext(T value) {
+                    sink.success(value);
+                  }
+
+                  @Override
+                  public void onError(Throwable t) {
+                    sink.error(t);
+                  }
+
+                  @Override
+                  public void onCompleted() {
+                    sink.success(); // no-op if onNext already completed the sink
+                  }
+                }));
   }
 }

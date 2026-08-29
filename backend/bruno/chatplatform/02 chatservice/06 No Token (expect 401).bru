@@ -1,0 +1,18 @@
+meta {
+  name: 06 No Token (expect 401)
+  type: http
+  seq: 6
+}
+
+get {
+  url: {{chatUrl}}/api/v1/tenants
+}
+
+assert {
+  res.status: eq 401
+}
+
+docs {
+  Negative case: without a Bearer token the resource server rejects the
+  request before it reaches any business code.
+}
