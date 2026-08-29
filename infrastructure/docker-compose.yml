@@ -22,11 +22,11 @@ services:
       POSTGRES_PASSWORD: chatpass
       POSTGRES_DB: chatservice
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - chatplatform_postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U chatuser"]
+      test: ['CMD-SHELL', 'pg_isready -U chatuser']
       interval: 5s
       timeout: 5s
       retries: 10

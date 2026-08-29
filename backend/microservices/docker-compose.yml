@@ -35,10 +35,10 @@ services:
       MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
     ports:
-      - "8110:8110"
-      - "127.0.0.1:8111:8111"
+      - '8110:8110'
+      - '127.0.0.1:8111:8111'
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/authservice/8111"]
+      test: ['CMD', 'bash', '-c', '</dev/tcp/authservice/8111']
       interval: 10s
       timeout: 3s
       retries: 12
@@ -64,13 +64,13 @@ services:
       MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
     ports:
-      - "8080:8080"
-      - "127.0.0.1:8081:8081"
+      - '8080:8080'
+      - '127.0.0.1:8081:8081'
     depends_on:
       authservice:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/chatservice/8081"]
+      test: ['CMD', 'bash', '-c', '</dev/tcp/chatservice/8081']
       interval: 10s
       timeout: 3s
       retries: 12
@@ -92,14 +92,14 @@ services:
       MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
     ports:
-      - "9095:9095"
-      - "8090:8090"
-      - "127.0.0.1:8091:8091"
+      - '9095:9095'
+      - '8090:8090'
+      - '127.0.0.1:8091:8091'
     depends_on:
       authservice:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/accountservice/8091"]
+      test: ['CMD', 'bash', '-c', '</dev/tcp/accountservice/8091']
       interval: 10s
       timeout: 3s
       retries: 12
@@ -122,15 +122,15 @@ services:
       MANAGEMENT_OPENTELEMETRY_LOGGING_EXPORT_OTLP_ENDPOINT: http://host.docker.internal:4318/v1/logs
       MANAGEMENT_OTLP_METRICS_EXPORT_URL: http://host.docker.internal:4318/v1/metrics
     ports:
-      - "8100:8100"
-      - "127.0.0.1:8101:8101"
+      - '8100:8100'
+      - '127.0.0.1:8101:8101'
     depends_on:
       accountservice:
         condition: service_healthy
       authservice:
         condition: service_healthy
     healthcheck:
-      test: ["CMD", "bash", "-c", "</dev/tcp/chatdashboardbff/8101"]
+      test: ['CMD', 'bash', '-c', '</dev/tcp/chatdashboardbff/8101']
       interval: 10s
       timeout: 3s
       retries: 12

@@ -10,14 +10,14 @@ services:
     image: allocationservice:local
     environment:
       DATABASE_URL: postgres://alloc:alloc@postgres:5432/allocation?sslmode=disable
-      DB_MIGRATE_ON_START: "true"
-      GRPC_ADDRESS: ":9096"
-      HTTP_ADDRESS: ":9097"
+      DB_MIGRATE_ON_START: 'true'
+      GRPC_ADDRESS: ':9096'
+      HTTP_ADDRESS: ':9097'
       LOG_LEVEL: info
       ENVIRONMENT: local
       # Point at any OTLP gRPC receiver to enable tracing, e.g. the
       # platform's otel-lgtm: host.docker.internal:4317
-      TELEMETRY_ENABLED: "false"
+      TELEMETRY_ENABLED: 'false'
       # Tenant identity mode. Default keeps the phase-1 trusted x-tenant-id
       # header; flip to verified platform JWTs (authservice must be up on the
       # host) with:  AUTH_MODE=jwt docker compose up -d
@@ -25,12 +25,12 @@ services:
       # container (host.docker.internal reaches the host's 8110), while the
       # issuer is only STRING-COMPARED against the token's iss claim, which
       # authservice always mints as http://localhost:8110.
-      AUTH_MODE: "${AUTH_MODE:-trusted-header}"
-      AUTH_ISSUER: "http://localhost:8110"
-      AUTH_JWKS_URL: "http://host.docker.internal:8110/oauth2/jwks"
+      AUTH_MODE: '${AUTH_MODE:-trusted-header}'
+      AUTH_ISSUER: 'http://localhost:8110'
+      AUTH_JWKS_URL: 'http://host.docker.internal:8110/oauth2/jwks'
     ports:
-      - "9096:9096"
-      - "9097:9097"
+      - '9096:9096'
+      - '9097:9097'
     depends_on:
       postgres:
         condition: service_healthy
@@ -45,11 +45,11 @@ services:
       POSTGRES_PASSWORD: alloc
       POSTGRES_DB: allocation
     ports:
-      - "5433:5432"
+      - '5433:5432'
     volumes:
       - allocation_pg_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U alloc -d allocation"]
+      test: ['CMD-SHELL', 'pg_isready -U alloc -d allocation']
       interval: 5s
       timeout: 5s
       retries: 10

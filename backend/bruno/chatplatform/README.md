@@ -14,16 +14,17 @@ bash localrun/start.sh
 
 ## Run order
 
-Requests are numbered — run them top to bottom, or use *Run Folder*:
+Requests are numbered — run them top to bottom, or use _Run Folder_:
 
-| Folder | What it proves |
-|---|---|
-| **01 authservice** | Token issuance (client_credentials via the dev-only `dev-cli` client), OIDC discovery, JWKS, and the admin-only user-management API. **Run request 01 first** — it stores `{{access_token}}` in the environment for everything else. Tokens expire after 15 min; just re-run it. |
-| **02 chatservice** | REST tenant CRUD on port 8080 behind JWT validation (list → create → get → update → delete), plus the 401 negative case. |
-| **03 chatdashboardbff** | The zero-trust chain: BFF (8100) validates your JWT, forwards it as gRPC metadata to accountservice (9095), which re-validates and enforces `account.read`/`account.write` scopes before touching the database. |
-| **04 health** | Actuator health for all four services (loopback-only management ports 8111/8081/8091/8101). |
+| Folder                  | What it proves                                                                                                                                                                                                                                                                   |
+| ----------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **01 authservice**      | Token issuance (client_credentials via the dev-only `dev-cli` client), OIDC discovery, JWKS, and the admin-only user-management API. **Run request 01 first** — it stores `{{access_token}}` in the environment for everything else. Tokens expire after 15 min; just re-run it. |
+| **02 chatservice**      | REST tenant CRUD on port 8080 behind JWT validation (list → create → get → update → delete), plus the 401 negative case.                                                                                                                                                         |
+| **03 chatdashboardbff** | The zero-trust chain: BFF (8100) validates your JWT, forwards it as gRPC metadata to accountservice (9095), which re-validates and enforces `account.read`/`account.write` scopes before touching the database.                                                                  |
+| **04 health**           | Actuator health for all four services (loopback-only management ports 8111/8081/8091/8101).                                                                                                                                                                                      |
 
 Expected "failures" that are actually correct behavior:
+
 - Re-running a **Create** without the matching **Delete** → `409` (slug/email conflict).
 - Any request after the token expires → `401` (re-run `01 authservice / 01`).
 
@@ -73,7 +74,7 @@ all.
 
 ## Dev credentials (dev profile only — never exist in real deployments)
 
-| What | Value |
-|---|---|
-| curl/CI client | `dev-cli` / `dev-secret` (client_credentials, all scopes) |
+| What                           | Value                                                               |
+| ------------------------------ | ------------------------------------------------------------------- |
+| curl/CI client                 | `dev-cli` / `dev-secret` (client_credentials, all scopes)           |
 | Browser login (auth-code flow) | `admin@local` / `admin-dev-password` at http://localhost:8110/login |

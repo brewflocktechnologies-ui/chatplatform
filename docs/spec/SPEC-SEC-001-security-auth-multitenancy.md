@@ -1,12 +1,12 @@
 # SPEC-SEC-001 — Security, Authentication, Authorization & Multi-Tenancy
 
-| Field | Value |
-|---|---|
-| Status | Draft v0.1 — for implementation |
-| Owner | Platform |
-| Applies to | api-gateway/BFF, auth-service, ws-gateway, conversation-service, allocation-service, presence-service, tenant-onboarding-service, chat widget, dashboard MFEs, edge (L4/L7), Postgres, NATS, Valkey |
-| Related | SPEC-WS (WebSocket protocol), SPEC-ALLOC (allocation engine), SPEC-INFRA-LOCAL (Compose rig) |
-| Conformance | RFC 2119 keywords (MUST / SHOULD / MAY) |
+| Field       | Value                                                                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Status      | Draft v0.1 — for implementation                                                                                                                                                                     |
+| Owner       | Platform                                                                                                                                                                                            |
+| Applies to  | api-gateway/BFF, auth-service, ws-gateway, conversation-service, allocation-service, presence-service, tenant-onboarding-service, chat widget, dashboard MFEs, edge (L4/L7), Postgres, NATS, Valkey |
+| Related     | SPEC-WS (WebSocket protocol), SPEC-ALLOC (allocation engine), SPEC-INFRA-LOCAL (Compose rig)                                                                                                        |
+| Conformance | RFC 2119 keywords (MUST / SHOULD / MAY)                                                                                                                                                             |
 
 ---
 
@@ -37,17 +37,17 @@
 
 ## 1. Terminology and principals
 
-| Term | Definition |
-|---|---|
-| Tenant | A paying customer organisation. `tenant_id` is a UUIDv7. |
-| Tenant user | Human with a login: `owner`, `admin`, `agent`, `viewer`. |
-| Visitor | End-user of the tenant's website interacting via the widget. Anonymous unless verified. |
-| Verified visitor | Visitor whose identity the tenant's backend vouched for via HMAC (§5.3). |
-| Service principal | One of the seven Go services, identified by mTLS certificate SAN. |
+| Term              | Definition                                                                                                |
+| ----------------- | --------------------------------------------------------------------------------------------------------- |
+| Tenant            | A paying customer organisation. `tenant_id` is a UUIDv7.                                                  |
+| Tenant user       | Human with a login: `owner`, `admin`, `agent`, `viewer`.                                                  |
+| Visitor           | End-user of the tenant's website interacting via the widget. Anonymous unless verified.                   |
+| Verified visitor  | Visitor whose identity the tenant's backend vouched for via HMAC (§5.3).                                  |
+| Service principal | One of the seven Go services, identified by mTLS certificate SAN.                                         |
 | Principal context | Struct carried through every request: `{typ, sub, tenant_id, roles[], scope[], jti, iat, exp, verified}`. |
-| Widget key | Public identifier `wk_<tenant-short>_<random>` embedded in the customer's page. Not secret. |
-| Widget secret | Per-tenant HMAC secret `ws_…` shown once; used for identity verification. Secret. |
-| API key | Per-tenant server-to-server key `ak_<prefix>_<random>`. Secret. |
+| Widget key        | Public identifier `wk_<tenant-short>_<random>` embedded in the customer's page. Not secret.               |
+| Widget secret     | Per-tenant HMAC secret `ws_…` shown once; used for identity verification. Secret.                         |
+| API key           | Per-tenant server-to-server key `ak_<prefix>_<random>`. Secret.                                           |
 
 Three token types are defined and MUST never be interchangeable (§3).
 
@@ -172,14 +172,15 @@ Numbering: `SEC-<area>-<n>`. Each requirement has an acceptance test ID in §15.
   "tid": "t_01J7…",
   "typ": "user",
   "rol": ["agent"],
-  "tm":  ["team_01J9…"],
-  "amr": ["pwd","totp"],
+  "tm": ["team_01J9…"],
+  "amr": ["pwd", "totp"],
   "sid": "s_01JA…",
   "jti": "01JB…",
   "iat": 1756450000,
   "exp": 1756450600
 }
 ```
+
 Header: `{"alg":"EdDSA","kid":"2026-08-a","typ":"JWT"}`.
 
 ### 3.2 Visitor token (`typ=visitor`)
@@ -191,7 +192,7 @@ Header: `{"alg":"EdDSA","kid":"2026-08-a","typ":"JWT"}`.
   "sub": "v_01JC…",
   "tid": "t_01J7…",
   "typ": "visitor",
-  "wk":  "wk_acme_9f3a",
+  "wk": "wk_acme_9f3a",
   "ver": false,
   "ext": null,
   "cnv": ["c_01JD…"],
@@ -200,6 +201,7 @@ Header: `{"alg":"EdDSA","kid":"2026-08-a","typ":"JWT"}`.
   "exp": 1756536400
 }
 ```
+
 `ver=true` ⇒ `ext` = tenant's external user id (HMAC-verified). `cnv` lists conversation ids the visitor may attach to; conversation-service extends it via re-issue on new conversation.
 
 ### 3.3 Internal token (`typ=svc`)
@@ -214,7 +216,7 @@ Header: `{"alg":"EdDSA","kid":"2026-08-a","typ":"JWT"}`.
   "typ": "svc",
   "ptyp": "user",
   "rol": ["agent"],
-  "tm":  ["team_01J9…"],
+  "tm": ["team_01J9…"],
   "ver": null,
   "rid": "req_01JF…",
   "jti": "01JG…",
@@ -222,6 +224,7 @@ Header: `{"alg":"EdDSA","kid":"2026-08-a","typ":"JWT"}`.
   "exp": 1756450120
 }
 ```
+
 `ptyp` = type of the original external principal. For API-key callers: `sub="ak_<id>"`, `ptyp="apikey"`, `scp=[…]`.
 
 ### 3.4 Verification rules (all verifiers)
@@ -238,25 +241,25 @@ Header: `{"alg":"EdDSA","kid":"2026-08-a","typ":"JWT"}`.
 
 Base path `/auth/v1`. All responses `application/problem+json` on error (RFC 9457). Generic messages; no account enumeration.
 
-| Method | Path | Auth | Purpose |
-|---|---|---|---|
-| POST | `/login` | none | email+password → `{mfa_required}` or session cookie (via BFF) |
-| POST | `/mfa/verify` | pre-auth cookie | TOTP or recovery code |
-| POST | `/logout` | session | revoke session + refresh family |
-| POST | `/token` | internal (BFF) | session_id → access JWT (cached until 60 s before exp) |
-| POST | `/token/refresh` | internal (BFF) | rotate refresh; reuse → revoke family, 401 |
-| GET | `/.well-known/jwks.json` | none | current + previous keys |
-| GET | `/.well-known/openid-configuration` | none | discovery (issuer, jwks_uri, algs) |
-| GET | `/oidc/{provider}/start` | none | PKCE authorization redirect |
-| GET | `/oidc/{provider}/callback` | none | code exchange, identity link |
-| GET | `/sessions` | session | list devices |
-| DELETE | `/sessions/{sid}` | session | revoke device |
-| POST | `/mfa/totp/enroll` `/confirm` `/disable` | session + recent-auth | TOTP lifecycle |
-| POST | `/password/reset/request` `/confirm` | none | single-use token, 30 min, hashed at rest |
-| POST | `/internal/session/resolve` | mTLS (ws-gateway) | session cookie → principal |
-| POST | `/internal/visitor/issue` | mTLS (gateway) | bootstrap → visitor JWT |
-| POST | `/internal/svc-token` | mTLS (gateway, ws-gateway) | mint internal token |
-| POST | `/internal/keys/rotate` | mTLS (ops CLI) | add new signing key |
+| Method | Path                                     | Auth                       | Purpose                                                       |
+| ------ | ---------------------------------------- | -------------------------- | ------------------------------------------------------------- |
+| POST   | `/login`                                 | none                       | email+password → `{mfa_required}` or session cookie (via BFF) |
+| POST   | `/mfa/verify`                            | pre-auth cookie            | TOTP or recovery code                                         |
+| POST   | `/logout`                                | session                    | revoke session + refresh family                               |
+| POST   | `/token`                                 | internal (BFF)             | session_id → access JWT (cached until 60 s before exp)        |
+| POST   | `/token/refresh`                         | internal (BFF)             | rotate refresh; reuse → revoke family, 401                    |
+| GET    | `/.well-known/jwks.json`                 | none                       | current + previous keys                                       |
+| GET    | `/.well-known/openid-configuration`      | none                       | discovery (issuer, jwks_uri, algs)                            |
+| GET    | `/oidc/{provider}/start`                 | none                       | PKCE authorization redirect                                   |
+| GET    | `/oidc/{provider}/callback`              | none                       | code exchange, identity link                                  |
+| GET    | `/sessions`                              | session                    | list devices                                                  |
+| DELETE | `/sessions/{sid}`                        | session                    | revoke device                                                 |
+| POST   | `/mfa/totp/enroll` `/confirm` `/disable` | session + recent-auth      | TOTP lifecycle                                                |
+| POST   | `/password/reset/request` `/confirm`     | none                       | single-use token, 30 min, hashed at rest                      |
+| POST   | `/internal/session/resolve`              | mTLS (ws-gateway)          | session cookie → principal                                    |
+| POST   | `/internal/visitor/issue`                | mTLS (gateway)             | bootstrap → visitor JWT                                       |
+| POST   | `/internal/svc-token`                    | mTLS (gateway, ws-gateway) | mint internal token                                           |
+| POST   | `/internal/keys/rotate`                  | mTLS (ops CLI)             | add new signing key                                           |
 
 **Data model (Postgres, all under RLS except `signing_keys`)**
 
@@ -304,10 +307,19 @@ ws-gateway: GETDEL wt:<ticket> → principal; 101 with Sec-WebSocket-Protocol: v
 
 ```js
 // tenant's server, never in the browser
-const hash = crypto.createHmac('sha256', WIDGET_SECRET).update(user.id).digest('hex');
+const hash = crypto
+  .createHmac('sha256', WIDGET_SECRET)
+  .update(user.id)
+  .digest('hex');
 // page
-window.PlatformChat('identify', { user_id: user.id, user_hash: hash, name, email });
+window.PlatformChat('identify', {
+  user_id: user.id,
+  user_hash: hash,
+  name,
+  email,
+});
 ```
+
 Server recomputes with constant-time compare. Wrong hash → bootstrap succeeds **unverified** (log WARN) unless `require_verification`.
 
 ---
@@ -320,6 +332,7 @@ Server recomputes with constant-time compare. Wrong hash → bootstrap succeeds 
 {"t":"sub","subject":"t.<tid>.conv.<cid>"}        // client → server
 {"t":"err","code":4403,"msg":"forbidden"}         // server → client
 ```
+
 Close codes: 4400 bad request, 4401 unauthenticated / expired, 4403 forbidden, 4408 auth timeout, 4429 rate limited.
 
 ---
@@ -327,6 +340,7 @@ Close codes: 4400 bad request, 4401 unauthenticated / expired, 4403 forbidden, 4
 ## 7. Edge configuration (reference)
 
 **HAProxy (L4)**
+
 ```
 frontend fe_tcp
   bind *:443
@@ -339,6 +353,7 @@ backend be_l7
 ```
 
 **Nginx (L7) excerpts**
+
 ```
 listen 8443 ssl http2 proxy_protocol;
 set_real_ip_from 10.0.0.0/8; real_ip_header proxy_protocol;
@@ -360,19 +375,19 @@ add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" alway
 
 ### 8.1 Permission matrix
 
-| Permission | owner | admin | agent | viewer |
-|---|---|---|---|---|
-| tenant.settings.write | ✓ | ✓ | | |
-| tenant.billing.manage | ✓ | | | |
-| users.invite / role.change | ✓ | ✓ | | |
-| apikeys.manage / widgetkeys.manage | ✓ | ✓ | | |
-| conversations.read.all | ✓ | ✓ | | ✓ |
-| conversations.read.assigned | ✓ | ✓ | ✓ | |
-| conversations.write.assigned | ✓ | ✓ | ✓ | |
-| conversations.takeover | ✓ | ✓ | | |
-| conversations.export | ✓ | ✓ | | |
-| contacts.read / write | ✓ | ✓ | ✓ / ✓ | ✓ / |
-| audit.read | ✓ | ✓ | | |
+| Permission                         | owner | admin | agent | viewer |
+| ---------------------------------- | ----- | ----- | ----- | ------ |
+| tenant.settings.write              | ✓     | ✓     |       |        |
+| tenant.billing.manage              | ✓     |       |       |        |
+| users.invite / role.change         | ✓     | ✓     |       |        |
+| apikeys.manage / widgetkeys.manage | ✓     | ✓     |       |        |
+| conversations.read.all             | ✓     | ✓     |       | ✓      |
+| conversations.read.assigned        | ✓     | ✓     | ✓     |        |
+| conversations.write.assigned       | ✓     | ✓     | ✓     |        |
+| conversations.takeover             | ✓     | ✓     |       |        |
+| conversations.export               | ✓     | ✓     |       |        |
+| contacts.read / write              | ✓     | ✓     | ✓ / ✓ | ✓ /    |
+| audit.read                         | ✓     | ✓     |       |        |
 
 ### 8.2 Policy package sketch (Go)
 
@@ -392,6 +407,7 @@ func Can(p principal.Context, a Action, r Resource) error {
     return ErrForbidden
 }
 ```
+
 Table-driven tests enumerate every (role, action, resource-relationship) cell.
 
 ### 8.3 Row-level security (SQL)
@@ -423,10 +439,12 @@ CREATE POLICY tenant_isolation ON messages
 ```
 
 Go side (pgx):
+
 ```go
 tx, _ := pool.Begin(ctx)
 _, _ = tx.Exec(ctx, "SELECT set_config('app.tenant_id', $1, true)", p.TenantID)
 ```
+
 A `pgxpool` `BeforeAcquire` hook asserts `app.tenant_id` is unset (connection reuse safety); CI fails if any query runs outside a tenant-scoped transaction (wrapper type `TenantTx` is the only way to get a querier).
 
 ---
@@ -434,6 +452,7 @@ A `pgxpool` `BeforeAcquire` hook asserts `app.tenant_id` is unset (connection re
 ## 9. NATS and Valkey configuration
 
 **nats-server.conf (per-service users)**
+
 ```
 accounts {
   APP {
@@ -456,9 +475,11 @@ accounts {
 system_account: SYS
 tls { cert_file: /certs/nats.crt, key_file: /certs/nats.key, ca_file: /certs/ca.crt, verify: true }
 ```
+
 Passwords are placeholders for Compose; prod uses NKeys or client certs (same ACL shape).
 
 **Valkey ACL file**
+
 ```
 user default off
 user auth-svc on >$AUTH_VK_PW ~sess:* ~jti:* ~wt:* ~rl:* +@read +@write +@scripting -@dangerous
@@ -480,22 +501,22 @@ user ws-gw on >$WSGW_VK_PW ~wt:* ~jti:* +get +getdel +exists -@all
 
 ## 11. 15-factor mapping for the security path
 
-| Factor | How this spec satisfies it |
-|---|---|
-| I Codebase / II Dependencies | One monorepo; Go modules vendored, SBOM per image |
-| III Config | All secrets and endpoints from env / mounted files; `config.Load()` fails fast on missing vars; identical var names in Compose and prod |
-| IV Backing services | Postgres, NATS, Valkey, OpenBao are attached resources via URLs; swap by config only |
-| V Build/Release/Run | Image built once; SOPS secrets decrypted at release; run stage reads env |
-| VI Processes | Stateless services; session state in Valkey/Postgres; WS state recoverable via NATS KV |
-| VII Port binding | Each service binds its own TLS port; no shared app server |
-| VIII Concurrency | Horizontal scale; no sticky sessions required (ticket + KV registry) |
-| IX Disposability | Graceful shutdown drains WS with close 1012; refresh rotation tolerates in-flight duplicates via `parent_id` |
-| X Dev/prod parity | Same TLS, same ACLs, same RLS, same L4/L7 chain locally |
-| XI Logs | Structured JSON to stdout; redaction middleware; audit to Postgres + JetStream |
-| XII Admin processes | Key rotation, migrations, seed as one-off `task` commands in the same image |
-| XIII API first | OpenAPI (external) and buf/protobuf (internal) are the source of truth; auth annotations live in the contracts |
-| XIV Telemetry | OpenTelemetry traces carry `tenant_id` + `request_id`; auth failures are metrics, not just logs |
-| XV Authn/Authz | This spec |
+| Factor                       | How this spec satisfies it                                                                                                              |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| I Codebase / II Dependencies | One monorepo; Go modules vendored, SBOM per image                                                                                       |
+| III Config                   | All secrets and endpoints from env / mounted files; `config.Load()` fails fast on missing vars; identical var names in Compose and prod |
+| IV Backing services          | Postgres, NATS, Valkey, OpenBao are attached resources via URLs; swap by config only                                                    |
+| V Build/Release/Run          | Image built once; SOPS secrets decrypted at release; run stage reads env                                                                |
+| VI Processes                 | Stateless services; session state in Valkey/Postgres; WS state recoverable via NATS KV                                                  |
+| VII Port binding             | Each service binds its own TLS port; no shared app server                                                                               |
+| VIII Concurrency             | Horizontal scale; no sticky sessions required (ticket + KV registry)                                                                    |
+| IX Disposability             | Graceful shutdown drains WS with close 1012; refresh rotation tolerates in-flight duplicates via `parent_id`                            |
+| X Dev/prod parity            | Same TLS, same ACLs, same RLS, same L4/L7 chain locally                                                                                 |
+| XI Logs                      | Structured JSON to stdout; redaction middleware; audit to Postgres + JetStream                                                          |
+| XII Admin processes          | Key rotation, migrations, seed as one-off `task` commands in the same image                                                             |
+| XIII API first               | OpenAPI (external) and buf/protobuf (internal) are the source of truth; auth annotations live in the contracts                          |
+| XIV Telemetry                | OpenTelemetry traces carry `tenant_id` + `request_id`; auth failures are metrics, not just logs                                         |
+| XV Authn/Authz               | This spec                                                                                                                               |
 
 ---
 
@@ -508,13 +529,14 @@ user ws-gw on >$WSGW_VK_PW ~wt:* ~jti:* +get +getdel +exists -@all
 **Secrets**: `secrets/*.enc.env` (SOPS + age). `make dev` decrypts to `.env.local` (git-ignored). Each service gets only its own vars via `env_file`. OpenBao dev instance stores the KEK; services call transit for DEK wrap/unwrap exactly as in prod.
 
 **Hardening in Compose** (parity with SEC-SC-1):
+
 ```yaml
 x-hardened: &hardened
   read_only: true
-  security_opt: ["no-new-privileges:true"]
-  cap_drop: ["ALL"]
-  user: "10001:10001"
-  tmpfs: ["/tmp"]
+  security_opt: ['no-new-privileges:true']
+  cap_drop: ['ALL']
+  user: '10001:10001'
+  tmpfs: ['/tmp']
 ```
 
 **Profiles**: `core` (everything above), `test` (k6, playwright), `chaos` (toxiproxy between gateway↔services and ws-gateway↔NATS to test reauth/reconnect under latency).
@@ -529,18 +551,18 @@ Metrics (Prometheus names): `auth_login_total{result}`, `auth_refresh_reuse_tota
 
 ## 14. ADRs to record
 
-| ID | Decision |
-|---|---|
-| ADR-SEC-01 | JOSE library (`lestrrat-go/jwx/v3`) and Ed25519 for all JWTs |
-| ADR-SEC-02 | BFF session cookie pattern over browser-held tokens |
-| ADR-SEC-03 | Single-use Valkey ticket for widget WebSocket auth |
+| ID         | Decision                                                                    |
+| ---------- | --------------------------------------------------------------------------- |
+| ADR-SEC-01 | JOSE library (`lestrrat-go/jwx/v3`) and Ed25519 for all JWTs                |
+| ADR-SEC-02 | BFF session cookie pattern over browser-held tokens                         |
+| ADR-SEC-03 | Single-use Valkey ticket for widget WebSocket auth                          |
 | ADR-SEC-04 | Signed internal token over trusted headers for service identity propagation |
-| ADR-SEC-05 | Postgres RLS as second enforcement layer with `SET LOCAL` per transaction |
-| ADR-SEC-06 | NATS per-service users with subject ACLs; no browser-facing NATS |
-| ADR-SEC-07 | OpenBao transit + `kms.Wrapper` abstraction for envelope encryption |
-| ADR-SEC-08 | ALTCHA self-hosted proof-of-work instead of third-party CAPTCHA |
-| ADR-SEC-09 | step-ca/mkcert local CA to keep TLS + mTLS identical locally |
-| ADR-SEC-10 | Intercom-style HMAC identity verification for visitors |
+| ADR-SEC-05 | Postgres RLS as second enforcement layer with `SET LOCAL` per transaction   |
+| ADR-SEC-06 | NATS per-service users with subject ACLs; no browser-facing NATS            |
+| ADR-SEC-07 | OpenBao transit + `kms.Wrapper` abstraction for envelope encryption         |
+| ADR-SEC-08 | ALTCHA self-hosted proof-of-work instead of third-party CAPTCHA             |
+| ADR-SEC-09 | step-ca/mkcert local CA to keep TLS + mTLS identical locally                |
+| ADR-SEC-10 | Intercom-style HMAC identity verification for visitors                      |
 
 ---
 
@@ -548,15 +570,15 @@ Metrics (Prometheus names): `auth_login_total{result}`, `auth_refresh_reuse_tota
 
 ### 15.1 Phase plan (each phase ends with its gate green)
 
-| Phase | Scope | Gate command |
-|---|---|---|
-| P1 | auth-service: keys, JWKS, login, refresh rotation, sessions, BFF cookie | `task test:sec:p1` |
-| P2 | Widget bootstrap, origin check, visitor JWT, identity verification, WS ticket | `task test:sec:p2` |
-| P3 | Edge chain (HAProxy→Nginx→gateway), header stripping, rate limits, security headers | `task test:sec:p3` |
-| P4 | Internal token, mTLS, gRPC interceptors, tenant injection | `task test:sec:p4` |
-| P5 | authz package + RLS + cross-tenant suite | `task test:sec:p5` |
-| P6 | NATS/Valkey ACLs, envelope encryption, audit, API keys, webhooks | `task test:sec:p6` |
-| P7 | Chaos (reauth under latency), load (k6 100 chats), supply-chain scans | `task test:sec:p7` |
+| Phase | Scope                                                                               | Gate command       |
+| ----- | ----------------------------------------------------------------------------------- | ------------------ |
+| P1    | auth-service: keys, JWKS, login, refresh rotation, sessions, BFF cookie             | `task test:sec:p1` |
+| P2    | Widget bootstrap, origin check, visitor JWT, identity verification, WS ticket       | `task test:sec:p2` |
+| P3    | Edge chain (HAProxy→Nginx→gateway), header stripping, rate limits, security headers | `task test:sec:p3` |
+| P4    | Internal token, mTLS, gRPC interceptors, tenant injection                           | `task test:sec:p4` |
+| P5    | authz package + RLS + cross-tenant suite                                            | `task test:sec:p5` |
+| P6    | NATS/Valkey ACLs, envelope encryption, audit, API keys, webhooks                    | `task test:sec:p6` |
+| P7    | Chaos (reauth under latency), load (k6 100 chats), supply-chain scans               | `task test:sec:p7` |
 
 ### 15.2 Test catalogue (IDs referenced by §2)
 
