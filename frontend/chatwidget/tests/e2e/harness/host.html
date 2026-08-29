@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chat Widget E2E Host</title>
+  <style>
+    :root {
+      --primary-color: #0b5fff;
+      --secondary-color: #0a3d91;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 24px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Chat Widget E2E Host</h1>
+
+  <!--
+    Real customer integration surface: a plain <script> tag plus
+    data-client-id. The client is parameterized via ?client= for the
+    per-client tests; the built IIFE bundle (dist/chat-widget.js) is loaded,
+    never the TS source.
+  -->
+  <script>
+    (function () {
+      var qs = new URLSearchParams(window.location.search);
+      if (qs.get('dark') === '1') {
+        document.documentElement.classList.add('dark');
+      }
+      var client = qs.get('client') || 'amber';
+      var count = qs.get('double') === '1' ? 2 : 1;
+      for (var i = 0; i < count; i++) {
+        var s = document.createElement('script');
+        s.setAttribute('src', '../../../dist/chat-widget.js');
+        s.setAttribute('data-client-id', client);
+        document.head.appendChild(s);
+      }
+    })();
+  </script>
+</body>
+</html>
