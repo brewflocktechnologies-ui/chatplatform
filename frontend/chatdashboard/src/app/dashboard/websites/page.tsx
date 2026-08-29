@@ -19,10 +19,7 @@ export default async function WebsitesPage(props: PageProps) {
 
   return (
     <PageContainer
-      pageTitle='Websites'
-      pageDescription='Manage websites running the chat widget, stored in MongoDB.'
       infoContent={websitesInfoContent}
-      pageHeaderAction={<WebsiteFormSheetTrigger />}
     >
       <WebsiteListingPage />
     </PageContainer>

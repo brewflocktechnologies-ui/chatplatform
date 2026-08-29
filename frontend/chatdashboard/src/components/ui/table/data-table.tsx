@@ -45,7 +45,10 @@ export function DataTable<TData>({ table, actionBar, children }: DataTableProps<
                   </TableRow>
                 ))}
               </TableHeader>
-              <TableBody>
+              {/* Keep the divider under the last row — the scroll container is
+                  usually taller than the rows, so the table shouldn't end
+                  without a line. */}
+              <TableBody className='[&_tr:last-child]:border-b'>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
                     <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>

@@ -19,10 +19,7 @@ export default async function CustomersPage(props: PageProps) {
 
   return (
     <PageContainer
-      pageTitle='Customers'
-      pageDescription='Manage customers stored in MongoDB.'
       infoContent={customersInfoContent}
-      pageHeaderAction={<CustomerFormSheetTrigger />}
     >
       <CustomerListingPage />
     </PageContainer>

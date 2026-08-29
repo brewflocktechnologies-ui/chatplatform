@@ -9,8 +9,6 @@ export const metadata = {
 export default function WidgetModifierPage() {
   return (
     <PageContainer
-      pageTitle='Widget Modifier'
-      pageDescription='Customize the chat widget per website — powered by the federated customization UI.'
       infoContent={widgetModifierInfoContent}
     >
       <WidgetModifierView />

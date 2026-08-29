@@ -1,3 +1,4 @@
+import { TeamIconGif } from '@/components/gif-icon';
 import {
   IconAdjustmentsHorizontal,
   IconAlertCircle,
@@ -132,6 +133,7 @@ export const Icons = {
   kanban: IconLayoutKanban,
   undo: IconArrowBackUp,
   refresh: IconRefresh,
+  customers: TeamIconGif,
   globe: IconWorld,
   panelLeft: IconLayoutSidebar,
 
