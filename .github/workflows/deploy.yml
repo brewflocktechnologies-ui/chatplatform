@@ -1,0 +1,130 @@
+name: Deploy
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'frontend/chatwidget/**'
+      - 'frontend/chatwidget-customization/**'
+      - '.github/workflows/deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: deploy
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build widget + Storybook + Customization
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend/chatwidget
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/chatwidget/package-lock.json
+
+      - name: Install dependencies (lit)
+        run: npm ci
+
+      - name: Run unit tests (lit) — deploy gate
+        run: npm run test
+
+      - name: Build widget (lit)
+        run: npm run build
+
+      - name: Build Storybook (lit)
+        run: npm run build-storybook
+
+      - name: Install, test & build customization app
+        run: |
+          cd ../chatwidget-customization
+          npm ci
+          npm run test
+          npm run build
+
+      - name: Add test page
+        run: |
+          cp test.html storybook-static/test.html
+
+      - name: Add widget bundle to deployment
+        run: |
+          mkdir -p storybook-static/dist
+          cp -r dist/* storybook-static/dist/
+
+          mkdir -p storybook-static/chatwidget/dist
+          cp -r dist/* storybook-static/chatwidget/dist/
+
+      - name: Add public client configurations
+        run: |
+          mkdir -p storybook-static/public/clients
+          cp -r public/clients/* storybook-static/public/clients/
+
+      # A missing file must FAIL the deploy, not silently ship a broken app —
+      # no `|| true` on any of these copies.
+      - name: Add widget customization app to deployment
+        run: |
+          mkdir -p storybook-static/chatwidget-customization
+
+          cp ../chatwidget-customization/index.html \
+            storybook-static/chatwidget-customization/
+
+          cp ../chatwidget-customization/forms.html \
+            storybook-static/chatwidget-customization/
+
+          cp ../chatwidget-customization/scripts.js \
+            storybook-static/chatwidget-customization/
+
+          cp ../chatwidget-customization/styles.css \
+            storybook-static/chatwidget-customization/
+
+          # src/core.js is loaded at runtime by index.html and is not bundled.
+          mkdir -p storybook-static/chatwidget-customization/src
+          cp -r ../chatwidget-customization/src/* \
+            storybook-static/chatwidget-customization/src/
+
+          mkdir -p storybook-static/chatwidget-customization/public
+          cp -r ../chatwidget-customization/public/* \
+            storybook-static/chatwidget-customization/public/
+
+          cp -r ../chatwidget-customization/dist/* \
+            storybook-static/chatwidget-customization/
+
+          mkdir -p storybook-static/chatwidget-customization/dist
+          cp -r dist/* \
+            storybook-static/chatwidget-customization/dist/
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: frontend/chatwidget/storybook-static
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

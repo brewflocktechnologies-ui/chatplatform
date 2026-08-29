@@ -4,10 +4,18 @@ import litStyles from '../../chatwidget/public/style.css?inline';
 import coreSource from './core.js?raw';
 import scriptsSource from '../scripts.js?raw';
 
-// ── LOCAL WIDGET HOST — hardcoded here so it is easy to change. The
-// chatwidget preview (frontend/chatwidget: npm run preview) serves
-// chat-widget.js on port 4173. Update the port if the widget runs elsewhere.
-const CHAT_WIDGET_HOST = 'http://localhost:4173';
+// ── WIDGET HOST — resolved automatically for both environments:
+// • local (localhost / 127.0.0.1): the chatwidget vite preview on port 4173
+//   (frontend/chatwidget: npm run preview). Change the port below if the
+//   widget preview runs elsewhere.
+// • deployed: the widget bundle sits in this remote's own dist/ folder
+//   (copied there by .github/workflows/deploy.yml), resolved relative to
+//   this module — no edits needed when deploying.
+const REMOTE_HOSTNAME = new URL(import.meta.url).hostname;
+const CHAT_WIDGET_HOST =
+  REMOTE_HOSTNAME === 'localhost' || REMOTE_HOSTNAME === '127.0.0.1'
+    ? 'http://localhost:4173'
+    : new URL('../dist', import.meta.url).href;
 
 // Origin this remote is served from (e.g. http://localhost:5001). Used so
 // preset/config fetches resolve against the remote, not the host page origin.
@@ -20,8 +28,6 @@ const CDN = {
   lucide: 'https://unpkg.com/lucide@latest',
   alpine: 'https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js',
   chatWidget: `${CHAT_WIDGET_HOST}/chat-widget.js`,
-  // Hosted build — swap in instead of the local host when deploying:
-  // chatWidget: 'https://brewflocktechnologies-ui.github.io/ai-widgets-websites/dist/chat-widget.js',
 };
 
 function runInFrameClassic(doc, code) {

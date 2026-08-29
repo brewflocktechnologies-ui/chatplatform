@@ -7,13 +7,19 @@
   <title>Widget Customization</title>
 
   <!-- ============================================================
-       LOCAL WIDGET HOST — hardcoded here so it is easy to change.
-       The chatwidget preview (frontend/chatwidget: npm run preview)
-       serves chat-widget.js and style.css on port 4173.
-       Update the port below if the widget runs on a different host.
+       WIDGET HOST — resolved automatically for both environments:
+       • local (localhost / 127.0.0.1): the chatwidget vite preview
+         on port 4173 (frontend/chatwidget: npm run preview).
+         Change the port below if the widget preview runs elsewhere.
+       • deployed: the widget bundle lives at <site-root>/dist/
+         (copied there by .github/workflows/deploy.yml), resolved
+         relative to this page — no edits needed when deploying.
        ============================================================ -->
   <script>
-    window.CHAT_WIDGET_HOST = 'http://localhost:4173';
+    window.CHAT_WIDGET_HOST =
+      (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+        ? 'http://localhost:4173'
+        : new URL('../dist', location.href).href;
   </script>
 
   <script>document.write('<link rel="stylesheet" href="' + window.CHAT_WIDGET_HOST + '/style.css">');</script>
