@@ -29,8 +29,16 @@ jobs:
         with:
           node-version: 24
           cache: 'npm'
+          cache-dependency-path: |
+            package-lock.json
+            frontend/chatwidget/package-lock.json
 
       - run: npm ci
+
+      # frontend/chatwidget keeps its own lockfile outside the npm workspace —
+      # install its deps so its nx targets (typecheck/test/build) can resolve
+      # modules like 'lit'.
+      - run: npm ci --prefix frontend/chatwidget
 
       # Prepend any command with "nx record --" to record its logs to Nx Cloud
       - run: npx nx record -- npx nx format:check --base="remotes/origin/main"

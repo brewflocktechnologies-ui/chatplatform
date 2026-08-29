@@ -4,3 +4,6 @@
 /.nx/cache
 /.nx/workspace-data
 .nx/self-healing
+# Frontend apps use their own formatters (oxfmt for chatdashboard); keep
+# root prettier out of them so nx format:check does not fight their style.
+/frontend
