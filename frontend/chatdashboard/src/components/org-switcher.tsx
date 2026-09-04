@@ -38,7 +38,7 @@ export function OrgSwitcher() {
               />
             }
           >
-            <div className="bg-sidebar-primary text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden">
+            <div className="bg-white text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden">
               <img
                 src="/images/Logo.png"
                 alt="Login"
