@@ -32,6 +32,10 @@ export class CwWidgetRoot extends LitElement {
   // -------------------------------------------------------------------------
   // 1. Widget & Layout
   // -------------------------------------------------------------------------
+  @property({ type: String, attribute: 'socket-url' }) socketUrl?: string;
+  @property({ type: String, attribute: 'tenant-id' }) tenantId?: string;
+  @property({ type: String, attribute: 'conversation-id' }) conversationId?: string;
+  @property({ type: String, attribute: 'visitor-name' }) visitorName?: string;
   @property({ type: String }) clientName?: string;
   @property({ type: String }) agentName?: string;
   @property({ type: Number }) widgetWidth?: number;
@@ -279,6 +283,12 @@ export class CwWidgetRoot extends LitElement {
       this.addEventListener('keydown', this.onKeydown);
 
       this.registerLeafEvents();
+      chatStore.initSocket(
+        this.socketUrl,
+        this.tenantId,
+        this.conversationId,
+        this.visitorName
+      );
       this.initialized = true;
       this.requestUpdate();
     }
@@ -375,7 +385,11 @@ export class CwWidgetRoot extends LitElement {
         this.userHasSentMessage = true;
         this.handleGreetSubmit((e.detail as string) || '');
       }],
-      ['cw:draft-change', (e) => { chatStore.get().draft = e.detail; }],
+      ['cw:draft-change', (e) => {
+        const val = (e.detail as string) || '';
+        chatStore.get().draft = val;
+        chatStore.sendTyping(!!val.trim());
+      }],
       ['cw:send', (e) => {
         this.userHasSentMessage = true;
         chatStore.send(e.detail as string);

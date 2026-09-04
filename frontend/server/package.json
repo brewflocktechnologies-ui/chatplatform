@@ -1,0 +1,14 @@
+{
+  "name": "chatplatform-websocket-server",
+  "version": "1.0.0",
+  "description": "Standalone WebSocket Hub for ChatPlatform real-time multi-room messaging",
+  "type": "module",
+  "main": "server.mjs",
+  "scripts": {
+    "start": "node server.mjs",
+    "dev": "node --watch server.mjs"
+  },
+  "dependencies": {
+    "ws": "^8.18.0"
+  }
+}

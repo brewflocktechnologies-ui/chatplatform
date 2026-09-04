@@ -198,8 +198,16 @@ export function getAnimClass(animation: string | undefined): string {
   return `anim-zotly-${animation}`;
 }
 
-/** Formats a Date-like ISO string into HH:MM. */
+/** Formats a Date-like ISO string or pre-formatted time into HH:MM. */
 export function formatTime(isoString: string | undefined): string {
-  const d = isoString ? new Date(isoString) : new Date();
+  if (!isoString) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const str = String(isoString).trim();
+  if (/^\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?$/i.test(str)) {
+    return str;
+  }
+  const d = new Date(str);
+  if (isNaN(d.getTime())) {
+    return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
