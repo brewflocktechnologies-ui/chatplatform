@@ -41,17 +41,17 @@ export default function SignInViewPage() {
         </div>
 
  
-      {/* Login image */}
-      <div className='relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden'>
-        <Image
-          src='/images/Login.png'
-          alt='Login'
-          width={400}
-          height={400}
-          className='max-h-[55vh] w-auto object-contain'
-          priority
-        />
-      </div>
+{/* Login image */}
+<div className='relative z-10 flex h-full w-full flex-1 items-center justify-center overflow-hidden'>
+  <Image
+    src='/images/Login.png'
+    alt='Login'
+    width={1200}
+    height={1200}
+    className='h-[75vh] w-auto max-w-none scale-150 -scale-x-150 object-contain drop-shadow-sm'
+    priority
+  />
+</div>
 
       </div>
 
