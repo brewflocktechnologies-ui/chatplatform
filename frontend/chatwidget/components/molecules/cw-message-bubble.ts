@@ -127,9 +127,20 @@ export class CwMessageBubble extends LitElement {
     const avatarBg = cw.agentAvatarBg || 'var(--cw-accent, #0b5fff)';
     const avatarColor = cw.agentAvatarColor || '#ffffff';
 
-    const formattedTime = m.created
-      ? new Date(m.created).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const formatTimeHelper = (raw?: string): string => {
+      if (!raw) return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const str = String(raw).trim();
+      if (/^\d{1,2}:\d{2}(:\d{2})?(\s*[AP]M)?$/i.test(str)) {
+        return str;
+      }
+      const d = new Date(str);
+      if (!isNaN(d.getTime())) {
+        return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      }
+      return str;
+    };
+
+    const formattedTime = formatTimeHelper(m.created);
 
     const avatarInitial = (m.senderName || this.agentName || 'A').charAt(0).toUpperCase();
 

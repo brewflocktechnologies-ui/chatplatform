@@ -9,6 +9,8 @@ import { CHATBAR_BAR_PRESET, CHATBAR_CARD_PRESET } from '../config/chatbar-prese
 
 // Types live in ./types.js (pure, side-effect-free) so presentational
 // components can depend on them without coupling to the store singleton.
+import { chatWidgetSocket } from '../services/socket-client.js';
+import { formatTime } from '../utils/style-helpers.js';
 import type {
   Message,
   ChatState,
@@ -459,6 +461,69 @@ export const chatStore = {
     return s.flags[key] !== undefined ? s.flags[key] : defaultValue;
   },
 
+  initSocket(url?: string, tenantId?: string, conversationId?: string, visitorName?: string) {
+    if (typeof window === 'undefined') return;
+    const wsUrl =
+      url ||
+      (window as any).CHAT_WIDGET_WS_URL ||
+      'ws://localhost:8088';
+
+    chatWidgetSocket.setCallbacks({
+      onMessage: ({ message, senderName }) => {
+        // Skip messages authored by this visitor
+        if (
+          message.author === chatWidgetSocket.visitorName ||
+          (message.sender === 'user' && message.author === chatWidgetSocket.visitorName)
+        ) {
+          return;
+        }
+
+        const curState = getStore().chat;
+        const agentMsg: Message = {
+          key: message.id || 'msg_' + Date.now(),
+          senderType: 'AGENT',
+          senderName: message.author || senderName || curState.agentName || 'Support Agent',
+          body: message.text,
+          created: message.timestamp || new Date().toISOString(),
+          status: 'delivered'
+        };
+
+        if (!curState.messages.some((m) => m.key === agentMsg.key)) {
+          curState.messages = [...curState.messages, agentMsg];
+          if (!curState.panelOpen) {
+            curState.unreadCount = (curState.unreadCount || 0) + 1;
+          }
+          curState.typingName = '';
+          emit('store:chat');
+        }
+      },
+      onTyping: ({ isTyping, senderName }) => {
+        const curState = getStore().chat;
+        curState.typingName = isTyping
+          ? senderName || curState.agentName || 'Support Agent'
+          : '';
+        emit('store:chat');
+      },
+      onStatusChange: (status) => {
+        const curState = getStore().chat;
+        curState.reconnecting = status === 'connecting' || status === 'error';
+        emit('store:chat');
+      }
+    });
+
+    chatWidgetSocket.connect(wsUrl, {
+      tenantId: tenantId || 'demo-tenant',
+      conversationId: conversationId || chatWidgetSocket.conversationId,
+      senderName: visitorName || chatWidgetSocket.visitorName
+    });
+  },
+
+  sendTyping(isTyping: boolean) {
+    if (chatWidgetSocket.isConnected) {
+      chatWidgetSocket.sendTyping(isTyping);
+    }
+  },
+
   send(textOverride?: string) {
     const s = getStore().chat;
     const text = (textOverride || s.draft || '').trim();
@@ -490,43 +555,64 @@ export const chatStore = {
     // Reset chatbar from card to bar layout if needed
     chatStore.resetChatbarLayout();
 
-    // Simulate delivery and read status
-    setTimeout(() => {
-      const idx = s.messages.findIndex((m) => m.key === msgObj.key);
-      if (idx !== -1) {
-        s.messages = s.messages.map((m, i) =>
-          i === idx ? { ...m, status: 'delivered' } : m
-        );
+    if (chatWidgetSocket.isConnected) {
+      // Send real message over WebSocket
+      chatWidgetSocket.sendMessage(text, chatWidgetSocket.visitorName);
+      chatWidgetSocket.sendTyping(false);
+
+      setTimeout(() => {
+        const idx = s.messages.findIndex((m) => m.key === msgObj.key);
+        if (idx !== -1) {
+          s.messages = s.messages.map((m, i) =>
+            i === idx ? { ...m, status: 'delivered' } : m
+          );
+          emit('store:chat');
+        }
+      }, 300);
+    } else {
+      // Connect if not yet connected
+      if (typeof window !== 'undefined') {
+        chatStore.initSocket();
+      }
+
+      // Offline fallback: simulated delivery and bot response
+      setTimeout(() => {
+        const idx = s.messages.findIndex((m) => m.key === msgObj.key);
+        if (idx !== -1) {
+          s.messages = s.messages.map((m, i) =>
+            i === idx ? { ...m, status: 'delivered' } : m
+          );
+          emit('store:chat');
+        }
+      }, 1500);
+      setTimeout(() => {
+        const curState = getStore().chat;
+        curState.typingName = curState.agentName || 'Sarah';
+        const idx = curState.messages.findIndex((m) => m.key === msgObj.key);
+        if (idx !== -1) {
+          curState.messages = curState.messages.map((m, i) =>
+            i === idx ? { ...m, status: 'read' } : m
+          );
+        }
         emit('store:chat');
-      }
-    }, 1500);
-    setTimeout(() => {
-      const curState = getStore().chat;
-      curState.typingName = curState.agentName || 'Sarah';
-      const idx = curState.messages.findIndex((m) => m.key === msgObj.key);
-      if (idx !== -1) {
-        curState.messages = curState.messages.map((m, i) =>
-          i === idx ? { ...m, status: 'read' } : m
-        );
-      }
-      emit('store:chat');
-    }, 2800);
-    setTimeout(() => {
-      const curState = getStore().chat;
-      curState.typingName = '';
-      const botMsg: Message = {
-        key: 'bot_' + Date.now(),
-        senderType: 'AGENT',
-        senderName: curState.agentName || 'Sarah',
-        body: 'Our team will contact you soon!',
-        created: new Date().toISOString(),
-      };
-      curState.messages = [...curState.messages, botMsg];
-      if (!curState.panelOpen) {
-        curState.unreadCount = (curState.unreadCount || 0) + 1;
-      }
-      emit('store:chat');
-    }, 4500);
+      }, 2800);
+      setTimeout(() => {
+        const curState = getStore().chat;
+        curState.typingName = '';
+        const botMsg: Message = {
+          key: 'bot_' + Date.now(),
+          senderType: 'AGENT',
+          senderName: curState.agentName || 'Sarah',
+          body: 'Our team will contact you soon!',
+          created: new Date().toISOString(),
+        };
+        curState.messages = [...curState.messages, botMsg];
+        if (!curState.panelOpen) {
+          curState.unreadCount = (curState.unreadCount || 0) + 1;
+        }
+        emit('store:chat');
+      }, 4500);
+    }
   },
 
   resetChatbarLayout() {
@@ -888,8 +974,7 @@ export const chatStore = {
   },
 
   timeLabel(msg: Message): string {
-    const d = msg.created ? new Date(msg.created) : new Date();
-    return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return formatTime(msg.created);
   },
 
   groupStart(index: number): boolean {
