@@ -1,41 +1,95 @@
 // ============================================================
-// External URLs — hosted widget assets
+// External URLs & MFE Environment Configuration
 // ============================================================
-// Central place for the URLs the Websites feature embeds and previews.
-// Update these when the widget is deployed to a different host.
+// Switch between 'local' and 'prod' as per your wish:
+// 1. By changing ACTIVE_WIDGET_ENV below ('local' | 'prod')
+// 2. Or setting NEXT_PUBLIC_WIDGET_CUSTOMIZATION_ENV in .env.local ('local' | 'prod')
+// 3. Or setting NEXT_PUBLIC_WIDGET_CUSTOMIZATION_URL to a custom URL
+// 4. Or toggling via browser localStorage: localStorage.setItem('widget_env', 'prod' | 'local')
 // ============================================================
+
+export type WidgetEnv = 'local' | 'prod';
+
+/**
+ * Default environment for widget assets & customization MFE.
+ * - 'prod': Loads from GitHub Pages CDN (works out-of-the-box without running port 5001).
+ * - 'local': Loads from local vite preview (chatwidget-customization on port 5001, chatwidget on port 4173).
+ */
+export const ACTIVE_WIDGET_ENV: WidgetEnv = 'prod';
+
+export const WIDGET_ENDPOINTS = {
+  customizationMfe: {
+    local: 'http://localhost:5001',
+    prod: 'https://brewflocktechnologies-ui.github.io/chatplatform/chatwidget-customization'
+  },
+  chatWidget: {
+    local: 'http://localhost:4173/chat-widget.js',
+    prod: 'https://brewflocktechnologies-ui.github.io/chatplatform/chatwidget/dist/chat-widget.js'
+  },
+  deployRoot: {
+    local: 'http://localhost:5001',
+    prod: 'https://brewflocktechnologies-ui.github.io/chatplatform'
+  }
+} as const;
 
 export const EXTERNAL_URLS = {
-  // Hosted chat widget bundle (loaded by previews and client sites)
-  chatWidgetCdn: 'https://brewflocktechnologies-ui.github.io/chatplatform/chatwidget/dist/chat-widget.js',
-  // Deployment root used to build the embed snippet (widget-loader.js lives here)
-  widgetDeployRoot: 'https://brewflocktechnologies-ui.github.io/chatplatform'
+  chatWidgetCdn: WIDGET_ENDPOINTS.chatWidget.prod,
+  widgetDeployRoot: WIDGET_ENDPOINTS.deployRoot.prod
 };
 
-// Chat widget bundle. Local: the chatwidget vite preview on port 4173
-// (frontend/chatwidget: npm run preview). Deployed: the hosted CDN bundle.
-export function getChatWidgetUrl(): string {
-  if (
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ) {
-    return 'http://localhost:4173/chat-widget.js';
+/**
+ * Resolves the active environment ('local' | 'prod') based on:
+ * 1. window.localStorage ('widget_env')
+ * 2. process.env.NEXT_PUBLIC_WIDGET_CUSTOMIZATION_ENV
+ * 3. ACTIVE_WIDGET_ENV constant above
+ */
+export function getActiveWidgetEnv(): WidgetEnv {
+  if (typeof window !== 'undefined') {
+    const stored = window.localStorage.getItem('widget_env') as WidgetEnv | null;
+    if (stored === 'local' || stored === 'prod') {
+      return stored;
+    }
   }
-  return EXTERNAL_URLS.chatWidgetCdn;
+
+  const envVar = process.env.NEXT_PUBLIC_WIDGET_CUSTOMIZATION_ENV as WidgetEnv | undefined;
+  if (envVar === 'local' || envVar === 'prod') {
+    return envVar;
+  }
+
+  return ACTIVE_WIDGET_ENV;
 }
 
-// Widget customization micro-frontend (module-federation remote exposing
-// ./mount). Local: the chatwidget-customization vite preview on port 5001
-// (frontend/chatwidget-customization: npm run preview). Deployed: the copy
-// published under the widget deploy root by .github/workflows/deploy.yml.
-export function getWidgetCustomizationMfeUrl(): string {
-  if (
-    typeof window !== 'undefined' &&
-    (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-  ) {
-    return 'http://localhost:5001';
+/**
+ * Set the environment at runtime from the browser.
+ */
+export function setActiveWidgetEnv(env: WidgetEnv): void {
+  if (typeof window !== 'undefined') {
+    window.localStorage.setItem('widget_env', env);
   }
-  return `${EXTERNAL_URLS.widgetDeployRoot}/chatwidget-customization`;
+}
+
+/**
+ * Widget customization micro-frontend URL (remoteEntry.js location).
+ */
+export function getWidgetCustomizationMfeUrl(): string {
+  if (process.env.NEXT_PUBLIC_WIDGET_CUSTOMIZATION_URL) {
+    return process.env.NEXT_PUBLIC_WIDGET_CUSTOMIZATION_URL;
+  }
+
+  const env = getActiveWidgetEnv();
+  return WIDGET_ENDPOINTS.customizationMfe[env];
+}
+
+/**
+ * Chat widget bundle URL.
+ */
+export function getChatWidgetUrl(): string {
+  if (process.env.NEXT_PUBLIC_CHAT_WIDGET_URL) {
+    return process.env.NEXT_PUBLIC_CHAT_WIDGET_URL;
+  }
+
+  const env = getActiveWidgetEnv();
+  return WIDGET_ENDPOINTS.chatWidget[env];
 }
 
 export function buildEmbedCode(websiteId: string): string {
@@ -44,3 +98,4 @@ export function buildEmbedCode(websiteId: string): string {
     `<script defer src="${EXTERNAL_URLS.widgetDeployRoot}/widget-loader.js" data-website-id="${websiteId}"></script>`
   ].join('\n');
 }
+
