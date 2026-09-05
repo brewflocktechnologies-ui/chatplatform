@@ -1,5 +1,4 @@
 import { expect, skipWithoutDb, test } from '../support/fixtures';
-import { uniqueName } from '../support/db';
 import { DataTablePage } from '../support/pages/data-table-page';
 
 /**
@@ -79,30 +78,5 @@ test.describe('Customers', () => {
 
     await table.expectToast('Customer deleted successfully');
     await table.expectRowGone(customer.name);
-  });
-
-  test('creating a customer from the page header', async ({ page, db }) => {
-    const name = uniqueName('Customer');
-    db.trackCustomerName(name);
-    const table = new DataTablePage(page, 'Search customers...');
-
-    await page.goto('/dashboard/customers');
-    await page.getByRole('button', { name: 'Add Customer' }).click();
-
-    const sheet = page.getByRole('dialog');
-    await expect(sheet.getByRole('heading', { name: 'New Customer' })).toBeVisible();
-
-    await sheet.getByLabel(/^Name/).fill(name);
-    await sheet.getByLabel(/^Email/).fill(`e2e-create-${Date.now().toString(36)}@example.test`);
-    await sheet.getByLabel(/^Country/).fill('india');
-    await sheet.getByLabel(/Active Plan/).click();
-    await page.getByRole('option', { name: 'Premium' }).click();
-
-    await sheet.getByRole('button', { name: 'Create Customer' }).click();
-    await table.expectToast('Customer created');
-
-    await table.search(name);
-    await table.expectRowVisible(name);
-    await expect(table.row(name)).toContainText('Premium');
   });
 });

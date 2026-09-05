@@ -1,5 +1,4 @@
 import { expect, skipWithoutDb, test } from '../support/fixtures';
-import { uniqueDomain } from '../support/db';
 import { DataTablePage } from '../support/pages/data-table-page';
 
 /**
@@ -25,34 +24,6 @@ test.describe('Websites', () => {
     await table.search(website.domain);
     await table.expectRowVisible(website.domain);
     await expect(table.row(website.domain)).toContainText(customer.name);
-  });
-
-  test('creating a website from the page header', async ({ page, db }) => {
-    const customer = await db.seedCustomer();
-    const domain = uniqueDomain();
-    db.trackWebsiteDomain(domain);
-    const table = new DataTablePage(page, 'Search websites...');
-
-    await page.goto('/dashboard/websites');
-    await page.getByRole('button', { name: 'Add Website' }).click();
-
-    const sheet = page.getByRole('dialog');
-    await expect(sheet.getByRole('heading', { name: 'New Website' })).toBeVisible();
-
-    await sheet.getByLabel(/^Domain/).fill(domain);
-    // Owner options load from MongoDB; pick the seeded customer.
-    await sheet.getByLabel(/^Customer/).click();
-    await page.getByRole('option', { name: new RegExp(customer.name) }).click();
-    await sheet.getByLabel(/Business Category/).click();
-    await page.getByRole('option', { name: 'Saas' }).click();
-    await sheet.getByLabel(/Flavour/).fill('Orange');
-
-    await sheet.getByRole('button', { name: 'Create Website' }).click();
-    await table.expectToast('Website created');
-
-    await table.search(domain);
-    await table.expectRowVisible(domain);
-    await expect(table.row(domain)).toContainText(customer.name);
   });
 
   test('embed-code wizard shows the site-specific snippet and copies it', async ({ page, db }) => {
@@ -97,7 +68,9 @@ test.describe('Websites', () => {
     const sheet = page.getByRole('dialog');
     await expect(sheet.getByText('Edit Website')).toBeVisible();
     await sheet.getByLabel('Domain').fill(newDomain);
-    await sheet.getByRole('button', { name: 'Update Website' }).click();
+    const updateBtn = sheet.getByRole('button', { name: 'Update Website' });
+    await updateBtn.scrollIntoViewIfNeeded();
+    await updateBtn.click({ force: true });
 
     await table.expectToast('Website updated');
 

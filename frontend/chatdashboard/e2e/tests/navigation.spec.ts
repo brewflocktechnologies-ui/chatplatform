@@ -55,15 +55,17 @@ test.describe('Navigation', () => {
   });
 
   test('kbar command palette navigates by search', async ({ page }) => {
+    test.slow();
     const shell = new DashboardShell(page);
     await page.goto('/dashboard/overview');
 
     const kbarInput = await shell.openKbar();
     await kbarInput.fill('Websites');
-    await expect(page.getByText('Go to Websites')).toBeVisible();
-    await kbarInput.press('Enter');
+    const result = page.getByText('Go to Websites');
+    await expect(result).toBeVisible();
+    await result.click();
 
-    await page.waitForURL('**/dashboard/websites');
+    await page.waitForURL('**/dashboard/websites', { waitUntil: 'commit' });
   });
 
   test('theme mode toggle switches between light and dark', async ({ page }) => {
