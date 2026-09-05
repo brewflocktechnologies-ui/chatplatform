@@ -19,7 +19,9 @@ export class DashboardShell {
 
   async navigateTo(title: string, expectedPath: string): Promise<void> {
     await this.navLink(title).click();
-    await this.page.waitForURL(`**${expectedPath}`);
+    // Use 'commit' (not the default 'load') so pages that open long-lived
+    // async connections (e.g. the chat WebSocket) don't stall the URL check.
+    await this.page.waitForURL(`**${expectedPath}`, { waitUntil: 'commit' });
   }
 
   async openUserMenu(): Promise<void> {

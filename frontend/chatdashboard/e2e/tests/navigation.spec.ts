@@ -29,6 +29,20 @@ test.describe('Navigation', () => {
   });
 
   test('sidebar reaches every product surface', async ({ page }) => {
+    // Under full-suite parallel load the Next.js dev server may take well over
+    // 60 s to compile every route on first access.  Triple the timeout (→ 180 s)
+    // and pre-warm every nav route via a background fetch so compilation is
+    // already done before the sidebar clicks start.
+    test.slow();
+
+    // Fire fetches concurrently — we only need the server to compile each
+    // route, we do not need the response bodies.
+    await Promise.all(
+      NAV_ITEMS.map(({ path }) =>
+        page.request.fetch(path, { timeout: 120_000 }).catch(() => null)
+      )
+    );
+
     const shell = new DashboardShell(page);
     await page.goto('/dashboard/overview');
 
