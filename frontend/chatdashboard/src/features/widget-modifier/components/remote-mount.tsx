@@ -2,7 +2,12 @@
 
 import { useEffect, useRef } from 'react';
 import { Icons } from '@/components/icons';
-import { getWidgetCustomizationMfeUrl } from '@/config/external-urls';
+import { Button } from '@/components/ui/button';
+import {
+  getActiveWidgetEnv,
+  getWidgetCustomizationMfeUrl,
+  setActiveWidgetEnv
+} from '@/config/external-urls';
 import { useViteRemote } from '../lib/federation';
 
 interface RemoteMountProps {
@@ -35,16 +40,37 @@ export function RemoteMount({ websiteId, customerId, domain }: RemoteMountProps)
   }, [mod, websiteId, customerId, domain]);
 
   if (error) {
+    const currentEnv = getActiveWidgetEnv();
+    const otherEnv = currentEnv === 'local' ? 'prod' : 'local';
+
     return (
       <div className='flex h-full items-center justify-center p-8'>
         <div className='border-destructive/40 bg-destructive/5 max-w-md rounded-lg border p-4 text-center'>
           <p className='text-destructive text-sm font-medium'>
-            Couldn&apos;t load the customization UI
+            Couldn&apos;t load customization UI ({currentEnv === 'local' ? 'Local: port 5001' : 'Production CDN'})
           </p>
           <p className='text-muted-foreground mt-1 text-xs'>
-            {error.message} — make sure the chatwidget-customization app is running (locally:
-            npm run preview on port 5001).
+            {error.message}
           </p>
+          <div className='mt-4 flex items-center justify-center gap-2'>
+            <Button
+              size='sm'
+              variant='outline'
+              onClick={() => {
+                setActiveWidgetEnv(otherEnv);
+                window.location.reload();
+              }}
+            >
+              Switch to {otherEnv === 'prod' ? 'Production CDN' : 'Local (port 5001)'}
+            </Button>
+            <Button
+              size='sm'
+              variant='ghost'
+              onClick={() => window.location.reload()}
+            >
+              Retry
+            </Button>
+          </div>
         </div>
       </div>
     );
