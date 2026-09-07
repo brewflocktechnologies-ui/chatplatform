@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { cn, formatBytes } from '@/lib/utils';
+import { cn, formatBytes, randomFraction, randomId } from '@/lib/utils';
 
 describe('cn', () => {
   it('merges class names', () => {
@@ -13,6 +13,32 @@ describe('cn', () => {
 
   it('lets later tailwind classes win over conflicting ones', () => {
     expect(cn('px-2', 'px-4')).toBe('px-4');
+  });
+});
+
+describe('randomFraction', () => {
+  it('returns values in [0, 1)', () => {
+    for (let i = 0; i < 50; i++) {
+      const value = randomFraction();
+      expect(value).toBeGreaterThanOrEqual(0);
+      expect(value).toBeLessThan(1);
+    }
+  });
+});
+
+describe('randomId', () => {
+  it('returns six base36 characters by default', () => {
+    expect(randomId()).toMatch(/^[0-9a-z]{6}$/);
+  });
+
+  it('respects a custom length', () => {
+    expect(randomId(4)).toMatch(/^[0-9a-z]{4}$/);
+    expect(randomId(12)).toMatch(/^[0-9a-z]{12}$/);
+  });
+
+  it('produces distinct ids across calls', () => {
+    const ids = new Set(Array.from({ length: 20 }, () => randomId(12)));
+    expect(ids.size).toBe(20);
   });
 });
 

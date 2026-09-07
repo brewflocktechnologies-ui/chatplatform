@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { randomId } from '@/lib/utils';
 import type { Attachment, Conversation, Message } from './types';
 import { initialConversations } from './data';
 import { chatDashboardSocket, SocketStatus } from '../services/chat-socket-client';
@@ -78,7 +79,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
         // Distinct user name! Treat as a brand-new separate user conversation
         // NEVER replace or overwrite any existing user's conversation
-        const newId = `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const newId = `user-${Date.now()}-${randomId(4)}`;
         const newConvo: Conversation = {
           id: newId,
           name: newName,
@@ -144,7 +145,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             const newId =
               conversationId && !state.conversations.some((c) => c.id === conversationId)
                 ? conversationId
-                : `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+                : `user-${Date.now()}-${randomId(4)}`;
 
             const newConvo: Conversation = {
               id: newId,
@@ -273,7 +274,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         const newId =
           conversationId && !state.conversations.some((c) => c.id === conversationId)
             ? conversationId
-            : `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+            : `user-${Date.now()}-${randomId(4)}`;
 
         const newConvo: Conversation = {
           id: newId,
@@ -330,7 +331,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       }
 
       // Create new user conversation for this name rather than wiping the previous user
-      const newId = `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const newId = `user-${Date.now()}-${randomId(4)}`;
       const newConvo: Conversation = {
         id: newId,
         name: trimmed,

@@ -9,7 +9,7 @@ import { ConversationSelect } from './conversation-select';
 import { ChatArea } from './chat-area';
 import { chatDashboardSocket } from '../services/chat-socket-client';
 import { Icons } from '@/components/icons';
-import { cn } from '@/lib/utils';
+import { cn, randomId } from '@/lib/utils';
 
 export function Messenger() {
   const {
@@ -72,7 +72,7 @@ export function Messenger() {
 
   const handleAddAttachments = useCallback((files: FileList) => {
     const newAttachments: Attachment[] = Array.from(files).map((file) => ({
-      id: 'file-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+      id: 'file-' + Date.now() + '-' + randomId(5),
       name: file.name,
       size: file.size,
       type: file.type
