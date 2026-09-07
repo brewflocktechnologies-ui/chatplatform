@@ -35,8 +35,7 @@ export function Messenger() {
 
   // Initialize socket on mount
   useEffect(() => {
-    const wsUrl =
-      process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8088';
+    const wsUrl = process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8088';
     initSocket(wsUrl, 'demo-tenant');
   }, [initSocket]);
 
@@ -168,7 +167,8 @@ export function Messenger() {
           <div className='max-w-md space-y-1.5'>
             <h3 className='text-foreground text-lg font-bold sm:text-xl'>Live Chat Platform</h3>
             <p className='text-muted-foreground text-xs leading-relaxed sm:text-sm'>
-              Real-time multi-tenant messaging hub. When visitors connect or send messages from the chat widget, their conversations will appear in the sidebar automatically.
+              Real-time multi-tenant messaging hub. When visitors connect or send messages from the
+              chat widget, their conversations will appear in the sidebar automatically.
             </p>
           </div>
           <div className='flex items-center gap-2 rounded-full border border-border/50 bg-muted/40 px-3.5 py-1.5 text-xs text-muted-foreground'>
@@ -178,7 +178,9 @@ export function Messenger() {
                 socketStatus === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'
               )}
             />
-            <span>WebSocket: {socketStatus === 'connected' ? 'Connected & Listening' : socketStatus}</span>
+            <span>
+              WebSocket: {socketStatus === 'connected' ? 'Connected & Listening' : socketStatus}
+            </span>
           </div>
         </div>
       )}

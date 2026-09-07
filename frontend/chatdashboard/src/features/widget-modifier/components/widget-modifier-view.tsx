@@ -99,9 +99,10 @@ export function WidgetModifierView() {
     null
   );
 
-  const isDirty = !!mfeState && !!selectedConfig && mfeState.configId === selectedConfig.id
-    ? mfeState.dirty
-    : false;
+  const isDirty =
+    !!mfeState && !!selectedConfig && mfeState.configId === selectedConfig.id
+      ? mfeState.dirty
+      : false;
 
   // Latest values for the postMessage handler (written in an effect, read in
   // event handlers only).
@@ -221,7 +222,6 @@ export function WidgetModifierView() {
     toast.info('Unsaved changes undone');
   };
 
-
   // Config CRUD ------------------------------------------------------------
 
   const [configPopoverOpen, setConfigPopoverOpen] = useState(false);
@@ -232,8 +232,7 @@ export function WidgetModifierView() {
   const [renameName, setRenameName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<WidgetConfig | null>(null);
 
-  const invalidateConfigs = () =>
-    queryClient.invalidateQueries({ queryKey: widgetConfigKeys.all });
+  const invalidateConfigs = () => queryClient.invalidateQueries({ queryKey: widgetConfigKeys.all });
 
   const createMutation = useMutation({
     mutationFn: (name: string) => createWidgetConfig(name),

@@ -7,7 +7,8 @@ describe('cn', () => {
   });
 
   it('drops falsy values', () => {
-    expect(cn('px-2', false && 'hidden', undefined, null)).toBe('px-2');
+    const isHidden = Boolean(process.env.NEVER_SET);
+    expect(cn('px-2', isHidden && 'hidden', undefined, null)).toBe('px-2');
   });
 
   it('lets later tailwind classes win over conflicting ones', () => {

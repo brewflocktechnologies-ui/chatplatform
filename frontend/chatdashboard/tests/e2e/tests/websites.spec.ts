@@ -70,7 +70,7 @@ test.describe('Websites', () => {
     await sheet.getByLabel('Domain').fill(newDomain);
     const updateBtn = sheet.getByRole('button', { name: 'Update Website' });
     await updateBtn.scrollIntoViewIfNeeded();
-    await updateBtn.click({ force: true });
+    await updateBtn.click();
 
     await table.expectToast('Website updated');
 

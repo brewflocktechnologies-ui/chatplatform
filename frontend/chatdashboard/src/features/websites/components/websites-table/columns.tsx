@@ -15,14 +15,21 @@ function formatDate(value: string | undefined) {
   return Number.isNaN(date.getTime()) ? value : format(date, 'MMM d, yyyy');
 }
 
-function BooleanBadge({ value, trueLabel, falseLabel }: { value: boolean; trueLabel: string; falseLabel: string }) {
+const CheckIcon = Icons.check;
+const CloseIcon = Icons.close;
+
+function BooleanBadge({
+  value,
+  trueLabel,
+  falseLabel
+}: {
+  value: boolean;
+  trueLabel: string;
+  falseLabel: string;
+}) {
   return (
     <Badge variant={value ? 'default' : 'secondary'}>
-      {value ? (
-        <Icons.check className='mr-1 h-3 w-3' />
-      ) : (
-        <Icons.close className='mr-1 h-3 w-3' />
-      )}
+      {value ? <CheckIcon className='mr-1 h-3 w-3' /> : <CloseIcon className='mr-1 h-3 w-3' />}
       {value ? trueLabel : falseLabel}
     </Badge>
   );

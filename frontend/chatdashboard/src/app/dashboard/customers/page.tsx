@@ -18,9 +18,7 @@ export default async function CustomersPage(props: PageProps) {
   searchParamsCache.parse(searchParams);
 
   return (
-    <PageContainer
-      infoContent={customersInfoContent}
-    >
+    <PageContainer infoContent={customersInfoContent}>
       <CustomerListingPage />
     </PageContainer>
   );

@@ -44,9 +44,18 @@ export function ChatHeader({ conversation }: ChatHeaderProps) {
           </div>
           {isTyping ? (
             <p className='text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-xs font-medium'>
-              <span className='h-1 w-1 rounded-full bg-emerald-500 animate-bounce' style={{ animationDelay: '0ms' }} />
-              <span className='h-1 w-1 rounded-full bg-emerald-500 animate-bounce' style={{ animationDelay: '150ms' }} />
-              <span className='h-1 w-1 rounded-full bg-emerald-500 animate-bounce' style={{ animationDelay: '300ms' }} />
+              <span
+                className='h-1 w-1 rounded-full bg-emerald-500 animate-bounce'
+                style={{ animationDelay: '0ms' }}
+              />
+              <span
+                className='h-1 w-1 rounded-full bg-emerald-500 animate-bounce'
+                style={{ animationDelay: '150ms' }}
+              />
+              <span
+                className='h-1 w-1 rounded-full bg-emerald-500 animate-bounce'
+                style={{ animationDelay: '300ms' }}
+              />
               <span>typing...</span>
             </p>
           ) : (

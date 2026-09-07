@@ -6,9 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { workspacesInfoContent } from '@/config/infoconfig';
 
-const WORKSPACES = [
-  { id: 'demo-org', name: 'Demo Workspace', role: 'Admin', members: 5 }
-];
+const WORKSPACES = [{ id: 'demo-org', name: 'Demo Workspace', role: 'Admin', members: 5 }];
 
 export default function WorkspacesPage() {
   return (

@@ -40,19 +40,17 @@ export default function SignUpViewPage() {
           Vainateya
         </div>
 
- 
-      {/* Sign Up image */}
-      <div className='relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden'>
-        <Image
-          src='/images/Sign-up.png'
-          alt='Sign-up'
-          width={400}
-          height={400}
-          className='max-h-[55vh] w-auto object-contain'
-          priority
-        />
-      </div>
-
+        {/* Sign Up image */}
+        <div className='relative z-10 flex min-h-0 flex-1 items-center justify-center overflow-hidden'>
+          <Image
+            src='/images/Sign-up.png'
+            alt='Sign-up'
+            width={400}
+            height={400}
+            className='max-h-[55vh] w-auto object-contain'
+            priority
+          />
+        </div>
       </div>
 
       {/* Right side */}

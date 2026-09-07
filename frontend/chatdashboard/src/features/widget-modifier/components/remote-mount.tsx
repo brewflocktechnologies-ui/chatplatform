@@ -47,11 +47,10 @@ export function RemoteMount({ websiteId, customerId, domain }: RemoteMountProps)
       <div className='flex h-full items-center justify-center p-8'>
         <div className='border-destructive/40 bg-destructive/5 max-w-md rounded-lg border p-4 text-center'>
           <p className='text-destructive text-sm font-medium'>
-            Couldn&apos;t load customization UI ({currentEnv === 'local' ? 'Local: port 5001' : 'Production CDN'})
+            Couldn&apos;t load customization UI (
+            {currentEnv === 'local' ? 'Local: port 5001' : 'Production CDN'})
           </p>
-          <p className='text-muted-foreground mt-1 text-xs'>
-            {error.message}
-          </p>
+          <p className='text-muted-foreground mt-1 text-xs'>{error.message}</p>
           <div className='mt-4 flex items-center justify-center gap-2'>
             <Button
               size='sm'
@@ -63,11 +62,7 @@ export function RemoteMount({ websiteId, customerId, domain }: RemoteMountProps)
             >
               Switch to {otherEnv === 'prod' ? 'Production CDN' : 'Local (port 5001)'}
             </Button>
-            <Button
-              size='sm'
-              variant='ghost'
-              onClick={() => window.location.reload()}
-            >
+            <Button size='sm' variant='ghost' onClick={() => window.location.reload()}>
               Retry
             </Button>
           </div>

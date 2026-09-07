@@ -98,4 +98,3 @@ export function buildEmbedCode(websiteId: string): string {
     `<script defer src="${EXTERNAL_URLS.widgetDeployRoot}/widget-loader.js" data-website-id="${websiteId}"></script>`
   ].join('\n');
 }
-

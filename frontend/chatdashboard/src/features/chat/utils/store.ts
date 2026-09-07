@@ -109,7 +109,9 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         // Resolve conversation by name or id
         let targetId = conversationId;
         if (senderName) {
-          const matched = state.conversations.find((c) => c.name.toLowerCase() === senderName.toLowerCase());
+          const matched = state.conversations.find(
+            (c) => c.name.toLowerCase() === senderName.toLowerCase()
+          );
           if (matched) targetId = matched.id;
         }
         if (!targetId) targetId = state.selectedConversationId;
@@ -139,9 +141,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             });
           } else if (status === 'online') {
             // New separate user section!
-            const newId = conversationId && !state.conversations.some((c) => c.id === conversationId)
-              ? conversationId
-              : `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+            const newId =
+              conversationId && !state.conversations.some((c) => c.id === conversationId)
+                ? conversationId
+                : `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
             const newConvo: Conversation = {
               id: newId,
@@ -267,9 +270,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       // If target does not exist (new user name!), create a NEW separate user conversation
       // NEVER overwrite or rename any existing user!
       if (!target) {
-        const newId = conversationId && !state.conversations.some((c) => c.id === conversationId)
-          ? conversationId
-          : `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const newId =
+          conversationId && !state.conversations.some((c) => c.id === conversationId)
+            ? conversationId
+            : `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
 
         const newConvo: Conversation = {
           id: newId,
@@ -284,10 +288,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             'Let me check that for you.',
             'Is there anything else I can assist with?'
           ],
-          autoReplies: [
-            'Thanks for getting back to me!',
-            'Got it, thank you!'
-          ]
+          autoReplies: ['Thanks for getting back to me!', 'Got it, thank you!']
         };
 
         return {
@@ -338,10 +339,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         unread: 0,
         initials: getInitials(trimmed),
         messages: [],
-        quickReplies: [
-          'How can I help you today?',
-          'Let me check that for you.'
-        ],
+        quickReplies: ['How can I help you today?', 'Let me check that for you.'],
         autoReplies: []
       };
 

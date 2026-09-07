@@ -20,12 +20,13 @@ const NAV_ITEMS: { title: string; path: string }[] = [
 test.describe('Navigation', () => {
   test('root URL routes signed-in users to the overview', async ({ page }) => {
     await page.goto('/');
-    await page.waitForURL('**/dashboard/overview');
+    // Generous timeout: the dev server may still be compiling the route.
+    await expect(page).toHaveURL(/\/dashboard\/overview$/, { timeout: 60_000 });
   });
 
   test('/dashboard redirects to the overview', async ({ page }) => {
     await page.goto('/dashboard');
-    await page.waitForURL('**/dashboard/overview');
+    await expect(page).toHaveURL(/\/dashboard\/overview$/, { timeout: 60_000 });
   });
 
   test('sidebar reaches every product surface', async ({ page }) => {
@@ -38,9 +39,7 @@ test.describe('Navigation', () => {
     // Fire fetches concurrently — we only need the server to compile each
     // route, we do not need the response bodies.
     await Promise.all(
-      NAV_ITEMS.map(({ path }) =>
-        page.request.fetch(path, { timeout: 120_000 }).catch(() => null)
-      )
+      NAV_ITEMS.map(({ path }) => page.request.fetch(path, { timeout: 120_000 }).catch(() => null))
     );
 
     const shell = new DashboardShell(page);

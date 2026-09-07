@@ -23,12 +23,10 @@ export const metadata: Metadata = {
     default: 'Chat Platform Dashboard',
     template: '%s | Chat Platform Dashboard'
   },
-  description:
-    'Admin dashboard built with Next.js 16, shadcn/ui, Tailwind CSS, and TypeScript.',
+  description: 'Admin dashboard built with Next.js 16, shadcn/ui, Tailwind CSS, and TypeScript.',
   openGraph: {
     title: 'Chat Platform Dashboard',
-    description:
-      'Admin dashboard built with Next.js 16, shadcn/ui, Tailwind CSS, and TypeScript.',
+    description: 'Admin dashboard built with Next.js 16, shadcn/ui, Tailwind CSS, and TypeScript.',
     siteName: 'Chat Platform Dashboard',
     type: 'website',
     images: [
@@ -43,8 +41,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'Chat Platform Dashboard',
-    description:
-      'Admin dashboard built with Next.js 16, shadcn/ui, Tailwind CSS, and TypeScript.',
+    description: 'Admin dashboard built with Next.js 16, shadcn/ui, Tailwind CSS, and TypeScript.',
     images: ['/og-image.png']
   }
 };

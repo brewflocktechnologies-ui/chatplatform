@@ -1,5 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
-import { loadLocalEnv } from './e2e/support/env';
+import { loadLocalEnv } from './tests/e2e/support/env';
 
 // Make .env.local (MONGODB_URI, NEXT_PUBLIC_CHAT_WS_URL, …) visible to the
 // test runner process — the Next dev server loads it on its own.
@@ -12,8 +12,8 @@ const WS_HEALTH_URL =
     .replace(/\/$/, '') + '/health';
 
 export default defineConfig({
-  testDir: './e2e/tests',
-  outputDir: './e2e/test-results',
+  testDir: './tests/e2e/tests',
+  outputDir: './tests/e2e/test-results',
 
   // Mutation specs (customers, websites) share one MongoDB database, but each
   // test operates only on rows it seeded with a run-unique prefix, so specs
@@ -24,8 +24,8 @@ export default defineConfig({
   workers: process.env.CI ? 2 : undefined,
 
   reporter: process.env.CI
-    ? [['github'], ['html', { outputFolder: 'e2e/playwright-report', open: 'never' }]]
-    : [['list'], ['html', { outputFolder: 'e2e/playwright-report', open: 'never' }]],
+    ? [['github'], ['html', { outputFolder: 'tests/e2e/playwright-report', open: 'never' }]]
+    : [['list'], ['html', { outputFolder: 'tests/e2e/playwright-report', open: 'never' }]],
 
   timeout: 60_000,
   expect: { timeout: 15_000 },
@@ -44,7 +44,7 @@ export default defineConfig({
   projects: [
     {
       name: 'setup',
-      testDir: './e2e/setup',
+      testDir: './tests/e2e/setup',
       testMatch: /auth\.setup\.ts/
     },
     {
@@ -55,7 +55,7 @@ export default defineConfig({
         viewport: { width: 1440, height: 900 },
         // Every dashboard workflow assumes the mock-auth session captured by
         // the setup project. auth.spec.ts opts out per-test.
-        storageState: 'e2e/.auth/agent.json',
+        storageState: 'tests/e2e/.auth/agent.json',
         permissions: ['clipboard-read', 'clipboard-write']
       }
     }

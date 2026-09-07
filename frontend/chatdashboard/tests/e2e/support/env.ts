@@ -7,7 +7,7 @@ import path from 'node:path';
  * inject its own MONGODB_URI / NEXT_PUBLIC_CHAT_WS_URL.
  */
 export function loadLocalEnv(): void {
-  const envPath = path.resolve(__dirname, '..', '..', '.env.local');
+  const envPath = path.resolve(__dirname, '..', '..', '..', '.env.local');
   if (!fs.existsSync(envPath)) return;
 
   for (const line of fs.readFileSync(envPath, 'utf8').split(/\r?\n/)) {

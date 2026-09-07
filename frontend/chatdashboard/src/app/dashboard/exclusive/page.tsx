@@ -22,8 +22,8 @@ export default function ExclusivePage() {
           <CardHeader>
             <CardTitle>Thank You for Checking Out the Exclusive Page</CardTitle>
             <CardDescription>
-              In the original template this was gated behind the Pro plan. In demo mode it is
-              always available.
+              In the original template this was gated behind the Pro plan. In demo mode it is always
+              available.
             </CardDescription>
           </CardHeader>
           <CardContent>

@@ -69,10 +69,9 @@ test.describe('Notifications page', () => {
 
     const markAllBtn = page.getByRole('button', { name: /Mark all as read/i });
     const btnVisible = await markAllBtn.isVisible().catch(() => false);
-    if (!btnVisible) {
-      test.skip();
-      return;
-    }
+    // The button only renders while unread notifications exist; another
+    // parallel spec may have already emptied the tab.
+    test.skip(!btnVisible, 'no unread notifications left to mark as read');
 
     await markAllBtn.click();
 

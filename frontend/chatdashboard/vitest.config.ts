@@ -8,9 +8,11 @@ export default defineConfig({
     }
   },
   test: {
-    environment: 'node',
-    include: ['src/**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules', 'e2e', '.next'],
+    globals: true,
+    environment: 'jsdom',
+    setupFiles: ['tests/unit/setup.ts'],
+    include: ['tests/unit/**/*.{test,spec}.{ts,tsx}'],
+    exclude: ['node_modules', 'tests/e2e', '.next'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'lcov'],

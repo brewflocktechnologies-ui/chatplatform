@@ -18,7 +18,12 @@ const PLANS = [
     name: 'Pro',
     price: '$29',
     description: 'For growing teams.',
-    features: ['Unlimited workspaces', 'Unlimited members', 'Priority support', 'Exclusive area access'],
+    features: [
+      'Unlimited workspaces',
+      'Unlimited members',
+      'Priority support',
+      'Exclusive area access'
+    ],
     highlighted: true
   },
   {
