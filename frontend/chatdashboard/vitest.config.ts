@@ -15,10 +15,26 @@ export default defineConfig({
     exclude: ['node_modules', 'tests/e2e', '.next'],
     coverage: {
       provider: 'v8',
-      reporter: ['text', 'lcov'],
+      reporter: ['text-summary', 'lcov'],
       reportsDirectory: 'coverage',
-      include: ['src/**/*.{ts,tsx}'],
-      exclude: ['src/**/*.{test,spec}.{ts,tsx}', 'src/**/*.d.ts']
+      // Unit coverage measures the logic layer. UI components/pages (*.tsx,
+      // src/app) and infrastructure that only runs against live systems
+      // (websocket hub, module federation, MongoDB, next/font, Sentry
+      // instrumentation) are exercised by the Playwright e2e suite instead.
+      include: ['src/**/*.ts'],
+      exclude: [
+        'src/**/*.{test,spec}.ts',
+        'src/**/*.d.ts',
+        'src/app/**',
+        'src/types/**',
+        'src/constants/mock-api.ts',
+        'src/features/chat/services/**',
+        'src/features/widget-modifier/lib/**',
+        'src/lib/mongodb.ts',
+        'src/components/themes/font.config.ts',
+        'src/instrumentation.ts',
+        'src/instrumentation-client.ts'
+      ]
     }
   }
 });
