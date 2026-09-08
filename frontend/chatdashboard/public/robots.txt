@@ -1,6 +1,6 @@
 User-agent: *
-Disallow: /auth
-Disallow: /dashboard
-Disallow: /sign-in
-Disallow: /sign-up
+Allow: /
+
+# API routes serve JSON, not pages — no value in crawling them.
+Disallow: /api/
 Disallow: /v1/

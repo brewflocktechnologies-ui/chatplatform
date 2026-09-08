@@ -1,6 +1,7 @@
 'use client';
 
 import { Icons } from '@/components/icons';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -39,7 +40,7 @@ export function OrgSwitcher() {
             }
           >
             <div className='bg-white text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden'>
-              <img src='/images/Logo.png' alt='Login' className='size-full object-cover' />
+              <Image src='/images/Logo.png' alt='Workspace logo' width={32} height={32} className='size-full object-cover' />
             </div>
             <div
               className={`grid flex-1 text-left text-sm leading-tight transition-all duration-200 ease-in-out ${

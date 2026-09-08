@@ -21,6 +21,9 @@ const baseConfig: NextConfig = {
       }
     ]
   },
+  // Lets a production build be measured without clobbering a running `next dev`:
+  //   NEXT_DIST_DIR=.next-prod next build && NEXT_DIST_DIR=.next-prod next start
+  distDir: process.env.NEXT_DIST_DIR || '.next',
   transpilePackages: ['geist'],
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production'
@@ -59,6 +62,16 @@ if (!process.env.NEXT_PUBLIC_SENTRY_DISABLED) {
     // Disable source map upload when org/project are not configured
     sourcemaps: {
       disable: !process.env.NEXT_PUBLIC_SENTRY_ORG || !process.env.NEXT_PUBLIC_SENTRY_PROJECT
+    },
+
+    // Tree-shake SDK features this app does not use out of the client bundle.
+    // Session Replay is the single largest piece of @sentry/browser; we do not
+    // configure replaysSessionSampleRate anywhere, so none of it is reachable.
+    bundleSizeOptimizations: {
+      excludeDebugStatements: true,
+      excludeReplayIframe: true,
+      excludeReplayShadowDom: true,
+      excludeReplayWorker: true
     }
   });
 }

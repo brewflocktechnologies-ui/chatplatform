@@ -25,6 +25,7 @@ describe('OrgSwitcher', () => {
         <OrgSwitcher />
       </SidebarProvider>
     );
-    expect(screen.getByRole('img', { name: 'Login' })).toHaveAttribute('src', '/images/Logo.png');
+    const img = screen.getByRole('img', { name: 'Workspace logo' });
+    expect(img).toHaveAttribute('src', expect.stringContaining('Logo.png'));
   });
 });
