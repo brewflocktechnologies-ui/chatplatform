@@ -22,6 +22,7 @@ export const DEMO_USER: MockUser = {
 interface MockAuthContextValue {
   user: MockUser | null;
   isAuthenticated: boolean;
+  isLoaded: boolean;
   login: (name?: string) => void;
   logout: () => void;
 }
@@ -30,6 +31,7 @@ const MockAuthContext = React.createContext<MockAuthContextValue | null>(null);
 
 export function MockAuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = React.useState<MockUser | null>(null);
+  const [isLoaded, setIsLoaded] = React.useState(false);
   const router = useRouter();
 
   React.useEffect(() => {
@@ -38,6 +40,8 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
       if (raw) setUser(JSON.parse(raw) as MockUser);
     } catch {
       // ignore malformed storage
+    } finally {
+      setIsLoaded(true);
     }
   }, []);
 
@@ -49,6 +53,7 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
       setUser(nextUser);
+      setIsLoaded(true);
       router.push('/dashboard/overview');
     },
     [router]
@@ -57,12 +62,13 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
   const logout = React.useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setUser(null);
+    setIsLoaded(true);
     router.push('/auth/sign-in');
   }, [router]);
 
   const value = React.useMemo<MockAuthContextValue>(
-    () => ({ user, isAuthenticated: !!user, login, logout }),
-    [user, login, logout]
+    () => ({ user, isAuthenticated: !!user, isLoaded, login, logout }),
+    [user, isLoaded, login, logout]
   );
 
   return <MockAuthContext.Provider value={value}>{children}</MockAuthContext.Provider>;

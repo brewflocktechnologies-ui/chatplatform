@@ -21,7 +21,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
   // Gate the whole /dashboard segment: redirect to sign-in when signed out.
   // Persisting the sidebar state in the cookie.
   const cookieStore = await cookies();
-  const defaultOpen = cookieStore.get('sidebar_state')?.value === 'true';
+  const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
   return (
     <AuthGuard>
       <KBar>

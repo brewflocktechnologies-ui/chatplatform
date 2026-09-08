@@ -25,14 +25,9 @@ export default function TeamPage() {
         </CardHeader>
         <CardContent className='space-y-2'>
           {MEMBERS.map((member) => (
-            <div
-              key={member.email}
-              className='flex items-center gap-3 rounded-lg border p-3'
-            >
+            <div key={member.email} className='flex items-center gap-3 rounded-lg border p-3'>
               <Avatar>
-                <AvatarFallback>
-                  {member.name.slice(0, 2).toUpperCase()}
-                </AvatarFallback>
+                <AvatarFallback>{member.name.slice(0, 2).toUpperCase()}</AvatarFallback>
               </Avatar>
               <div className='flex-1'>
                 <p className='text-sm font-medium'>{member.name}</p>

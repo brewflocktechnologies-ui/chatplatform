@@ -47,6 +47,13 @@
   },
   "overrides": [
     {
+      "files": ["e2e/**/*.ts", "playwright.config.ts"],
+      "rules": {
+        "no-empty-pattern": "off",
+        "react-hooks/rules-of-hooks": "off"
+      }
+    },
+    {
       "files": ["**/*.ts", "**/*.tsx", "**/*.mts", "**/*.cts"],
       "rules": {
         "constructor-super": "off",

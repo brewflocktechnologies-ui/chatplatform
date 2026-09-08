@@ -93,5 +93,5 @@ export const navGroups: NavGroup[] = [
         items: []
       }
     ]
-  },
+  }
 ];

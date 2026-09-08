@@ -12,6 +12,10 @@ import { useChatStore } from '../utils/store';
 
 type FilterTab = 'all' | 'unread' | 'online';
 
+const SearchIcon = Icons.search;
+const ChatIcon = Icons.chat;
+const ChecksIcon = Icons.checks;
+
 interface ConversationListProps {
   conversations: Conversation[];
   selectedId: string;
@@ -78,7 +82,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
 
       {/* Search Input */}
       <div className='relative'>
-        <Icons.search
+        <SearchIcon
           className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
           aria-hidden='true'
         />
@@ -113,8 +117,13 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
               : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
           )}
         >
-          All
-          <span className={cn('text-[10px] opacity-80', filterTab === 'all' ? 'text-primary-foreground' : 'text-muted-foreground')}>
+          All{' '}
+          <span
+            className={cn(
+              'text-[10px] opacity-80',
+              filterTab === 'all' ? 'text-primary-foreground' : 'text-muted-foreground'
+            )}
+          >
             {counts.all}
           </span>
         </button>
@@ -130,10 +139,12 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
         >
           Unread
           {counts.unread > 0 && (
-            <span className={cn(
-              'rounded-full px-1.5 py-0.2 text-[10px] font-bold',
-              filterTab === 'unread' ? 'bg-white/20 text-white' : 'bg-emerald-500 text-white'
-            )}>
+            <span
+              className={cn(
+                'rounded-full px-1.5 py-0.2 text-[10px] font-bold',
+                filterTab === 'unread' ? 'bg-white/20 text-white' : 'bg-emerald-500 text-white'
+              )}
+            >
               {counts.unread}
             </span>
           )}
@@ -148,8 +159,13 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
               : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
           )}
         >
-          Online
-          <span className={cn('text-[10px] opacity-80', filterTab === 'online' ? 'text-primary-foreground' : 'text-muted-foreground')}>
+          Online{' '}
+          <span
+            className={cn(
+              'text-[10px] opacity-80',
+              filterTab === 'online' ? 'text-primary-foreground' : 'text-muted-foreground'
+            )}
+          >
             {counts.online}
           </span>
         </button>
@@ -164,7 +180,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
         {filtered.length === 0 ? (
           <div className='flex flex-col items-center justify-center py-12 text-center px-4'>
             <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted/60 text-muted-foreground'>
-              <Icons.chat className='h-6 w-6' />
+              <ChatIcon className='h-6 w-6' />
             </div>
             <p className='text-foreground text-xs font-semibold'>
               {conversations.length === 0 ? 'No active chats yet' : 'No matching conversations'}
@@ -224,7 +240,9 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
                     <span
                       className={cn(
                         'shrink-0 text-[11px]',
-                        conversation.unread > 0 ? 'text-emerald-600 dark:text-emerald-400 font-semibold' : 'text-muted-foreground'
+                        conversation.unread > 0
+                          ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                          : 'text-muted-foreground'
                       )}
                     >
                       {lastMessage.timestamp}
@@ -237,15 +255,24 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
                   <div className='min-w-0 flex-1'>
                     {isTyping ? (
                       <span className='text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-xs font-medium'>
-                        <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce' style={{ animationDelay: '0ms' }} />
-                        <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce' style={{ animationDelay: '150ms' }} />
-                        <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce' style={{ animationDelay: '300ms' }} />
+                        <span
+                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+                          style={{ animationDelay: '0ms' }}
+                        />
+                        <span
+                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+                          style={{ animationDelay: '150ms' }}
+                        />
+                        <span
+                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+                          style={{ animationDelay: '300ms' }}
+                        />
                         <span>typing...</span>
                       </span>
                     ) : lastMessage ? (
                       <p className='text-muted-foreground flex items-center gap-1 truncate text-xs'>
                         {isSentByAgent && (
-                          <Icons.checks
+                          <ChecksIcon
                             className='text-primary shrink-0 h-3.5 w-3.5'
                             aria-label='Sent'
                           />
@@ -272,4 +299,3 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
     </div>
   );
 }
-

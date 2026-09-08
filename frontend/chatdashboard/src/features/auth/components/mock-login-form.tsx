@@ -37,9 +37,7 @@ export default function MockLoginForm() {
       >
         <form.AppField
           name='name'
-          children={(field) => (
-            <field.TextField label='Name' placeholder='Your name' />
-          )}
+          children={(field) => <field.TextField label='Name' placeholder='Your name' />}
         />
         <LoadingButton type='submit' className='w-full'>
           Login (Demo)

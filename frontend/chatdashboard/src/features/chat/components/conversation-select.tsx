@@ -22,7 +22,8 @@ export function ConversationSelect({
         <div>
           <p className='text-foreground text-xs font-semibold sm:text-sm'>Chats</p>
           <p className='text-muted-foreground text-[0.65rem] sm:text-xs'>
-            {conversations.length} conversation{conversations.length === 1 ? '' : 's'} • {onlineCount} online
+            {conversations.length} conversation{conversations.length === 1 ? '' : 's'} •{' '}
+            {onlineCount} online
           </p>
         </div>
         <Badge
@@ -47,7 +48,8 @@ export function ConversationSelect({
         >
           {conversations.map((conversation) => (
             <option key={conversation.id} value={conversation.id}>
-              {conversation.name} {conversation.unread > 0 ? `(${conversation.unread} unread)` : ''} {conversation.status === 'online' ? '• Online' : ''}
+              {conversation.name} {conversation.unread > 0 ? `(${conversation.unread} unread)` : ''}{' '}
+              {conversation.status === 'online' ? '• Online' : ''}
             </option>
           ))}
         </select>

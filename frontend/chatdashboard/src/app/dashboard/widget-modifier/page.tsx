@@ -8,9 +8,7 @@ export const metadata = {
 
 export default function WidgetModifierPage() {
   return (
-    <PageContainer
-      infoContent={widgetModifierInfoContent}
-    >
+    <PageContainer infoContent={widgetModifierInfoContent}>
       <WidgetModifierView />
     </PageContainer>
   );

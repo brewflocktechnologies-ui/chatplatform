@@ -40,19 +40,17 @@ export default function SignInViewPage() {
           Vainateya
         </div>
 
- 
-{/* Login image */}
-<div className='relative z-10 flex h-full w-full flex-1 items-center justify-center overflow-hidden'>
-  <Image
-    src='/images/Login.png'
-    alt='Login'
-    width={1200}
-    height={1200}
-    className='h-[75vh] w-auto max-w-none scale-150 -scale-x-150 object-contain drop-shadow-sm'
-    priority
-  />
-</div>
-
+        {/* Login image */}
+        <div className='relative z-10 flex h-full w-full flex-1 items-center justify-center overflow-hidden'>
+          <Image
+            src='/images/Login.png'
+            alt='Login'
+            width={1200}
+            height={1200}
+            className='h-[75vh] w-auto max-w-none scale-150 -scale-x-150 object-contain drop-shadow-sm'
+            priority
+          />
+        </div>
       </div>
 
       {/* Right side */}

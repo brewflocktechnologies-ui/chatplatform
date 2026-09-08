@@ -13,7 +13,12 @@ export interface SocketClientCallbacks {
   onMessage?: (data: { message: Message; conversationId: string; senderName?: string }) => void;
   onUpdateName?: (data: { conversationId: string; senderName: string }) => void;
   onTyping?: (data: { isTyping: boolean; senderName: string; conversationId?: string }) => void;
-  onPresence?: (data: { status: 'online' | 'offline'; role: string; senderName: string; conversationId?: string }) => void;
+  onPresence?: (data: {
+    status: 'online' | 'offline';
+    role: string;
+    senderName: string;
+    conversationId?: string;
+  }) => void;
   onStatusChange?: (status: SocketStatus) => void;
 }
 

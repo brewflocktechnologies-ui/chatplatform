@@ -18,9 +18,7 @@ export default async function WebsitesPage(props: PageProps) {
   searchParamsCache.parse(searchParams);
 
   return (
-    <PageContainer
-      infoContent={websitesInfoContent}
-    >
+    <PageContainer infoContent={websitesInfoContent}>
       <WebsiteListingPage />
     </PageContainer>
   );

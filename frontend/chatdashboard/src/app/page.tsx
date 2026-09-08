@@ -5,12 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
 export default function Page() {
-  const { isAuthenticated } = useMockAuth();
+  const { isAuthenticated, isLoaded } = useMockAuth();
   const router = useRouter();
 
   useEffect(() => {
+    if (!isLoaded) return;
     router.replace(isAuthenticated ? '/dashboard/overview' : '/auth/sign-in');
-  }, [isAuthenticated, router]);
+  }, [isLoaded, isAuthenticated, router]);
 
   return null;
 }

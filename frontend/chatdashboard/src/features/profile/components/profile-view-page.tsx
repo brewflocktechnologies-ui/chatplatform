@@ -45,9 +45,7 @@ export default function ProfileViewPage() {
           >
             <form.AppField
               name='name'
-              children={(field) => (
-                <field.TextField label='Name' placeholder='Your name' />
-              )}
+              children={(field) => <field.TextField label='Name' placeholder='Your name' />}
             />
             <form.AppField
               name='email'

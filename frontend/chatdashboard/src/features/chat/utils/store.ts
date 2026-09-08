@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { randomId } from '@/lib/utils';
 import type { Attachment, Conversation, Message } from './types';
 import { initialConversations } from './data';
 import { chatDashboardSocket, SocketStatus } from '../services/chat-socket-client';
@@ -78,7 +79,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
         // Distinct user name! Treat as a brand-new separate user conversation
         // NEVER replace or overwrite any existing user's conversation
-        const newId = `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const newId = `user-${Date.now()}-${randomId(4)}`;
         const newConvo: Conversation = {
           id: newId,
           name: newName,
@@ -109,7 +110,9 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         // Resolve conversation by name or id
         let targetId = conversationId;
         if (senderName) {
-          const matched = state.conversations.find((c) => c.name.toLowerCase() === senderName.toLowerCase());
+          const matched = state.conversations.find(
+            (c) => c.name.toLowerCase() === senderName.toLowerCase()
+          );
           if (matched) targetId = matched.id;
         }
         if (!targetId) targetId = state.selectedConversationId;
@@ -139,9 +142,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             });
           } else if (status === 'online') {
             // New separate user section!
-            const newId = conversationId && !state.conversations.some((c) => c.id === conversationId)
-              ? conversationId
-              : `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+            const newId =
+              conversationId && !state.conversations.some((c) => c.id === conversationId)
+                ? conversationId
+                : `user-${Date.now()}-${randomId(4)}`;
 
             const newConvo: Conversation = {
               id: newId,
@@ -267,9 +271,10 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       // If target does not exist (new user name!), create a NEW separate user conversation
       // NEVER overwrite or rename any existing user!
       if (!target) {
-        const newId = conversationId && !state.conversations.some((c) => c.id === conversationId)
-          ? conversationId
-          : `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const newId =
+          conversationId && !state.conversations.some((c) => c.id === conversationId)
+            ? conversationId
+            : `user-${Date.now()}-${randomId(4)}`;
 
         const newConvo: Conversation = {
           id: newId,
@@ -284,10 +289,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
             'Let me check that for you.',
             'Is there anything else I can assist with?'
           ],
-          autoReplies: [
-            'Thanks for getting back to me!',
-            'Got it, thank you!'
-          ]
+          autoReplies: ['Thanks for getting back to me!', 'Got it, thank you!']
         };
 
         return {
@@ -329,7 +331,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       }
 
       // Create new user conversation for this name rather than wiping the previous user
-      const newId = `user-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const newId = `user-${Date.now()}-${randomId(4)}`;
       const newConvo: Conversation = {
         id: newId,
         name: trimmed,
@@ -338,10 +340,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
         unread: 0,
         initials: getInitials(trimmed),
         messages: [],
-        quickReplies: [
-          'How can I help you today?',
-          'Let me check that for you.'
-        ],
+        quickReplies: ['How can I help you today?', 'Let me check that for you.'],
         autoReplies: []
       };
 

@@ -38,12 +38,8 @@ export function OrgSwitcher() {
               />
             }
           >
-            <div className="bg-white text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden">
-              <img
-                src="/images/Logo.png"
-                alt="Login"
-                className="size-full object-cover"
-              />
+            <div className='bg-white text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden'>
+              <img src='/images/Logo.png' alt='Login' className='size-full object-cover' />
             </div>
             <div
               className={`grid flex-1 text-left text-sm leading-tight transition-all duration-200 ease-in-out ${
@@ -88,7 +84,9 @@ export function OrgSwitcher() {
                     </div>
                     {workspace.name}
                     {isActive && <Icons.check className='ml-auto size-4' />}
-                    {!isActive && <span className='ml-auto text-muted-foreground text-xs'>⌘{index + 1}</span>}
+                    {!isActive && (
+                      <span className='ml-auto text-muted-foreground text-xs'>⌘{index + 1}</span>
+                    )}
                   </DropdownMenuItem>
                 );
               })}

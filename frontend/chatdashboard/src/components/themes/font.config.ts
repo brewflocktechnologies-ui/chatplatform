@@ -31,7 +31,10 @@ const fontMono = Geist_Mono({
 
 const fontGoogleSansFlex = Google_Sans_Flex({
   subsets: ['latin'],
-  variable: '--font-google-sans-flex'
+  variable: '--font-google-sans-flex',
+  // Next.js has no fallback metrics for this font — it warns on every compile
+  // and skips the fallback anyway, so opt out explicitly to silence it.
+  adjustFontFallback: false
 });
 
 const fontSourceCodePro = Source_Code_Pro({
