@@ -10,11 +10,7 @@ import { cookies } from 'next/headers';
 
 export const metadata: Metadata = {
   title: 'Dashboard',
-  description: 'Basic dashboard with Next.js and Shadcn',
-  robots: {
-    index: false,
-    follow: false
-  }
+  description: 'Basic dashboard with Next.js and Shadcn'
 };
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
