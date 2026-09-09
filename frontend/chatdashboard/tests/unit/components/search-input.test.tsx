@@ -1,14 +1,11 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 import SearchInput from '@/components/search-input';
 
-const toggle = vi.fn();
-vi.mock('kbar', () => ({
-  useKBar: () => ({ query: { toggle } })
-}));
+const dispatchSpy = vi.spyOn(window, 'dispatchEvent');
 
 beforeEach(() => {
-  toggle.mockReset();
+  dispatchSpy.mockClear();
 });
 
 describe('SearchInput', () => {
@@ -20,7 +17,9 @@ describe('SearchInput', () => {
 
   it('opens the command palette on click', () => {
     render(<SearchInput />);
-    fireEvent.click(screen.getByRole('button', { name: /search/i }));
-    expect(toggle).toHaveBeenCalledOnce();
+    const button = screen.getByRole('button', { name: /search/i });
+    fireEvent.click(button);
+    const dispatched = dispatchSpy.mock.calls.map(([event]) => event);
+    expect(dispatched.some((e) => e.type === 'kbar:open')).toBe(true);
   });
 });

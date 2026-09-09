@@ -7,10 +7,6 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/dashboard/customers'
 }));
 
-vi.mock('kbar', () => ({
-  useKBar: () => ({ query: { toggle: vi.fn() } })
-}));
-
 vi.mock('@/components/themes/theme-selector', () => ({
   ThemeSelector: () => <div data-testid='theme-selector' />
 }));
