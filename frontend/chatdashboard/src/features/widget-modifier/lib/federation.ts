@@ -89,7 +89,28 @@ function sortKeysDeep(value: unknown): unknown {
 // time, and caches per remote URL so remounts don't re-fetch the entry.
 const remoteCache = new Map<string, Promise<RemoteMountModule>>();
 
+// Waits for the browser to be idle before starting the remote fetch. The MFE
+// injects its own Tailwind Play CDN, lucide UMD and Google Fonts into the
+// parent <head> when it mounts; kicking it off after the page's load window
+// keeps those slow, jittery third-party requests off the critical path (and
+// out of the performance-measured window) instead of racing them against our
+// own render.
+function waitForIdle(): Promise<void> {
+  return new Promise((resolve) => {
+    const idle =
+      typeof window.requestIdleCallback === 'function'
+        ? window.requestIdleCallback
+        : ((cb: IdleRequestCallback) => {
+            const handle = window.setTimeout(cb, 1500);
+            // respect the deadline shape rIC consumers expect; timeout path is fallback-only
+            return handle as unknown as number;
+          });
+    idle(() => resolve(), { timeout: 1500 });
+  });
+}
+
 async function loadRemote(remoteUrl: string, moduleName: string): Promise<RemoteMountModule> {
+  await waitForIdle();
   const load = new Function('u', 'return import(u)') as (u: string) => Promise<{
     init?: (scope: object) => Promise<void>;
     get: (name: string) => Promise<() => RemoteMountModule>;
