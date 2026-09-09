@@ -1,14 +1,59 @@
 'use client';
 import { navGroups } from '@/config/nav-config';
-import { KBarAnimator, KBarPortal, KBarPositioner, KBarProvider, KBarSearch } from 'kbar';
+import { KBarAnimator, KBarPortal, KBarPositioner, KBarProvider, KBarSearch, useKBar } from 'kbar';
 import { Kbd } from '@/components/ui/kbd';
 import { useRouter } from 'next/navigation';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import RenderResults from './render-result';
 import useThemeSwitching from './use-theme-switching';
 import { useFilteredNavGroups } from '@/hooks/use-nav';
 
-export default function KBar({ children }: { children: React.ReactNode }) {
+// KBarProvider has no imperative "open" API from outside the provider; this
+// inner component lives inside it and flips the palette open whenever the
+// gatekeeper asks (first mount or a subsequent toggle signal, e.g. a click on
+// the header SearchInput button).
+function KBarOpenSignal({
+  openOnMount,
+  openNonce
+}: {
+  openOnMount: boolean;
+  openNonce: number;
+}) {
+  const { query } = useKBar();
+  const openOnMountRef = useRef(openOnMount);
+
+  // Open once on first mount (i.e. when the palette is requested before the
+  // chunk has loaded — LazyKBar mounts us already "open").
+  useEffect(() => {
+    if (openOnMountRef.current) {
+      query.toggle();
+    }
+    // query is stable for the lifetime of the provider; openOnMountRef
+    // intentionally captures only the mount-time intent.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  // Toggle on every subsequent request.
+  useEffect(() => {
+    if (openNonce > 0) {
+      query.toggle();
+    }
+    // query is stable for the lifetime of the provider.
+    // oxlint-disable-next-line react-hooks/exhaustive-deps
+  }, [openNonce, query]);
+
+  return null;
+}
+
+export default function KBar({
+  children,
+  openOnMount = false,
+  openNonce = 0
+}: {
+  children: React.ReactNode;
+  openOnMount?: boolean;
+  openNonce?: number;
+}) {
   const router = useRouter();
   const filteredGroups = useFilteredNavGroups(navGroups);
 
@@ -55,6 +100,7 @@ export default function KBar({ children }: { children: React.ReactNode }) {
 
   return (
     <KBarProvider actions={actions}>
+      <KBarOpenSignal openOnMount={openOnMount} openNonce={openNonce} />
       <KBarComponent>{children}</KBarComponent>
     </KBarProvider>
   );
