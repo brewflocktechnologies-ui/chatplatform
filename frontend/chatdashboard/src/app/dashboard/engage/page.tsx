@@ -8,9 +8,9 @@ export default function EngagePage() {
   const [activeTab, setActiveTab] = useState<'traffic' | 'campaigns' | 'goals'>('traffic');
 
   return (
-    <div className="flex h-[calc(100dvh-4rem)] overflow-hidden md:h-[calc(100dvh-3.5rem)]">
+    <div className="flex w-full flex-1 h-[calc(100dvh-4rem)] overflow-hidden md:h-[calc(100dvh-3.5rem)]">
       {/* Left Sidebar */}
-      <div className="w-[220px] border-r p-4 bg-gray-50 dark:bg-zinc-900">
+      <div className="w-[220px] shrink-0 border-r p-4 bg-gray-50 dark:bg-zinc-900">
         <h2 className="text-xl font-semibold mb-4 dark:text-white">Engage</h2>
         <nav className="flex flex-col gap-2">
           {['traffic', 'campaigns', 'goals'].map((tab) => (
@@ -34,7 +34,7 @@ export default function EngagePage() {
       </div>
 
       {/* Right Content View */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0 h-full flex flex-col">
         {activeTab === 'traffic' && <TrafficView />}
         {activeTab === 'campaigns' && <CampaignsView />}
         {activeTab === 'goals' && <GoalsView />}
@@ -46,9 +46,9 @@ export default function EngagePage() {
 
 
 function CampaignsView() {
-  return <div className="text-xl font-bold">🎯 Marketing Campaigns</div>;
+  return <div className="p-6 text-xl font-bold">🎯 Marketing Campaigns</div>;
 }
 
 function GoalsView() {
-  return <div className="text-xl font-bold">🏁 Engagement Goals</div>;
+  return <div className="p-6 text-xl font-bold">🏁 Engagement Goals</div>;
 }

@@ -13,6 +13,7 @@ const NAV_ITEMS: { title: string; path: string }[] = [
   { title: 'Customers', path: '/dashboard/customers' },
   { title: 'Websites', path: '/dashboard/websites' },
   { title: 'Widget Modifier', path: '/dashboard/widget-modifier' },
+  { title: 'Engage', path: '/dashboard/engage' },
   { title: 'Chat', path: '/dashboard/chat' },
   { title: 'AI Chat', path: '/dashboard/ai-chat' }
 ];

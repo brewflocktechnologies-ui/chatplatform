@@ -23,6 +23,7 @@ e2e/
     ├── customers.spec.ts        # search/URL state, edit, delete, empty state
     ├── websites.spec.ts         # search, embed-code wizard, edit, delete
     ├── widget-modifier.spec.ts  # customer→website cascade + deep links
+    ├── engage.spec.ts           # engage tabs: traffic table/filters, profile, campaigns/goals
     ├── chat.spec.ts             # visitor⇄hub⇄agent realtime flows (serial)
     └── ai-chat.spec.ts          # scripted streaming demo
 ```
