@@ -12,6 +12,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
+export type DetailsTab = 'info' | 'canned' | 'apps';
+
 function copyToClipboard(text: string, label: string) {
   navigator.clipboard?.writeText(text);
   toast.success(`Copied ${label} to clipboard`);
@@ -21,6 +23,8 @@ interface ArchivesDetailsProps {
   chat: ArchivedChat;
   isOpen: boolean;
   onToggle: () => void;
+  activeTab: DetailsTab;
+  onTabChange: (tab: DetailsTab) => void;
 }
 
 interface AgentNote {
@@ -66,8 +70,13 @@ const CANNED_RESPONSES = [
   }
 ];
 
-export function ArchivesDetails({ chat, isOpen, onToggle }: ArchivesDetailsProps) {
-  const [activeTab, setActiveTab] = useState<'info' | 'canned' | 'apps'>('info');
+export function ArchivesDetails({
+  chat,
+  isOpen,
+  onToggle,
+  activeTab,
+  onTabChange
+}: ArchivesDetailsProps) {
   const [notes, setNotes] = useState<Record<string, AgentNote[]>>(DEFAULT_NOTES);
   const [newNoteText, setNewNoteText] = useState('');
   const [cannedSearch, setCannedSearch] = useState('');
@@ -105,22 +114,6 @@ export function ArchivesDetails({ chat, isOpen, onToggle }: ArchivesDetailsProps
 
   return (
     <div className='relative flex h-full w-full sm:w-[320px] md:w-[360px] shrink-0 flex-col border-l border-border/60 bg-card/50 overflow-hidden'>
-      {/* Collapse Handle Button on Left Border */}
-      <Tooltip>
-        <TooltipTrigger
-          render={
-            <button
-              type='button'
-              aria-label='Collapse Details'
-              onClick={onToggle}
-              className='absolute -left-3 top-20 z-10 flex h-6 w-6 items-center justify-center rounded-full border border-border/80 bg-background text-muted-foreground shadow-2xs hover:bg-muted hover:text-foreground'
-            />
-          }
-        >
-          <Icons.chevronRight className='h-3 w-3' />
-        </TooltipTrigger>
-        <TooltipContent side='left'>Collapse Details</TooltipContent>
-      </Tooltip>
 
       {/* Top Tab Bar & Utility Actions */}
       <div className='flex items-center justify-between border-b border-border/60 px-4 py-2 shrink-0 bg-background/50'>
@@ -131,7 +124,7 @@ export function ArchivesDetails({ chat, isOpen, onToggle }: ArchivesDetailsProps
                 <button
                   type='button'
                   aria-label='Customer Details'
-                  onClick={() => setActiveTab('info')}
+                  onClick={() => onTabChange('info')}
                   className={cn(
                     'flex h-8 items-center gap-1.5 border-b-2 px-2.5 text-xs font-medium transition-colors',
                     activeTab === 'info'
@@ -152,7 +145,7 @@ export function ArchivesDetails({ chat, isOpen, onToggle }: ArchivesDetailsProps
                 <button
                   type='button'
                   aria-label='Notes & Canned Responses'
-                  onClick={() => setActiveTab('canned')}
+                  onClick={() => onTabChange('canned')}
                   className={cn(
                     'flex h-8 items-center gap-1.5 border-b-2 px-2.5 text-xs font-medium transition-colors',
                     activeTab === 'canned'
@@ -173,7 +166,7 @@ export function ArchivesDetails({ chat, isOpen, onToggle }: ArchivesDetailsProps
                 <button
                   type='button'
                   aria-label='Apps & Integrations'
-                  onClick={() => setActiveTab('apps')}
+                  onClick={() => onTabChange('apps')}
                   className={cn(
                     'flex h-8 items-center gap-1.5 border-b-2 px-2.5 text-xs font-medium transition-colors',
                     activeTab === 'apps'
@@ -194,15 +187,15 @@ export function ArchivesDetails({ chat, isOpen, onToggle }: ArchivesDetailsProps
             render={
               <button
                 type='button'
-                aria-label='Close Details Panel'
+                aria-label='Hide Details Panel'
                 onClick={onToggle}
                 className='text-muted-foreground hover:text-foreground p-1 rounded-md'
               />
             }
           >
-            <Icons.close className='h-4 w-4' />
+            <Icons.chevronRight className='h-4 w-4' />
           </TooltipTrigger>
-          <TooltipContent side='left'>Close Details Panel</TooltipContent>
+          <TooltipContent side='left'>Hide Details Panel</TooltipContent>
         </Tooltip>
       </div>
 

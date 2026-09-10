@@ -5,7 +5,7 @@ import { MOCK_ARCHIVED_CHATS, TOTAL_ARCHIVED_COUNT } from '@/constants/mock-api-
 import type { ArchivedChat } from '../types';
 import { ArchivesList } from './archives-list';
 import { ArchivesTranscript } from './archives-transcript';
-import { ArchivesDetails } from './archives-details';
+import { ArchivesDetails, type DetailsTab } from './archives-details';
 import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -15,6 +15,7 @@ export default function ArchivesView() {
   // Default to chat-5 ("Test 10.11") matching the exact screenshot
   const [selectedId, setSelectedId] = useState<string>('chat-5');
   const [isDetailsOpen, setIsDetailsOpen] = useState<boolean>(true);
+  const [detailsTab, setDetailsTab] = useState<DetailsTab>('info');
 
   const activeChat = chats.find((c) => c.id === selectedId) || chats[0];
 
@@ -72,6 +73,8 @@ export default function ArchivesView() {
           chat={activeChat}
           isOpen={isDetailsOpen}
           onToggle={() => setIsDetailsOpen(false)}
+          activeTab={detailsTab}
+          onTabChange={setDetailsTab}
         />
       )}
 
@@ -101,7 +104,10 @@ export default function ArchivesView() {
                   <button
                     type='button'
                     aria-label='Customer Details'
-                    onClick={() => setIsDetailsOpen(true)}
+                    onClick={() => {
+                      setDetailsTab('info');
+                      setIsDetailsOpen(true);
+                    }}
                     className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors'
                   />
                 }
@@ -117,7 +123,10 @@ export default function ArchivesView() {
                   <button
                     type='button'
                     aria-label='Notes & Canned Responses'
-                    onClick={() => setIsDetailsOpen(true)}
+                    onClick={() => {
+                      setDetailsTab('canned');
+                      setIsDetailsOpen(true);
+                    }}
                     className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors'
                   />
                 }
@@ -133,7 +142,10 @@ export default function ArchivesView() {
                   <button
                     type='button'
                     aria-label='Apps & Integrations'
-                    onClick={() => setIsDetailsOpen(true)}
+                    onClick={() => {
+                      setDetailsTab('apps');
+                      setIsDetailsOpen(true);
+                    }}
                     className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors'
                   />
                 }
