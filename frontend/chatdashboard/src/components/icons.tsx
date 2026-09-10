@@ -34,6 +34,7 @@ import {
   IconDotsVertical,
   IconEdit,
   IconExternalLink,
+  IconBroadcast,
   IconEye,
   IconEyeOff,
   IconFile,
@@ -42,6 +43,7 @@ import {
   IconFileTypeDoc,
   IconFileTypeXls,
   IconFileZip,
+  IconFilter,
   IconFolder,
   IconGripVertical,
   IconHelpCircle,
@@ -57,6 +59,7 @@ import {
   IconLock,
   IconLogin,
   IconLogout,
+  IconMapPin,
   IconMessage,
   IconMinus,
   IconMoon,
@@ -136,6 +139,11 @@ export const Icons = {
   customers: TeamIconGif,
   globe: IconWorld,
   panelLeft: IconLayoutSidebar,
+
+  // Engagement
+  engage: IconBroadcast,
+  filter: IconFilter,
+  mapPin: IconMapPin,
 
   // User
   user: IconUser,

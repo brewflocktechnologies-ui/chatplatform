@@ -69,6 +69,14 @@ export const navGroups: NavGroup[] = [
         items: []
       },
       {
+        title: 'Engage',
+        url: '/dashboard/engage',
+        icon: 'engage',
+        shortcut: ['e', 'e'],
+        isActive: false,
+        items: []
+      },
+      {
         title: 'Widget Modifier',
         url: '/dashboard/widget-modifier',
         icon: 'adjustments',
