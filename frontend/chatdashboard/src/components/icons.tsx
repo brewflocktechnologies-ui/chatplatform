@@ -3,6 +3,7 @@ import {
   IconAdjustmentsHorizontal,
   IconAlertCircle,
   IconAlertTriangle,
+  IconArchive,
   IconArrowRight,
   IconBell,
   IconBold,
@@ -139,6 +140,7 @@ export const Icons = {
   customers: TeamIconGif,
   globe: IconWorld,
   panelLeft: IconLayoutSidebar,
+  archive: IconArchive,
 
   // Engagement
   engage: IconBroadcast,
