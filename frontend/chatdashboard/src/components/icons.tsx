@@ -5,6 +5,8 @@ import {
   IconAlertTriangle,
   IconArchive,
   IconArrowRight,
+  IconArrowsMaximize,
+  IconArrowsMinimize,
   IconBell,
   IconBold,
   IconBox,
@@ -141,6 +143,8 @@ export const Icons = {
   globe: IconWorld,
   panelLeft: IconLayoutSidebar,
   archive: IconArchive,
+  maximize: IconArrowsMaximize,
+  minimize: IconArrowsMinimize,
 
   // Engagement
   engage: IconBroadcast,

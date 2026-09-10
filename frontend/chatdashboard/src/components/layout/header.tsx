@@ -3,9 +3,9 @@ import { SidebarTrigger } from '../ui/sidebar';
 import { Separator } from '../ui/separator';
 import { Breadcrumbs } from '../breadcrumbs';
 import SearchInput from '../search-input';
-import { ThemeSelector } from '../themes/theme-selector';
 import { ThemeModeToggle } from '../themes/theme-mode-toggle';
-import { LazyNotificationCenter } from './lazy-notification-center';
+import { FullscreenToggle } from './fullscreen-toggle';
+import { UserDropdown } from './user-dropdown';
 
 export default function Header() {
   return (
@@ -21,10 +21,8 @@ export default function Header() {
           <SearchInput />
         </div>
         <ThemeModeToggle />
-        <div className='hidden sm:block'>
-          <ThemeSelector />
-        </div>
-        <LazyNotificationCenter />
+        <FullscreenToggle />
+        <UserDropdown />
       </div>
     </header>
   );
