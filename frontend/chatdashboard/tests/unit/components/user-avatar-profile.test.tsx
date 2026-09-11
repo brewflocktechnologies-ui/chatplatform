@@ -30,4 +30,17 @@ describe('UserAvatarProfile', () => {
     expect(screen.getByText('Demo User')).toBeInTheDocument();
     expect(screen.getByText('demo@example.com')).toBeInTheDocument();
   });
+
+  it('renders a status badge with the given class', () => {
+    const { container } = render(
+      <UserAvatarProfile user={user} badgeClassName='bg-green-500' />
+    );
+    const badge = container.querySelector('.bg-green-500');
+    expect(badge).toBeInTheDocument();
+  });
+
+  it('renders no badge by default', () => {
+    const { container } = render(<UserAvatarProfile user={user} />);
+    expect(container.querySelector('.bg-green-500')).not.toBeInTheDocument();
+  });
 });

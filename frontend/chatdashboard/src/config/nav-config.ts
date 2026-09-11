@@ -69,6 +69,14 @@ export const navGroups: NavGroup[] = [
         items: []
       },
       {
+        title: 'Engage',
+        url: '/dashboard/engage',
+        icon: 'engage',
+        shortcut: ['e', 'e'],
+        isActive: false,
+        items: []
+      },
+      {
         title: 'Widget Modifier',
         url: '/dashboard/widget-modifier',
         icon: 'adjustments',
@@ -81,6 +89,14 @@ export const navGroups: NavGroup[] = [
         url: '/dashboard/chat',
         icon: 'chat',
         shortcut: ['c', 'c'],
+        isActive: false,
+        items: []
+      },
+      {
+        title: 'Archives',
+        url: '/dashboard/archives',
+        icon: 'archive',
+        shortcut: ['a', 'r'],
         isActive: false,
         items: []
       },

@@ -31,90 +31,104 @@ export function MessageComposer({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
-    <form onSubmit={onSubmit} className='space-y-2 sm:space-y-3' aria-label='Reply composer'>
+    <form
+      onSubmit={onSubmit}
+      className='border-t border-border/60 bg-background/50 px-4 py-3 shrink-0'
+      aria-label='Reply composer'
+    >
       <label htmlFor='messenger-editor' className='sr-only'>
         Write a message
       </label>
-      <div className='border-border/40 bg-background/80 flex items-end gap-2 rounded-2xl border p-3 backdrop-blur sm:gap-3 sm:rounded-3xl sm:p-4'>
-        <div className='min-w-0 flex-1'>
-          {attachments.length > 0 && (
-            <FilePreview
-              files={attachments.map((a) => ({
-                id: a.id,
-                name: a.name,
-                type: a.type
-              }))}
-              onRemove={onRemoveAttachment}
-              className='mb-1 p-0'
-            />
-          )}
-          <Textarea
-            id='messenger-editor'
-            value={draft}
-            onChange={(e) => onDraftChange(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                if (draft.trim() || attachments.length > 0) {
-                  const form = e.currentTarget.closest('form');
-                  form?.requestSubmit();
-                }
-              }
-            }}
-            placeholder={'Message ' + contactName + ' (Enter to send, Shift+Enter for newline)'}
-            rows={2}
-            required={attachments.length === 0}
-            className='text-foreground placeholder:text-muted-foreground/70 min-h-[3rem] w-full resize-none border-none bg-transparent text-xs focus-visible:ring-0 focus-visible:outline-none sm:min-h-[4rem] sm:text-sm'
-            aria-label={'Message ' + contactName}
-          />
-          <div className='mt-2 flex flex-wrap gap-1.5 sm:mt-3 sm:gap-2'>
-            {quickReplies.map((reply) => (
-              <button
-                key={reply}
-                type='button'
-                onClick={() => onDraftChange(reply)}
-                className='border-border/50 bg-background/70 text-muted-foreground hover:border-primary/40 hover:text-foreground focus-visible:ring-primary/40 focus-visible:ring-offset-background rounded-full border px-2.5 py-0.5 text-[0.65rem] transition focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none sm:px-3 sm:py-1 sm:text-xs'
-              >
-                {reply}
-              </button>
-            ))}
-          </div>
+
+      {/* Precoded Quick Replies (Horizontal Scrolling Row) */}
+      {quickReplies && quickReplies.length > 0 && (
+        <div className='flex items-center gap-1.5 overflow-x-auto pb-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
+          <span className='text-[10px] font-medium text-muted-foreground shrink-0 flex items-center gap-1 mr-0.5'>
+            <Icons.sparkles className='h-3 w-3 text-primary' />
+            Suggested:
+          </span>
+          {quickReplies.map((reply) => (
+            <button
+              key={reply}
+              type='button'
+              onClick={() => onDraftChange(reply)}
+              className='shrink-0 rounded-full border border-border/70 bg-card hover:bg-muted/80 text-foreground/85 hover:text-foreground px-2.5 py-1 text-[11px] transition-colors shadow-2xs cursor-pointer'
+            >
+              {reply}
+            </button>
+          ))}
         </div>
-        <div className='flex shrink-0 flex-col items-end gap-1.5 sm:w-24 sm:gap-2'>
-          <input
-            ref={fileInputRef}
-            aria-label='Add attachments'
-            type='file'
-            multiple
-            className='hidden'
-            onChange={(e) => {
-              if (e.target.files?.length) {
-                onAddAttachments(e.target.files);
+      )}
+
+      {/* Attachments Preview */}
+      {attachments.length > 0 && (
+        <FilePreview
+          files={attachments.map((a) => ({
+            id: a.id,
+            name: a.name,
+            type: a.type
+          }))}
+          onRemove={onRemoveAttachment}
+          className='mb-2 p-0'
+        />
+      )}
+
+      {/* Unified Input Box */}
+      <div className='flex items-center gap-2 rounded-2xl border border-border/70 bg-card/90 px-3 py-1.5 shadow-2xs focus-within:border-primary/60 focus-within:ring-2 focus-within:ring-primary/20 transition-all'>
+        <input
+          ref={fileInputRef}
+          aria-label='Add attachments'
+          type='file'
+          multiple
+          className='hidden'
+          onChange={(e) => {
+            if (e.target.files?.length) {
+              onAddAttachments(e.target.files);
+            }
+            e.target.value = '';
+          }}
+        />
+
+        <Button
+          type='button'
+          variant='ghost'
+          size='icon-sm'
+          className='h-8 w-8 text-muted-foreground hover:text-foreground shrink-0 rounded-full cursor-pointer'
+          aria-label='Attach a file'
+          onClick={() => fileInputRef.current?.click()}
+        >
+          <Icons.paperclip className='h-4 w-4' />
+        </Button>
+
+        <Textarea
+          id='messenger-editor'
+          value={draft}
+          onChange={(e) => onDraftChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && !e.shiftKey) {
+              e.preventDefault();
+              if (draft.trim() || attachments.length > 0) {
+                const form = e.currentTarget.closest('form');
+                form?.requestSubmit();
               }
-              // Reset so same file can be re-selected
-              e.target.value = '';
-            }}
-          />
-          <Button
-            type='button'
-            variant='ghost'
-            size='icon'
-            className='border-border/40 bg-background/70 text-muted-foreground hover:bg-muted/50 focus-visible:ring-primary/40 focus-visible:ring-offset-background size-8 rounded-full border transition focus-visible:ring-2 focus-visible:ring-offset-2 sm:size-10'
-            aria-label='Attach a file'
-            onClick={() => fileInputRef.current?.click()}
-          >
-            <Icons.paperclip className='h-3.5 w-3.5 sm:h-4 sm:w-4' />
-          </Button>
-          <Button
-            type='submit'
-            size='icon'
-            className='bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-primary/40 focus-visible:ring-offset-background size-8 rounded-full shadow-lg transition focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 sm:size-10'
-            disabled={!draft.trim() && attachments.length === 0}
-            aria-label='Send message'
-          >
-            <Icons.send className='h-3.5 w-3.5 sm:h-4 sm:w-4' aria-hidden='true' />
-          </Button>
-        </div>
+            }
+          }}
+          placeholder={`Message ${contactName}...`}
+          rows={1}
+          required={attachments.length === 0}
+          className='text-foreground placeholder:text-muted-foreground/70 min-h-[36px] max-h-[120px] w-full resize-none border-none bg-transparent py-2 text-xs sm:text-sm focus-visible:ring-0 focus-visible:outline-none flex-1 leading-relaxed'
+          aria-label={'Message ' + contactName}
+        />
+
+        <Button
+          type='submit'
+          size='icon-sm'
+          className='h-8 w-8 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 shrink-0 shadow-xs transition disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer flex items-center justify-center'
+          disabled={!draft.trim() && attachments.length === 0}
+          aria-label='Send message'
+        >
+          <Icons.send className='h-3.5 w-3.5' aria-hidden='true' />
+        </Button>
       </div>
     </form>
   );

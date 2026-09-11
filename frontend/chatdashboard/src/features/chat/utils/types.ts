@@ -16,6 +16,29 @@ export type Message = {
 
 export type ConversationStatus = 'online' | 'offline';
 
+export type DetailsTab = 'info' | 'canned' | 'apps';
+
+export type ChatNote = {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: string;
+};
+
+export type VisitorInfo = {
+  email?: string;
+  phone?: string;
+  location?: string;
+  localTime?: string;
+  ipAddress?: string;
+  os?: string;
+  browser?: string;
+  device?: string;
+  startedUrl?: string;
+  chattingTime?: string;
+  tags?: string[];
+};
+
 export type Conversation = {
   id: string;
   name: string;
@@ -26,4 +49,6 @@ export type Conversation = {
   messages: Message[];
   quickReplies: string[];
   autoReplies: string[];
+  visitorInfo?: VisitorInfo;
+  notes?: ChatNote[];
 };

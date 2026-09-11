@@ -42,7 +42,7 @@ export function ThemeSelector() {
           <SelectValue placeholder='Select a theme' />
           <Kbd>T T</Kbd>
         </SelectTrigger>
-        <SelectContent align='end'>
+        <SelectContent align='start' side='bottom' sideOffset={4} alignItemWithTrigger={false}>
           {THEMES.length > 0 && (
             <>
               <SelectGroup>

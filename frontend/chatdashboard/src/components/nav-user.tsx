@@ -42,15 +42,15 @@ export function NavUser({
               />
             }
           >
-            <Avatar className='h-8 w-8 rounded-lg'>
+            <Avatar className='h-8 w-8 shrink-0 rounded-lg'>
               <AvatarImage src={user.avatar} alt={user.name} />
               <AvatarFallback className='rounded-lg'>CN</AvatarFallback>
             </Avatar>
-            <div className='grid flex-1 text-left text-sm leading-tight'>
+            <div className='grid flex-1 text-left text-sm leading-tight transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none'>
               <span className='truncate font-semibold'>{user.name}</span>
               <span className='truncate text-xs'>{user.email}</span>
             </div>
-            <Icons.chevronsDown className='ml-auto size-4' />
+            <Icons.chevronsDown className='ml-auto size-4 shrink-0 transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none' />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className='w-(--anchor-width) min-w-56 rounded-lg'
