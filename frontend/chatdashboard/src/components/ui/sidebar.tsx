@@ -383,7 +383,7 @@ function SidebarGroupLabel({
     props: mergeProps<'div'>(
       {
         className: cn(
-          'flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden transition-opacity duration-200 ease-linear group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none truncate focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
+          'relative flex h-8 shrink-0 items-center rounded-md px-2 text-xs font-medium text-sidebar-foreground/70 ring-sidebar-ring outline-hidden truncate focus-visible:ring-2 [&>svg]:size-4 [&>svg]:shrink-0',
           className
         )
       },

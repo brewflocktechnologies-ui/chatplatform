@@ -65,7 +65,19 @@ export default function AppSidebar() {
       <SidebarContent className='overflow-x-hidden'>
         {filteredGroups.map((group) => (
           <SidebarGroup key={group.label || 'ungrouped'} className='py-0'>
-            {group.label && <SidebarGroupLabel>{group.label}</SidebarGroupLabel>}
+            {group.label && (
+              <SidebarGroupLabel>
+                <span className='truncate text-left transition-opacity duration-150 ease-linear group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none'>
+                  {group.label}
+                </span>
+                <div
+                  aria-hidden='true'
+                  className='pointer-events-none absolute left-0 top-0 flex h-8 w-8 items-center justify-center opacity-0 transition-opacity duration-150 ease-linear group-data-[collapsible=icon]:opacity-100'
+                >
+                  <span className='h-px w-5 rounded-full bg-sidebar-border' />
+                </div>
+              </SidebarGroupLabel>
+            )}
             <SidebarMenu>
               {group.items.map((item) => {
                 const Icon = item.icon ? Icons[item.icon] : Icons.logo;
