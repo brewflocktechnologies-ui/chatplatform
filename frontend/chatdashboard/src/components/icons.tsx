@@ -1,4 +1,4 @@
-import { TeamIconGif } from '@/components/gif-icon';
+import { TeamIconGif, MessageIconGif } from '@/components/gif-icon';
 import {
   IconAdjustmentsHorizontal,
   IconAlertCircle,
@@ -63,7 +63,6 @@ import {
   IconLogin,
   IconLogout,
   IconMapPin,
-  IconMessage,
   IconMinus,
   IconMoon,
   IconMusic,
@@ -166,7 +165,7 @@ export const Icons = {
   logo: IconCommand,
 
   // Communication
-  chat: IconMessage,
+  chat: MessageIconGif,
   notification: IconBell,
   phone: IconPhone,
   video: IconVideo,
