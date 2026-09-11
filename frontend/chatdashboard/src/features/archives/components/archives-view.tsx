@@ -62,8 +62,13 @@ export default function ArchivesView() {
           onToggleDetails={() => setIsDetailsOpen((prev) => !prev)}
         />
       ) : (
-        <div className='flex flex-1 items-center justify-center text-sm text-muted-foreground'>
-          Select an archived chat to inspect.
+        <div className='flex flex-1 flex-col bg-background overflow-hidden min-w-0'>
+          <div className='flex items-center justify-between border-b border-border/60 px-4 sm:px-6 h-[56px] shrink-0 bg-background/50'>
+            <h3 className='text-sm font-semibold tracking-tight text-foreground'>Transcript</h3>
+          </div>
+          <div className='flex flex-1 items-center justify-center text-sm text-muted-foreground'>
+            Select an archived chat to inspect.
+          </div>
         </div>
       )}
 
@@ -80,24 +85,27 @@ export default function ArchivesView() {
 
       {/* 4. Sleek Reopen Rail when details panel is collapsed */}
       {activeChat && !isDetailsOpen && (
-        <div className='flex h-full w-10 flex-col items-center border-l border-border/60 bg-card/40 py-3 shrink-0'>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <Button
-                  variant='ghost'
-                  size='icon-sm'
-                  onClick={() => setIsDetailsOpen(true)}
-                  className='h-7 w-7 text-muted-foreground hover:text-foreground'
-                />
-              }
-            >
-              <Icons.chevronLeft className='h-4 w-4' />
-            </TooltipTrigger>
-            <TooltipContent side='left'>Open Details Panel</TooltipContent>
-          </Tooltip>
+        <div className='flex h-full w-10 flex-col items-center border-l border-border/60 bg-card/40 shrink-0'>
+          <div className='flex h-[56px] w-full items-center justify-center border-b border-border/60 shrink-0'>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant='ghost'
+                    size='icon-sm'
+                    onClick={() => setIsDetailsOpen(true)}
+                    className='h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer'
+                    aria-label='Open Details Panel'
+                  />
+                }
+              >
+                <Icons.chevronLeft className='h-4 w-4' />
+              </TooltipTrigger>
+              <TooltipContent side='left'>Open Details Panel</TooltipContent>
+            </Tooltip>
+          </div>
 
-          <div className='mt-4 flex flex-col gap-2'>
+          <div className='mt-3 flex flex-col gap-2'>
             <Tooltip>
               <TooltipTrigger
                 render={
@@ -108,7 +116,7 @@ export default function ArchivesView() {
                       setDetailsTab('info');
                       setIsDetailsOpen(true);
                     }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors'
+                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
                   />
                 }
               >
@@ -127,7 +135,7 @@ export default function ArchivesView() {
                       setDetailsTab('canned');
                       setIsDetailsOpen(true);
                     }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors'
+                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
                   />
                 }
               >
@@ -146,7 +154,7 @@ export default function ArchivesView() {
                       setDetailsTab('apps');
                       setIsDetailsOpen(true);
                     }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors'
+                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
                   />
                 }
               >

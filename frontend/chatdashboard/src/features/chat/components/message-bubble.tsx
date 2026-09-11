@@ -16,40 +16,34 @@ export function MessageBubble({ message }: MessageBubbleProps) {
 
   return (
     <motion.div
-      initial={shouldReduceMotion ? false : { opacity: 0, y: 12, scale: 0.98 }}
+      initial={shouldReduceMotion ? false : { opacity: 0, y: 8, scale: 0.98 }}
       animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: 0 }}
-      transition={{ duration: 0.28, ease: 'easeOut' }}
-      className='flex flex-col gap-1'
+      transition={{ duration: 0.22, ease: 'easeOut' }}
+      className={cn('flex flex-col', isUser ? 'items-end' : 'items-start')}
       role='group'
       aria-label={message.author + ' at ' + message.timestamp}
     >
       <div
         className={cn(
-          'relative max-w-[85%] rounded-xl border px-3 py-2 text-xs leading-relaxed sm:max-w-[82%] sm:rounded-2xl sm:px-4 sm:py-3 sm:text-sm',
+          'relative max-w-[80%] sm:max-w-[70%] rounded-2xl px-3.5 py-2 sm:px-4 sm:py-2.5 leading-relaxed shadow-2xs transition-all',
           isUser
-            ? 'border-primary/40 bg-primary text-primary-foreground ml-auto'
-            : 'bg-muted border-transparent'
+            ? 'bg-primary text-primary-foreground rounded-tr-xs'
+            : 'bg-muted/80 text-foreground border border-border/40 rounded-tl-xs'
         )}
       >
-        <p
-          className={cn(
-            'font-medium sm:text-sm',
-            isUser ? 'text-primary-foreground/80' : 'text-foreground/80'
-          )}
-        >
-          {message.author}
-        </p>
+        {!isUser && (
+          <p className='text-[10px] font-semibold text-muted-foreground mb-0.5 tracking-tight'>
+            {message.author}
+          </p>
+        )}
+
         {message.text && (
-          <p
-            className={cn(
-              'mt-1 text-[0.875rem] sm:text-[0.95rem]',
-              isUser ? 'text-primary-foreground/90' : 'text-foreground/90'
-            )}
-          >
+          <p className='text-xs sm:text-[13px] leading-relaxed whitespace-pre-wrap break-words'>
             {message.text}
           </p>
         )}
+
         {message.attachments && message.attachments.length > 0 && (
           <FilePreview
             files={message.attachments.map((a) => ({
@@ -58,16 +52,20 @@ export function MessageBubble({ message }: MessageBubbleProps) {
               type: a.type
             }))}
             variant={isUser ? 'inverted' : 'default'}
-            className='mt-1 p-0'
+            className='mt-1.5 p-0'
           />
         )}
-        <div className='mt-2 flex items-center justify-end gap-1.5 text-[0.65rem] sm:mt-3 sm:gap-2 sm:text-[0.7rem]'>
-          <span className={cn('text-muted-foreground', isUser && 'text-primary-foreground/80')}>
-            {message.timestamp}
-          </span>
+
+        <div
+          className={cn(
+            'mt-1 flex items-center justify-end gap-1 text-[10px]',
+            isUser ? 'text-primary-foreground/75' : 'text-muted-foreground'
+          )}
+        >
+          <span>{message.timestamp}</span>
           {isUser && (
             <Icons.checks
-              className='text-primary-foreground/80 h-3 w-3 sm:h-3.5 sm:w-3.5'
+              className='text-primary-foreground/80 h-3 w-3 shrink-0'
               aria-hidden='true'
             />
           )}

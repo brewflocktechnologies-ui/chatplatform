@@ -58,13 +58,13 @@ export function ArchivesList({ chats, selectedId, onSelect, totalCount }: Archiv
   return (
     <div className='flex h-full w-full flex-col border-r border-border/70 bg-card/60 sm:w-[320px] md:w-[340px] shrink-0 overflow-hidden'>
       {/* Top Header */}
-      <div className='flex items-center justify-between border-b border-border/60 px-4 py-3'>
-        <h2 className='text-base font-semibold tracking-tight text-foreground'>Archives</h2>
+      <div className='flex items-center justify-between border-b border-border/60 px-4 h-[56px] shrink-0 bg-background/50'>
+        <h2 className='text-sm font-semibold tracking-tight text-foreground'>Archives</h2>
         <div className='flex items-center gap-1'>
           <Button
             variant='ghost'
             size='icon-sm'
-            className='text-muted-foreground hover:text-foreground'
+            className='h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer'
             title='Export or Refresh'
           >
             <Icons.refresh className='h-4 w-4' />

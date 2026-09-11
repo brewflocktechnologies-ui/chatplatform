@@ -95,27 +95,6 @@ export function ArchivesTranscript({
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-
-          {onToggleDetails && (
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant='ghost'
-                    size='icon-sm'
-                    onClick={onToggleDetails}
-                    className={cn(
-                      'h-8 w-8 text-muted-foreground hover:text-foreground transition-colors',
-                      isDetailsOpen && 'bg-accent text-foreground'
-                    )}
-                  />
-                }
-              >
-                <Icons.user className='h-4 w-4' />
-              </TooltipTrigger>
-              <TooltipContent>{isDetailsOpen ? 'Hide Details' : 'Show Details'}</TooltipContent>
-            </Tooltip>
-          )}
         </div>
       </div>
 

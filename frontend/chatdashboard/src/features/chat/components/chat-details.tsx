@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
-import type { ArchivedChat } from '../types';
+import type { Conversation, DetailsTab, ChatNote } from '../utils/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
@@ -12,41 +12,29 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
-export type DetailsTab = 'info' | 'canned' | 'apps';
-
 function copyToClipboard(text: string, label: string) {
-  navigator.clipboard?.writeText(text);
-  toast.success(`Copied ${label} to clipboard`);
+  if (typeof navigator !== 'undefined' && navigator.clipboard) {
+    navigator.clipboard.writeText(text);
+    toast.success(`Copied ${label} to clipboard`);
+  }
 }
 
-interface ArchivesDetailsProps {
-  chat: ArchivedChat;
+interface ChatDetailsProps {
+  conversation: Conversation;
   isOpen: boolean;
   onToggle: () => void;
   activeTab: DetailsTab;
   onTabChange: (tab: DetailsTab) => void;
+  onInsertCanned?: (text: string) => void;
 }
 
-interface AgentNote {
-  id: string;
-  author: string;
-  text: string;
-  createdAt: string;
-}
-
-const DEFAULT_NOTES: Record<string, AgentNote[]> = {
-  'chat-5': [
+const DEFAULT_NOTES: Record<string, ChatNote[]> = {
+  default: [
     {
       id: 'note-1',
-      author: 'Dan',
-      text: 'Customer reached out regarding API integration. Follow-up email sent with docs.',
-      createdAt: 'Mar 28, 2022'
-    },
-    {
-      id: 'note-2',
-      author: 'Support Bot',
-      text: 'Transferred from BotEngine to live agent queue after lead qualification.',
-      createdAt: 'Mar 28, 2022'
+      author: 'Support Agent',
+      text: 'Visitor initiated conversation from pricing page inquiry. Interested in multi-agent routing.',
+      createdAt: '10 mins ago'
     }
   ]
 };
@@ -54,30 +42,35 @@ const DEFAULT_NOTES: Record<string, AgentNote[]> = {
 const CANNED_RESPONSES = [
   {
     title: 'Greeting & Welcome',
-    text: 'Hello! Thanks for reaching out. How can I assist you today?'
+    text: 'Hello! Thanks for reaching out to support. How can I help you today?'
   },
   {
-    title: 'Lead Follow-up',
-    text: 'We have logged your request and our sales team will reach out within 24 hours.'
+    title: 'Request Account Details',
+    text: 'Could you please provide your registered email address or organization ID so I can look up your account?'
   },
   {
-    title: 'Chat Wrap-up',
-    text: 'Is there anything else I can help you with today before we wrap up?'
+    title: 'Checking with Engineering',
+    text: 'Let me consult our engineering team regarding this issue. I will update you here in a moment.'
   },
   {
-    title: 'Documentation Link',
-    text: 'You can review our API documentation at https://docs.chatplatform.dev'
+    title: 'Documentation Guide',
+    text: 'You can find step-by-step guides and documentation at https://docs.chatplatform.dev'
+  },
+  {
+    title: 'Resolution & Wrap-up',
+    text: 'Is there anything else I can assist you with before we wrap up today?'
   }
 ];
 
-export function ArchivesDetails({
-  chat,
+export function ChatDetails({
+  conversation,
   isOpen,
   onToggle,
   activeTab,
-  onTabChange
-}: ArchivesDetailsProps) {
-  const [notes, setNotes] = useState<Record<string, AgentNote[]>>(DEFAULT_NOTES);
+  onTabChange,
+  onInsertCanned
+}: ChatDetailsProps) {
+  const [notes, setNotes] = useState<Record<string, ChatNote[]>>(DEFAULT_NOTES);
   const [newNoteText, setNewNoteText] = useState('');
   const [cannedSearch, setCannedSearch] = useState('');
 
@@ -85,25 +78,49 @@ export function ArchivesDetails({
     return null;
   }
 
-  const currentNotes = notes[chat.id] || [];
+  const currentNotes = notes[conversation.id] || notes.default || [];
+
+  // Generate sensible defaults for visitor attributes if not explicitly provided
+  const email =
+    conversation.visitorInfo?.email ||
+    `${conversation.name.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '')}@visitor.com`;
+  const location = conversation.visitorInfo?.location || 'San Francisco, United States';
+  const localTime =
+    conversation.visitorInfo?.localTime ||
+    new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+  const ipAddress = conversation.visitorInfo?.ipAddress || '198.51.100.42';
+  const os = conversation.visitorInfo?.os || 'macOS / Chrome 122';
+  const browser = conversation.visitorInfo?.browser || 'Chrome 122.0.6261';
+  const device = conversation.visitorInfo?.device || 'Desktop (1920x1080)';
+  const startedUrl = conversation.visitorInfo?.startedUrl || 'https://chatplatform.dev/pricing';
+  const chattingTime = conversation.visitorInfo?.chattingTime || '4m 12s';
 
   const handleAddNote = (e: FormEvent) => {
     e.preventDefault();
     if (!newNoteText.trim()) return;
 
-    const newNote: AgentNote = {
+    const newNote: ChatNote = {
       id: 'note-' + Date.now(),
-      author: chat.agent || 'Agent',
+      author: 'You',
       text: newNoteText.trim(),
       createdAt: 'Just now'
     };
 
     setNotes((prev) => ({
       ...prev,
-      [chat.id]: [newNote, ...(prev[chat.id] || [])]
+      [conversation.id]: [newNote, ...(prev[conversation.id] || [])]
     }));
     setNewNoteText('');
-    toast.success('Note added successfully');
+    toast.success('Private note added');
+  };
+
+  const handleInsert = (text: string) => {
+    if (onInsertCanned) {
+      onInsertCanned(text);
+      toast.success('Inserted into composer');
+    } else {
+      copyToClipboard(text, 'response');
+    }
   };
 
   const filteredCanned = CANNED_RESPONSES.filter(
@@ -114,7 +131,6 @@ export function ArchivesDetails({
 
   return (
     <div className='relative flex h-full w-full sm:w-[320px] md:w-[360px] shrink-0 flex-col border-l border-border/60 bg-card/50 overflow-hidden'>
-
       {/* Top Tab Bar & Utility Actions */}
       <div className='flex items-center justify-between border-b border-border/60 px-4 h-[56px] shrink-0 bg-background/50'>
         <div className='flex items-center gap-1'>
@@ -123,7 +139,7 @@ export function ArchivesDetails({
               render={
                 <button
                   type='button'
-                  aria-label='Customer Details'
+                  aria-label='Visitor Details'
                   onClick={() => onTabChange('info')}
                   className={cn(
                     'flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer',
@@ -136,7 +152,7 @@ export function ArchivesDetails({
             >
               <Icons.user className='h-4 w-4' />
             </TooltipTrigger>
-            <TooltipContent>Customer Details</TooltipContent>
+            <TooltipContent>Visitor Details</TooltipContent>
           </Tooltip>
 
           <Tooltip>
@@ -201,35 +217,41 @@ export function ArchivesDetails({
         </Tooltip>
       </div>
 
-      {/* Tab 1: Customer Details */}
+      {/* Tab 1: Visitor Details */}
       {activeTab === 'info' && (
         <div className='flex-1 overflow-y-auto p-4 space-y-5 text-xs divide-y divide-border/40'>
           {/* Section 1: General Info */}
           <div className='space-y-3 pt-1'>
             <div className='flex items-center justify-between'>
               <h4 className='text-xs font-semibold text-foreground tracking-tight'>General info</h4>
-              <button type='button' className='text-muted-foreground hover:text-foreground'>
-                <Icons.moreHorizontal className='h-4 w-4' />
-              </button>
+              <span className='inline-flex items-center gap-1 text-[11px] font-medium'>
+                <span
+                  className={cn(
+                    'h-2 w-2 rounded-full',
+                    conversation.status === 'online' ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/50'
+                  )}
+                />
+                <span className='capitalize text-muted-foreground'>{conversation.status}</span>
+              </span>
             </div>
 
             <div className='flex items-start gap-3'>
-              <Avatar className='h-10 w-10 text-white text-sm font-semibold bg-purple-600 ring-2 ring-background'>
-                <AvatarFallback className='bg-purple-600 text-white'>
-                  {chat.customer.initials || 'T'}
+              <Avatar className='h-10 w-10 text-white text-sm font-semibold bg-primary/20 ring-2 ring-background'>
+                <AvatarFallback className='bg-primary/20 text-primary font-bold'>
+                  {conversation.initials}
                 </AvatarFallback>
               </Avatar>
 
               <div className='space-y-0.5 overflow-hidden flex-1'>
                 <div className='font-semibold text-foreground text-sm truncate'>
-                  {chat.customer.name}
+                  {conversation.name}
                 </div>
                 <button
                   type='button'
-                  onClick={() => copyToClipboard(chat.customer.email, 'email')}
-                  className='text-left text-muted-foreground hover:text-foreground hover:underline cursor-pointer truncate text-xs'
+                  onClick={() => copyToClipboard(email, 'email')}
+                  className='text-left text-muted-foreground hover:text-foreground hover:underline cursor-pointer truncate text-xs block'
                 >
-                  {chat.customer.email}
+                  {email}
                 </button>
               </div>
             </div>
@@ -237,11 +259,11 @@ export function ArchivesDetails({
             <div className='space-y-1.5 pt-1 text-muted-foreground'>
               <div className='flex items-center gap-2'>
                 <Icons.clock className='h-3.5 w-3.5 shrink-0' />
-                <span>{chat.customer.localTime}</span>
+                <span>{localTime}</span>
               </div>
               <div className='flex items-center gap-2'>
                 <Icons.mapPin className='h-3.5 w-3.5 shrink-0' />
-                <span className='truncate'>{chat.customer.location}</span>
+                <span className='truncate'>{location}</span>
               </div>
             </div>
 
@@ -249,8 +271,9 @@ export function ArchivesDetails({
               variant='outline'
               size='sm'
               className='w-full h-8 text-xs font-normal justify-center border-border/70 text-foreground/80 hover:text-foreground'
+              onClick={() => toast.info('Loading past history for this visitor')}
             >
-              <span>View all chats ({chat.customer.allChatsCount})</span>
+              <span>View all past sessions</span>
               <Icons.externalLink className='ml-1.5 h-3 w-3' />
             </Button>
           </div>
@@ -264,85 +287,65 @@ export function ArchivesDetails({
                 <span className='text-muted-foreground'>Chat ID:</span>
                 <button
                   type='button'
-                  onClick={() => copyToClipboard(chat.chatInfo.chatId, 'Chat ID')}
-                  className='font-mono font-medium text-foreground hover:underline'
+                  onClick={() => copyToClipboard(conversation.id, 'Chat ID')}
+                  className='font-mono font-medium text-foreground hover:underline cursor-pointer'
                 >
-                  {chat.chatInfo.chatId}
+                  {conversation.id}
                 </button>
               </div>
 
               <div className='flex items-center justify-between'>
-                <span className='text-muted-foreground'>Chatting time:</span>
+                <span className='text-muted-foreground'>Active duration:</span>
                 <div className='flex items-center gap-1 font-medium text-foreground'>
-                  <span>{chat.chatInfo.chattingTime}</span>
+                  <span>{chattingTime}</span>
                   <Icons.info className='h-3 w-3 text-muted-foreground' />
                 </div>
               </div>
 
               <div className='flex flex-col gap-0.5'>
-                <span className='text-muted-foreground'>Started on:</span>
+                <span className='text-muted-foreground'>Current page:</span>
                 <a
-                  href={chat.chatInfo.startedUrl}
+                  href={startedUrl}
                   target='_blank'
                   rel='noreferrer'
                   className='text-blue-600 dark:text-blue-400 hover:underline truncate text-[11px]'
                 >
-                  {chat.chatInfo.startedUrl}
+                  {startedUrl}
                 </a>
               </div>
 
               <div className='flex items-center justify-between pt-1'>
-                <span className='text-muted-foreground'>Groups:</span>
+                <span className='text-muted-foreground'>Routing queue:</span>
                 <div className='flex items-center gap-1.5'>
                   <span className='flex h-4 w-4 items-center justify-center rounded bg-emerald-600 text-[10px] font-bold text-white'>
-                    C
+                    L
                   </span>
-                  <span className='font-medium text-foreground'>{chat.chatInfo.group}</span>
+                  <span className='font-medium text-foreground'>Live Support</span>
                 </div>
               </div>
             </div>
           </div>
 
-          {/* Section 3: Pre-chat Form Data */}
-          <div className='space-y-2.5 pt-4'>
-            <h4 className='text-xs font-semibold text-foreground tracking-tight'>Pre-chat form</h4>
-
-            <div className='space-y-1.5 rounded-lg border border-border/50 bg-background/60 p-3 text-[11px]'>
-              {chat.preChatForm.name && (
-                <div className='flex flex-col'>
-                  <span className='text-muted-foreground font-medium'>Name:</span>
-                  <span className='text-foreground'>{chat.preChatForm.name}</span>
-                </div>
-              )}
-              {chat.preChatForm.email && (
-                <div className='flex flex-col pt-1'>
-                  <span className='text-muted-foreground font-medium'>E-mail:</span>
-                  <span className='text-foreground break-all'>{chat.preChatForm.email}</span>
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Section 4: Technology */}
+          {/* Section 3: Technology Specs */}
           <div className='space-y-2.5 pt-4'>
             <h4 className='text-xs font-semibold text-foreground tracking-tight'>Technology</h4>
 
             <div className='space-y-1.5 text-[11px] text-muted-foreground'>
               <div className='flex items-center justify-between'>
                 <span>IP address:</span>
-                <span className='font-mono text-foreground'>{chat.technology.ipAddress}</span>
+                <span className='font-mono text-foreground'>{ipAddress}</span>
               </div>
               <div className='flex items-center justify-between'>
                 <span>OS / Platform:</span>
-                <span className='text-foreground'>{chat.technology.os}</span>
+                <span className='text-foreground'>{os}</span>
               </div>
               <div className='flex items-center justify-between'>
                 <span>Browser:</span>
-                <span className='text-foreground'>{chat.technology.browser}</span>
+                <span className='text-foreground'>{browser}</span>
               </div>
               <div className='flex items-center justify-between'>
                 <span>Device:</span>
-                <span className='text-foreground'>{chat.technology.device}</span>
+                <span className='text-foreground'>{device}</span>
               </div>
             </div>
           </div>
@@ -365,7 +368,7 @@ export function ArchivesDetails({
 
             <form onSubmit={handleAddNote} className='space-y-2'>
               <Textarea
-                placeholder='Leave a private note about this chat or customer...'
+                placeholder='Leave a private note about this chat...'
                 value={newNoteText}
                 onChange={(e) => setNewNoteText(e.target.value)}
                 className='min-h-[70px] text-xs resize-none'
@@ -425,14 +428,26 @@ export function ArchivesDetails({
                     <span className='font-semibold text-foreground text-[11px]'>
                       {canned.title}
                     </span>
-                    <button
-                      type='button'
-                      onClick={() => copyToClipboard(canned.text, canned.title)}
-                      className='text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 font-medium'
-                    >
-                      <Icons.page className='h-3 w-3' />
-                      Copy
-                    </button>
+                    <div className='flex items-center gap-1.5'>
+                      <button
+                        type='button'
+                        onClick={() => handleInsert(canned.text)}
+                        className='text-blue-600 dark:text-blue-400 hover:underline text-[10px] flex items-center gap-0.5 font-medium cursor-pointer'
+                        title='Insert into composer'
+                      >
+                        <Icons.send className='h-2.5 w-2.5' />
+                        Insert
+                      </button>
+                      <span className='text-border'>•</span>
+                      <button
+                        type='button'
+                        onClick={() => copyToClipboard(canned.text, canned.title)}
+                        className='text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 font-medium cursor-pointer'
+                      >
+                        <Icons.page className='h-3 w-3' />
+                        Copy
+                      </button>
+                    </div>
                   </div>
                   <p className='text-[11px] text-muted-foreground line-clamp-2'>{canned.text}</p>
                 </div>
@@ -460,22 +475,22 @@ export function ArchivesDetails({
                 variant='outline'
                 className='text-[10px] h-4.5 px-1.5 text-emerald-600 border-emerald-500/30'
               >
-                Connected
+                Sync Active
               </Badge>
             </div>
 
             <div className='space-y-1.5 text-[11px] text-muted-foreground'>
               <div className='flex justify-between'>
                 <span>Contact Stage:</span>
-                <span className='font-medium text-foreground'>Qualified Opportunity</span>
+                <span className='font-medium text-foreground'>Active Lead</span>
               </div>
               <div className='flex justify-between'>
-                <span>Owner:</span>
-                <span className='font-medium text-foreground'>{chat.agent}</span>
+                <span>Assigned Agent:</span>
+                <span className='font-medium text-foreground'>You</span>
               </div>
               <div className='flex justify-between'>
-                <span>Deal Value:</span>
-                <span className='font-medium text-foreground'>$3,200.00</span>
+                <span>Pipeline Value:</span>
+                <span className='font-medium text-foreground'>$4,800.00</span>
               </div>
             </div>
           </div>
@@ -487,30 +502,28 @@ export function ArchivesDetails({
                 <span className='flex h-6 w-6 items-center justify-center rounded-md bg-blue-500/10 text-blue-600 font-bold text-xs'>
                   J
                 </span>
-                <span className='font-semibold text-foreground text-xs'>Jira Software</span>
+                <span className='font-semibold text-foreground text-xs'>Jira Service Desk</span>
               </div>
               <Badge
                 variant='outline'
                 className='text-[10px] h-4.5 px-1.5 text-blue-600 border-blue-500/30'
               >
-                Active
+                Linked
               </Badge>
             </div>
 
             <div className='space-y-1.5 text-[11px] text-muted-foreground'>
               <div className='flex justify-between'>
                 <span>Ticket:</span>
-                <span className='font-mono font-medium text-foreground'>#CHAT-1029</span>
+                <span className='font-mono font-medium text-foreground'>#CHAT-2041</span>
               </div>
               <div className='flex justify-between'>
-                <span>Summary:</span>
-                <span className='font-medium text-foreground truncate max-w-[170px]'>
-                  Widget session reconnect
-                </span>
+                <span>Priority:</span>
+                <span className='font-medium text-amber-600'>Medium</span>
               </div>
               <div className='flex justify-between'>
                 <span>Status:</span>
-                <span className='font-medium text-emerald-600'>Resolved</span>
+                <span className='font-medium text-emerald-600'>In Progress</span>
               </div>
             </div>
           </div>
@@ -528,23 +541,48 @@ export function ArchivesDetails({
                 variant='outline'
                 className='text-[10px] h-4.5 px-1.5 text-indigo-600 border-indigo-500/30'
               >
-                Customer
+                Pro Tier
               </Badge>
             </div>
 
             <div className='space-y-1.5 text-[11px] text-muted-foreground'>
               <div className='flex justify-between'>
                 <span>Plan:</span>
-                <span className='font-medium text-foreground'>Business Tier (Monthly)</span>
+                <span className='font-medium text-foreground'>Pro Annual</span>
               </div>
               <div className='flex justify-between'>
                 <span>MRR:</span>
-                <span className='font-medium text-foreground'>$89.00</span>
+                <span className='font-medium text-foreground'>$129.00</span>
               </div>
               <div className='flex justify-between'>
-                <span>Payment Status:</span>
-                <span className='font-medium text-emerald-600'>Good Standing</span>
+                <span>Billing Status:</span>
+                <span className='font-medium text-emerald-600'>Active</span>
               </div>
+            </div>
+          </div>
+
+          {/* Operator Actions */}
+          <div className='space-y-2 pt-2 border-t border-border/40'>
+            <h4 className='text-xs font-semibold text-foreground tracking-tight'>Quick Actions</h4>
+            <div className='grid grid-cols-2 gap-2'>
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-7 text-[11px] border-border/60 text-muted-foreground hover:text-foreground'
+                onClick={() => toast.success('Transcript exported to email')}
+              >
+                <Icons.page className='mr-1 h-3 w-3' />
+                Export
+              </Button>
+              <Button
+                variant='outline'
+                size='sm'
+                className='h-7 text-[11px] border-border/60 text-muted-foreground hover:text-foreground'
+                onClick={() => toast.info('Transfer modal opened')}
+              >
+                <Icons.share className='mr-1 h-3 w-3' />
+                Transfer
+              </Button>
             </div>
           </div>
         </div>
