@@ -91,7 +91,6 @@ export const fakeProducts = {
     search?: string;
     sort?: string;
   }) {
-    await delay(1000);
     const categoriesArray = categories
       ? Array.isArray(categories)
         ? categories
@@ -150,7 +149,6 @@ export const fakeProducts = {
 
   // Get a specific product by its ID
   async getProductById(id: number) {
-    await delay(3000); // Simulate a slow API call
 
     // Find the product by its ID
     const product = this.records.find((product) => product.id === id);
@@ -175,7 +173,6 @@ export const fakeProducts = {
 
   // Create a new product
   async createProduct(data: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'photo_url'>) {
-    await delay(1000);
 
     const newProduct: Product = {
       ...data,
@@ -199,7 +196,6 @@ export const fakeProducts = {
     id: number,
     data: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'photo_url'>
   ) {
-    await delay(1000);
 
     const index = this.records.findIndex((product) => product.id === id);
 
@@ -225,7 +221,6 @@ export const fakeProducts = {
 
   // Delete a product
   async deleteProduct(id: number) {
-    await delay(1000);
 
     const index = this.records.findIndex((product) => product.id === id);
 
