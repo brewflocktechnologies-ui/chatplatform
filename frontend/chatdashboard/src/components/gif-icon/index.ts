@@ -1,3 +1,5 @@
+'use client';
+
 import { createGifIcon } from './create-gif-icon';
 
 /**
