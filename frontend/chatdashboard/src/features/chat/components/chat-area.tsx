@@ -15,6 +15,9 @@ interface ChatAreaProps {
   attachments: Attachment[];
   onAddAttachments: (files: FileList) => void;
   onRemoveAttachment: (id: string) => void;
+  isDetailsOpen?: boolean;
+  onToggleDetails?: () => void;
+  onBack?: () => void;
 }
 
 export function ChatArea({
@@ -24,7 +27,10 @@ export function ChatArea({
   onSubmit,
   attachments,
   onAddAttachments,
-  onRemoveAttachment
+  onRemoveAttachment,
+  isDetailsOpen,
+  onToggleDetails,
+  onBack
 }: ChatAreaProps) {
   const shouldReduceMotion = useReducedMotion();
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
@@ -44,7 +50,7 @@ export function ChatArea({
     } else {
       scrollToBottom();
     }
-  }, [conversation.messages, conversation.id, shouldReduceMotion]);
+  }, [conversation.messages, shouldReduceMotion]);
 
   useEffect(() => {
     if (!liveRegionRef.current) return;
@@ -63,13 +69,18 @@ export function ChatArea({
           animate={shouldReduceMotion ? { opacity: 1 } : { opacity: 1, y: 0 }}
           exit={shouldReduceMotion ? { opacity: 0 } : { opacity: 0, y: -12 }}
           transition={{ duration: 0.32, ease: 'easeOut' }}
-          className='border-border/40 bg-background/80 flex min-h-0 flex-col gap-3 overflow-hidden rounded-2xl border p-3 backdrop-blur sm:gap-4 sm:p-4 lg:col-start-2 lg:col-end-3 lg:rounded-3xl'
+          className='flex h-full flex-1 flex-col bg-background overflow-hidden min-w-0'
         >
-          <ChatHeader conversation={conversation} />
+          <ChatHeader
+            conversation={conversation}
+            isDetailsOpen={isDetailsOpen}
+            onToggleDetails={onToggleDetails}
+            onBack={onBack}
+          />
 
           <div
             ref={messagesContainerRef}
-            className='[&::-webkit-scrollbar-thumb]:bg-muted relative min-h-0 flex-1 space-y-3 overflow-y-auto pr-2 sm:space-y-4 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full'
+            className='[&::-webkit-scrollbar-thumb]:bg-muted relative min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full'
             aria-live='off'
             aria-label={'Message thread with ' + conversation.name}
           >

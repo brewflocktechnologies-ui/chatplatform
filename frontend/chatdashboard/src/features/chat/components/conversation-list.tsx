@@ -55,125 +55,133 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
   }, [conversations, filterTab, search]);
 
   return (
-    <div className='border-border/50 bg-background/80 hidden h-full flex-col gap-3 overflow-hidden rounded-2xl border p-3.5 backdrop-blur-xl shadow-sm lg:col-start-1 lg:col-end-2 lg:flex lg:rounded-3xl lg:p-4'>
+    <div
+      className={cn(
+        'flex h-full w-full flex-col border-r border-border/70 bg-card/60 sm:w-[320px] md:w-[340px] shrink-0 overflow-hidden',
+        selectedId ? 'hidden md:flex' : 'flex'
+      )}
+    >
       {/* Header */}
-      <div className='flex items-center justify-between gap-3 px-1 pt-0.5'>
-        <div>
-          <h2 className='text-foreground text-base font-bold tracking-tight'>Chats</h2>
-          <p className='text-muted-foreground text-xs'>
-            {conversations.length} {conversations.length === 1 ? 'conversation' : 'conversations'}
-          </p>
-        </div>
-        <div className='flex items-center gap-1.5'>
-          {counts.online > 0 && (
-            <span className='inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2.5 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400'>
-              <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse' />
-              {counts.online} online
-            </span>
-          )}
+      <div className='flex items-center justify-between border-b border-border/60 px-4 h-[56px] shrink-0 bg-background/50'>
+        <div className='flex items-center gap-2'>
+          <h2 className='text-sm font-semibold tracking-tight text-foreground'>Live Chats</h2>
           <Badge
             variant='outline'
-            className='bg-primary/10 text-primary border-primary/20 rounded-full px-2 py-0.5 text-[0.65rem] font-semibold uppercase tracking-wider'
+            className='bg-primary/10 text-primary border-primary/20 rounded-full px-2 py-0 text-[10px] font-semibold tracking-wide'
           >
             Live
           </Badge>
         </div>
-      </div>
-
-      {/* Search Input */}
-      <div className='relative'>
-        <SearchIcon
-          className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
-          aria-hidden='true'
-        />
-        <Input
-          id='messenger-search'
-          type='search'
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder='Search users or messages...'
-          className='border-border/50 bg-muted/40 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/40 h-9 w-full rounded-xl pl-9 text-xs focus-visible:ring-2'
-        />
-        {search && (
-          <button
-            type='button'
-            onClick={() => setSearch('')}
-            className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 text-xs'
-          >
-            ✕
-          </button>
-        )}
-      </div>
-
-      {/* Filter Tabs (WhatsApp style pills) */}
-      <div className='flex items-center gap-1.5 border-b border-border/40 pb-2 text-xs'>
-        <button
-          type='button'
-          onClick={() => setFilterTab('all')}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition',
-            filterTab === 'all'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-          )}
-        >
-          All{' '}
-          <span
-            className={cn(
-              'text-[10px] opacity-80',
-              filterTab === 'all' ? 'text-primary-foreground' : 'text-muted-foreground'
-            )}
-          >
-            {counts.all}
-          </span>
-        </button>
-        <button
-          type='button'
-          onClick={() => setFilterTab('unread')}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition',
-            filterTab === 'unread'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-          )}
-        >
-          Unread
-          {counts.unread > 0 && (
-            <span
-              className={cn(
-                'rounded-full px-1.5 py-0.2 text-[10px] font-bold',
-                filterTab === 'unread' ? 'bg-white/20 text-white' : 'bg-emerald-500 text-white'
-              )}
-            >
-              {counts.unread}
+        <div className='flex items-center gap-1.5'>
+          {counts.online > 0 ? (
+            <span className='inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400'>
+              <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse' />
+              {counts.online} online
+            </span>
+          ) : (
+            <span className='text-[11px] text-muted-foreground'>
+              {conversations.length} {conversations.length === 1 ? 'chat' : 'chats'}
             </span>
           )}
-        </button>
-        <button
-          type='button'
-          onClick={() => setFilterTab('online')}
-          className={cn(
-            'flex items-center gap-1 rounded-lg px-2.5 py-1 text-xs font-medium transition',
-            filterTab === 'online'
-              ? 'bg-primary text-primary-foreground shadow-sm'
-              : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-          )}
-        >
-          Online{' '}
-          <span
-            className={cn(
-              'text-[10px] opacity-80',
-              filterTab === 'online' ? 'text-primary-foreground' : 'text-muted-foreground'
-            )}
-          >
-            {counts.online}
-          </span>
-        </button>
+        </div>
       </div>
 
-      {/* Conversations List (WhatsApp Layout) */}
+      {/* Search Input & Filter Tabs */}
+      <div className='space-y-2 border-b border-border/50 p-3 shrink-0'>
+        <div className='relative'>
+          <SearchIcon
+            className='text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2'
+            aria-hidden='true'
+          />
+          <Input
+            id='messenger-search'
+            type='search'
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder='Search users or messages...'
+            className='border-border/50 bg-background/80 text-foreground placeholder:text-muted-foreground focus-visible:ring-primary/40 h-9 w-full rounded-lg pl-9 text-xs focus-visible:ring-2'
+          />
+          {search && (
+            <button
+              type='button'
+              onClick={() => setSearch('')}
+              className='text-muted-foreground hover:text-foreground absolute top-1/2 right-2.5 -translate-y-1/2 text-xs cursor-pointer'
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {/* Filter Tabs */}
+        <div className='flex items-center gap-1.5 text-xs'>
+          <button
+            type='button'
+            onClick={() => setFilterTab('all')}
+            className={cn(
+              'flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer',
+              filterTab === 'all'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+            )}
+          >
+            All{' '}
+            <span
+              className={cn(
+                'text-[10px] opacity-80',
+                filterTab === 'all' ? 'text-primary-foreground' : 'text-muted-foreground'
+              )}
+            >
+              {counts.all}
+            </span>
+          </button>
+          <button
+            type='button'
+            onClick={() => setFilterTab('unread')}
+            className={cn(
+              'flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer',
+              filterTab === 'unread'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+            )}
+          >
+            Unread
+            {counts.unread > 0 && (
+              <span
+                className={cn(
+                  'rounded-full px-1.5 py-0.2 text-[10px] font-bold',
+                  filterTab === 'unread' ? 'bg-white/20 text-white' : 'bg-emerald-500 text-white'
+                )}
+              >
+                {counts.unread}
+              </span>
+            )}
+          </button>
+          <button
+            type='button'
+            onClick={() => setFilterTab('online')}
+            className={cn(
+              'flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition cursor-pointer',
+              filterTab === 'online'
+                ? 'bg-primary text-primary-foreground shadow-sm'
+                : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
+            )}
+          >
+            Online{' '}
+            <span
+              className={cn(
+                'text-[10px] opacity-80',
+                filterTab === 'online' ? 'text-primary-foreground' : 'text-muted-foreground'
+              )}
+            >
+              {counts.online}
+            </span>
+          </button>
+        </div>
+      </div>
+
+      {/* Conversations List (WhatsApp / Archives Layout) */}
       <div
-        className='flex-1 space-y-1.5 overflow-y-auto pr-0.5'
+        className='flex-1 overflow-y-auto divide-y divide-border/40'
         aria-label='User conversations list'
         role='list'
       >
@@ -206,10 +214,10 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
               onClick={() => onSelect(conversation.id)}
               aria-current={isActive ? 'true' : undefined}
               className={cn(
-                'group relative flex w-full items-center gap-3 rounded-xl border border-transparent p-2.5 text-left transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
+                'group relative flex w-full items-center gap-3 cursor-pointer px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 border-l-4 select-none',
                 isActive
-                  ? 'bg-primary/10 border-primary/30 shadow-xs'
-                  : 'hover:bg-muted/50 active:bg-muted/70'
+                  ? 'bg-accent/70 border-l-primary shadow-2xs font-normal'
+                  : 'border-l-transparent hover:bg-muted/40'
               )}
               role='listitem'
             >

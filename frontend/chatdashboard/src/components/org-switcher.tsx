@@ -23,7 +23,7 @@ import {
 const WORKSPACES = [{ id: 'demo-org', name: 'Demo Workspace' }];
 
 export function OrgSwitcher() {
-  const { isMobile, state } = useSidebar();
+  const { isMobile } = useSidebar();
   const router = useRouter();
   const activeOrganization = WORKSPACES[0];
 
@@ -42,23 +42,11 @@ export function OrgSwitcher() {
             <div className='bg-white text-sidebar-primary-foreground flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg overflow-hidden'>
               <Image src='/images/Logo.png' alt='Workspace logo' width={32} height={32} className='size-full object-cover' />
             </div>
-            <div
-              className={`grid flex-1 text-left text-sm leading-tight transition-all duration-200 ease-in-out ${
-                state === 'collapsed'
-                  ? 'invisible max-w-0 overflow-hidden opacity-0'
-                  : 'visible max-w-full opacity-100'
-              }`}
-            >
+            <div className='grid flex-1 text-left text-sm leading-tight transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none'>
               <span className='truncate font-medium'>{activeOrganization.name}</span>
               <span className='text-muted-foreground truncate text-xs'>Organization</span>
             </div>
-            <Icons.chevronsUpDown
-              className={`ml-auto transition-all duration-200 ease-in-out ${
-                state === 'collapsed'
-                  ? 'invisible max-w-0 opacity-0'
-                  : 'visible max-w-full opacity-100'
-              }`}
-            />
+            <Icons.chevronsUpDown className='ml-auto size-4 shrink-0 transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none' />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className='w-(--anchor-width) min-w-56 rounded-lg'

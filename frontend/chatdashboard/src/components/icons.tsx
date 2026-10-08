@@ -1,9 +1,12 @@
-import { TeamIconGif } from '@/components/gif-icon';
+import { TeamIconGif, MessageIconGif } from '@/components/gif-icon';
 import {
   IconAdjustmentsHorizontal,
   IconAlertCircle,
   IconAlertTriangle,
+  IconArchive,
   IconArrowRight,
+  IconArrowsMaximize,
+  IconArrowsMinimize,
   IconBell,
   IconBold,
   IconBox,
@@ -34,6 +37,7 @@ import {
   IconDotsVertical,
   IconEdit,
   IconExternalLink,
+  IconBroadcast,
   IconEye,
   IconEyeOff,
   IconFile,
@@ -42,6 +46,7 @@ import {
   IconFileTypeDoc,
   IconFileTypeXls,
   IconFileZip,
+  IconFilter,
   IconFolder,
   IconGripVertical,
   IconHelpCircle,
@@ -57,7 +62,7 @@ import {
   IconLock,
   IconLogin,
   IconLogout,
-  IconMessage,
+  IconMapPin,
   IconMinus,
   IconMoon,
   IconMusic,
@@ -136,6 +141,14 @@ export const Icons = {
   customers: TeamIconGif,
   globe: IconWorld,
   panelLeft: IconLayoutSidebar,
+  archive: IconArchive,
+  maximize: IconArrowsMaximize,
+  minimize: IconArrowsMinimize,
+
+  // Engagement
+  engage: IconBroadcast,
+  filter: IconFilter,
+  mapPin: IconMapPin,
 
   // User
   user: IconUser,
@@ -152,7 +165,7 @@ export const Icons = {
   logo: IconCommand,
 
   // Communication
-  chat: IconMessage,
+  chat: MessageIconGif,
   notification: IconBell,
   phone: IconPhone,
   video: IconVideo,

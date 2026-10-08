@@ -7,16 +7,16 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/dashboard/customers'
 }));
 
-vi.mock('@/components/themes/theme-selector', () => ({
-  ThemeSelector: () => <div data-testid='theme-selector' />
-}));
-
 vi.mock('@/components/themes/theme-mode-toggle', () => ({
   ThemeModeToggle: () => <div data-testid='theme-mode-toggle' />
 }));
 
-vi.mock('@/features/notifications/components/notification-center', () => ({
-  NotificationCenter: () => <div data-testid='notification-center' />
+vi.mock('@/components/layout/fullscreen-toggle', () => ({
+  FullscreenToggle: () => <div data-testid='fullscreen-toggle' />
+}));
+
+vi.mock('@/components/layout/user-dropdown', () => ({
+  UserDropdown: () => <div data-testid='user-dropdown' />
 }));
 
 function renderHeader() {
@@ -44,11 +44,10 @@ describe('Header', () => {
     expect(screen.getByRole('button', { name: /toggle sidebar/i })).toBeInTheDocument();
   });
 
-  it('composes search, theme controls, and notifications', () => {
+  it('composes theme controls, fullscreen, and the user dropdown', () => {
     renderHeader();
-    expect(screen.getByRole('button', { name: /search/i })).toBeInTheDocument();
-    expect(screen.getByTestId('theme-selector')).toBeInTheDocument();
     expect(screen.getByTestId('theme-mode-toggle')).toBeInTheDocument();
-    expect(screen.getByTestId('notification-center')).toBeInTheDocument();
+    expect(screen.getByTestId('fullscreen-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('user-dropdown')).toBeInTheDocument();
   });
 });
