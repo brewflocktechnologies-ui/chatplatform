@@ -1,3 +1,6 @@
+/** Opaque nested objects the API stores but this UI doesn't edit. */
+export type PlanModule = Record<string, unknown>;
+
 export type Plan = {
   id: number;
   name: string;
@@ -8,10 +11,10 @@ export type Plan = {
   defaultPlan: boolean;
   active: boolean;
   custom: boolean;
-  smartChatModule: string | null;
-  managedAccountsModule: string | null;
+  smartChatModule: PlanModule | null;
+  managedAccountsModule: PlanModule | null;
   companyIds: number[];
-  planProductPrice: string | null;
+  planProductPrice: PlanModule | null;
   createdDate: string;
   modifiedDate: string;
   createdByUserId: number | null;
@@ -34,7 +37,10 @@ export type PlanFilters = {
   status: PlanStatusFilter;
 };
 
-/** Fields an admin can edit; the rest of `Plan` is server-managed. */
+/**
+ * Body for POST and PUT. PUT is a full replace, so every field is always sent;
+ * id and audit fields are server-managed and must not be included.
+ */
 export type PlanMutationPayload = Pick<
   Plan,
   | 'name'
@@ -44,4 +50,19 @@ export type PlanMutationPayload = Pick<
   | 'active'
   | 'freePlan'
   | 'defaultPlan'
+  | 'custom'
+  | 'companyIds'
+  | 'smartChatModule'
+  | 'managedAccountsModule'
+  | 'planProductPrice'
 >;
+
+/** Server actions return failures as data; thrown errors lose their message in production. */
+export type PlanResult<T> =
+  | { ok: true; data: T }
+  | {
+      ok: false;
+      status: number;
+      message: string;
+      fieldErrors?: Record<string, string>;
+    };

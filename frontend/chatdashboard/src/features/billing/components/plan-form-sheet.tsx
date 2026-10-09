@@ -16,9 +16,22 @@ import {
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
 import { useAppForm } from '@/lib/form';
+import { PlanApiError } from '../api/errors';
 import { createPlanMutation, updatePlanMutation } from '../api/mutations';
 import type { Plan, PlanMutationPayload } from '../api/types';
+import { toPayload } from '../lib/plan-payload';
 import { planSchema, type PlanFormValues } from '../schemas/plan';
+
+const FORM_FIELDS = [
+  'name',
+  'description',
+  'amountMonthly',
+  'amountAnnually',
+  'active',
+  'freePlan',
+  'defaultPlan',
+  'custom'
+] as const satisfies readonly (keyof PlanFormValues)[];
 
 interface PlanFormSheetProps {
   plan?: Plan;
@@ -37,7 +50,7 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
       onOpenChange(false);
       form.reset();
     },
-    onError: () => toast.error("Couldn't create plan. Try again.")
+    onError: (error) => reportError(error, "Couldn't create plan. Try again.")
   });
 
   const updateMutation = useMutation({
@@ -47,8 +60,29 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
       toast.success('Plan updated');
       onOpenChange(false);
     },
-    onError: () => toast.error("Couldn't update plan. Try again.")
+    onError: (error) => reportError(error, "Couldn't update plan. Try again.")
   });
+
+  /** Field-level 400s paint on the matching inputs; anything else becomes a toast. */
+  function reportError(error: Error, fallback: string) {
+    const fieldErrors = error instanceof PlanApiError ? error.fieldErrors : undefined;
+    const unmatched: string[] = [];
+
+    for (const [name, message] of Object.entries(fieldErrors ?? {})) {
+      if (FORM_FIELDS.includes(name as keyof PlanFormValues)) {
+        form.setFieldMeta(name as keyof PlanFormValues, (meta) => ({
+          ...meta,
+          errorMap: { ...meta.errorMap, onSubmit: { message } }
+        }));
+      } else {
+        unmatched.push(message);
+      }
+    }
+
+    if (!fieldErrors || unmatched.length > 0) {
+      toast.error(unmatched.join('. ') || error.message || fallback);
+    }
+  }
 
   const form = useAppForm({
     defaultValues: {
@@ -58,18 +92,31 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
       amountAnnually: plan?.amountAnnually ?? 0,
       active: plan?.active ?? true,
       freePlan: plan?.freePlan ?? false,
-      defaultPlan: plan?.defaultPlan ?? false
+      defaultPlan: plan?.defaultPlan ?? false,
+      custom: plan?.custom ?? false
     } as PlanFormValues,
     validators: { onSubmit: planSchema },
     onSubmit: async ({ value }) => {
-      const payload: PlanMutationPayload = {
-        ...value,
-        description: value.description.trim() || null
-      };
-      if (isEdit) {
-        await updateMutation.mutateAsync({ id: plan.id, values: payload });
-      } else {
-        await createMutation.mutateAsync(payload);
+      const edited = { ...value, description: value.description.trim() || null };
+      try {
+        if (isEdit) {
+          // PUT replaces the whole plan, so carry over fields this form doesn't edit.
+          await updateMutation.mutateAsync({
+            id: plan.id,
+            values: toPayload(plan, edited)
+          });
+        } else {
+          const payload: PlanMutationPayload = {
+            ...edited,
+            companyIds: [],
+            smartChatModule: null,
+            managedAccountsModule: null,
+            planProductPrice: null
+          };
+          await createMutation.mutateAsync(payload);
+        }
+      } catch {
+        // Already reported by the mutation's onError.
       }
     }
   });
@@ -161,6 +208,15 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
                   <field.SwitchField
                     label='Default plan'
                     description='Assigned to new accounts automatically.'
+                  />
+                )}
+              />
+              <form.AppField
+                name='custom'
+                children={(field) => (
+                  <field.SwitchField
+                    label='Custom plan'
+                    description='Negotiated for specific companies rather than listed publicly.'
                   />
                 )}
               />

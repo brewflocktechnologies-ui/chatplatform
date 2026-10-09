@@ -23,7 +23,12 @@ import {
   plansQueryOptions
 } from '../api/queries';
 import type { Plan, PlanStatusFilter } from '../api/types';
-import { PlanActiveSwitch, PlanRowActions } from './plan-row-actions';
+import { PlanFormSheet } from './plan-form-sheet';
+import {
+  PlanActiveSwitch,
+  PlanDeleteModal,
+  PlanRowActions
+} from './plan-row-actions';
 
 const FILTERS: { value: PlanStatusFilter; label: string }[] = [
   { value: 'all', label: 'All plans' },
@@ -67,6 +72,12 @@ function StatTile({
 export function PlanAdmin() {
   const [page, setPage] = useState(DEFAULT_PLAN_FILTERS.page);
   const [status, setStatus] = useState<PlanStatusFilter>(DEFAULT_PLAN_FILTERS.status);
+  // Edit/delete targets are snapshots taken on click. The nonce remounts the form
+  // per open so it starts from fresh data and a refetch can't reset it mid-edit.
+  const [edit, setEdit] = useState<{ plan: Plan; nonce: number } | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
+  const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data, isPending, isError, isFetching, refetch } = useQuery(
     plansQueryOptions({ page, size: PLAN_PAGE_SIZE, status })
@@ -216,7 +227,17 @@ export function PlanAdmin() {
                         <PlanActiveSwitch plan={plan} />
                       </TableCell>
                       <TableCell>
-                        <PlanRowActions plan={plan} />
+                        <PlanRowActions
+                          plan={plan}
+                          onEdit={(p) => {
+                            setEdit({ plan: p, nonce: Date.now() });
+                            setEditOpen(true);
+                          }}
+                          onDelete={(p) => {
+                            setDeleteTarget(p);
+                            setDeleteOpen(true);
+                          }}
+                        />
                       </TableCell>
                     </TableRow>
                   );
@@ -254,6 +275,20 @@ export function PlanAdmin() {
           </div>
         </div>
       </Card>
+
+      {edit && (
+        <PlanFormSheet
+          key={edit.nonce}
+          plan={edit.plan}
+          open={editOpen}
+          onOpenChange={setEditOpen}
+        />
+      )}
+      <PlanDeleteModal
+        plan={deleteTarget}
+        open={deleteOpen}
+        onOpenChange={setDeleteOpen}
+      />
     </div>
   );
 }
