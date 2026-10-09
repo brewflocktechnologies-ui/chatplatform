@@ -1,29 +1,21 @@
-'use client';
-
 import PageContainer from '@/components/layout/page-container';
-import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Icons } from '@/components/icons';
 import { billingInfoContent } from '@/config/infoconfig';
-import { PlanCards } from '@/features/billing/components/plan-cards';
+import PlanListing from '@/features/billing/components/plan-listing';
+import { PlanFormSheetTrigger } from '@/features/billing/components/plan-form-sheet';
+
+export const metadata = {
+  title: 'Dashboard: Billing'
+};
 
 export default function BillingPage() {
   return (
     <PageContainer
-      pageTitle="Billing & Plans"
-      pageDescription="Manage your subscription and usage limits (demo)"
+      pageTitle='Billing & Plans'
+      pageDescription='Create, price and manage subscription plans'
       infoContent={billingInfoContent}
+      pageHeaderAction={<PlanFormSheetTrigger />}
     >
-      <div className="space-y-6">
-        <Alert>
-          <Icons.info className="h-4 w-4" />
-          <AlertDescription>
-            This is a demo billing page. Plans are read from the billing
-            service; choosing a plan is not wired up yet.
-          </AlertDescription>
-        </Alert>
-
-        <PlanCards />
-      </div>
+      <PlanListing />
     </PageContainer>
   );
 }
