@@ -1,22 +1,11 @@
 'use server';
 
-import type {
-  Plan,
-  PlanFilters,
-  PlanMutationPayload,
-  PlanResult,
-  PlansPage
-} from './types';
+import type { Plan, PlanFilters, PlanMutationPayload, PlanResult, PlansPage } from './types';
 
-const BILLING_API_URL =
-  process.env.BILLING_API_URL ?? 'https://billing-service-eta.vercel.app';
+const BILLING_API_URL = process.env.BILLING_API_URL ?? 'https://billing-service-eta.vercel.app';
 
 /** Runs on the server, so the browser never calls the billing origin. */
-export async function getPlans({
-  page,
-  size,
-  status
-}: PlanFilters): Promise<PlansPage> {
+export async function getPlans({ page, size, status }: PlanFilters): Promise<PlansPage> {
   const path = status === 'active' ? '/api/plans/active' : '/api/plans';
   const res = await fetch(`${BILLING_API_URL}${path}?page=${page}&size=${size}`, {
     cache: 'no-store'

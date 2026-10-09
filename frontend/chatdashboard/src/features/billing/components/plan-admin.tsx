@@ -17,18 +17,10 @@ import {
 } from '@/components/ui/table';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import {
-  DEFAULT_PLAN_FILTERS,
-  PLAN_PAGE_SIZE,
-  plansQueryOptions
-} from '../api/queries';
+import { DEFAULT_PLAN_FILTERS, PLAN_PAGE_SIZE, plansQueryOptions } from '../api/queries';
 import type { Plan, PlanStatusFilter } from '../api/types';
 import { PlanFormSheet } from './plan-form-sheet';
-import {
-  PlanActiveSwitch,
-  PlanDeleteModal,
-  PlanRowActions
-} from './plan-row-actions';
+import { PlanActiveSwitch, PlanDeleteModal, PlanRowActions } from './plan-row-actions';
 
 const FILTERS: { value: PlanStatusFilter; label: string }[] = [
   { value: 'all', label: 'All plans' },
@@ -57,9 +49,7 @@ function StatTile({
   return (
     <Card className='gap-2 py-4'>
       <CardHeader className='flex flex-row items-center justify-between gap-2 px-4'>
-        <CardTitle className='text-muted-foreground text-sm font-medium'>
-          {label}
-        </CardTitle>
+        <CardTitle className='text-muted-foreground text-sm font-medium'>{label}</CardTitle>
         <Icon className='text-muted-foreground h-4 w-4' />
       </CardHeader>
       <CardContent className='px-4'>
@@ -137,15 +127,8 @@ export function PlanAdmin() {
               </Button>
             ))}
           </div>
-          <Button
-            size='sm'
-            variant='ghost'
-            onClick={() => refetch()}
-            disabled={isFetching}
-          >
-            <Icons.refresh
-              className={cn('mr-2 h-4 w-4', isFetching && 'animate-spin')}
-            />
+          <Button size='sm' variant='ghost' onClick={() => refetch()} disabled={isFetching}>
+            <Icons.refresh className={cn('mr-2 h-4 w-4', isFetching && 'animate-spin')} />
             Refresh
           </Button>
         </div>
@@ -183,10 +166,7 @@ export function PlanAdmin() {
                 ))
               ) : plans.length === 0 ? (
                 <TableRow>
-                  <TableCell
-                    colSpan={6}
-                    className='text-muted-foreground h-24 text-center'
-                  >
+                  <TableCell colSpan={6} className='text-muted-foreground h-24 text-center'>
                     No plans found.
                   </TableCell>
                 </TableRow>
@@ -197,13 +177,9 @@ export function PlanAdmin() {
                     <TableRow key={plan.id}>
                       <TableCell className='max-w-72'>
                         <div className='flex flex-wrap items-center gap-2'>
-                          <span className='truncate font-medium'>
-                            {plan.name}
-                          </span>
+                          <span className='truncate font-medium'>{plan.name}</span>
                           {plan.freePlan && <Badge variant='secondary'>Free</Badge>}
-                          {plan.defaultPlan && (
-                            <Badge variant='outline'>Default</Badge>
-                          )}
+                          {plan.defaultPlan && <Badge variant='outline'>Default</Badge>}
                           {plan.custom && <Badge variant='outline'>Custom</Badge>}
                         </div>
                         <p className='text-muted-foreground truncate text-xs'>
@@ -249,9 +225,7 @@ export function PlanAdmin() {
 
         <div className='flex items-center justify-between border-t p-3'>
           <p className='text-muted-foreground text-sm'>
-            {totalPages > 0
-              ? `Page ${page + 1} of ${totalPages.toLocaleString()}`
-              : ' '}
+            {totalPages > 0 ? `Page ${page + 1} of ${totalPages.toLocaleString()}` : ' '}
           </p>
           <div className='flex gap-2'>
             <Button
@@ -284,11 +258,7 @@ export function PlanAdmin() {
           onOpenChange={setEditOpen}
         />
       )}
-      <PlanDeleteModal
-        plan={deleteTarget}
-        open={deleteOpen}
-        onOpenChange={setDeleteOpen}
-      />
+      <PlanDeleteModal plan={deleteTarget} open={deleteOpen} onOpenChange={setDeleteOpen} />
     </div>
   );
 }

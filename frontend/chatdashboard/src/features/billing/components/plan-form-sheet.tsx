@@ -97,7 +97,10 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
     } as PlanFormValues,
     validators: { onSubmit: planSchema },
     onSubmit: async ({ value }) => {
-      const edited = { ...value, description: value.description.trim() || null };
+      const edited = {
+        ...value,
+        description: value.description.trim() || null
+      };
       try {
         if (isEdit) {
           // PUT replaces the whole plan, so carry over fields this form doesn't edit.
@@ -147,40 +150,25 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
             <FieldGroup>
               <form.AppField
                 name='name'
-                children={(field) => (
-                  <field.TextField label='Name' required placeholder='Growth' />
-                )}
+                children={(field) => <field.TextField label='Name' required placeholder='Growth' />}
               />
               <form.AppField
                 name='description'
                 children={(field) => (
-                  <field.TextareaField
-                    label='Description'
-                    placeholder='Who is this plan for?'
-                  />
+                  <field.TextareaField label='Description' placeholder='Who is this plan for?' />
                 )}
               />
               <div className='grid grid-cols-2 gap-4'>
                 <form.AppField
                   name='amountMonthly'
                   children={(field) => (
-                    <field.TextField
-                      label='Monthly ($)'
-                      required
-                      type='number'
-                      min={0}
-                    />
+                    <field.TextField label='Monthly ($)' required type='number' min={0} />
                   )}
                 />
                 <form.AppField
                   name='amountAnnually'
                   children={(field) => (
-                    <field.TextField
-                      label='Annual ($)'
-                      required
-                      type='number'
-                      min={0}
-                    />
+                    <field.TextField label='Annual ($)' required type='number' min={0} />
                   )}
                 />
               </div>
@@ -225,11 +213,7 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
         </div>
 
         <SheetFooter>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={() => onOpenChange(false)}
-          >
+          <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <LoadingButton loading={isPending} type='submit' form='plan-form-sheet'>

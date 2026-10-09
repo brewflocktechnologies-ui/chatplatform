@@ -5,8 +5,7 @@ import { createPlan, deletePlan, updatePlan } from './service';
 import { planKeys } from './queries';
 import type { PlanMutationPayload } from './types';
 
-const invalidate = () =>
-  getQueryClient().invalidateQueries({ queryKey: planKeys.all });
+const invalidate = () => getQueryClient().invalidateQueries({ queryKey: planKeys.all });
 
 export const createPlanMutation = mutationOptions({
   mutationFn: async (data: PlanMutationPayload) => unwrap(await createPlan(data)),

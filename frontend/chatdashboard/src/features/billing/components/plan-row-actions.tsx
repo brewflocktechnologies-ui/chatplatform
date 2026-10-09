@@ -21,8 +21,7 @@ import { toPayload } from '../lib/plan-payload';
 export function PlanActiveSwitch({ plan }: { plan: Plan }) {
   const mutation = useMutation({
     ...updatePlanMutation,
-    onError: (error) =>
-      toast.error(error.message || "Couldn't change plan status.")
+    onError: (error) => toast.error(error.message || "Couldn't change plan status.")
   });
 
   return (
