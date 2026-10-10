@@ -120,9 +120,8 @@ export function PlanAdmin() {
   const [status, setStatus] = useState<PlanStatusFilter>(DEFAULT_PLAN_FILTERS.status);
   const [size, setSize] = useState(DEFAULT_PLAN_FILTERS.size);
   const [sort, setSort] = useState<PlanSort>(DEFAULT_PLAN_FILTERS.sort);
-  // Edit/delete targets are snapshots taken on click. The nonce remounts the form
-  // per open so it starts from fresh data and a refetch can't reset it mid-edit.
-  const [edit, setEdit] = useState<{ plan: Plan; nonce: number } | null>(null);
+  // Edit/delete targets are snapshots taken on click, so a refetch can't change them mid-edit.
+  const [edit, setEdit] = useState<Plan | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<Plan | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
@@ -290,7 +289,7 @@ export function PlanAdmin() {
                         <PlanRowActions
                           plan={plan}
                           onEdit={(p) => {
-                            setEdit({ plan: p, nonce: Date.now() });
+                            setEdit(p);
                             setEditOpen(true);
                           }}
                           onDelete={(p) => {
@@ -362,14 +361,7 @@ export function PlanAdmin() {
         </div>
       </Card>
 
-      {edit && (
-        <PlanFormSheet
-          key={edit.nonce}
-          plan={edit.plan}
-          open={editOpen}
-          onOpenChange={setEditOpen}
-        />
-      )}
+      {edit && <PlanFormSheet plan={edit} open={editOpen} onOpenChange={setEditOpen} />}
       <PlanDeleteModal plan={deleteTarget} open={deleteOpen} onOpenChange={setDeleteOpen} />
     </div>
   );

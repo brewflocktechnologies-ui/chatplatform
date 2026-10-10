@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
@@ -33,6 +33,21 @@ const FORM_FIELDS = [
   'custom'
 ] as const satisfies readonly (keyof PlanFormValues)[];
 
+function toDefaults(plan?: Plan): PlanFormValues {
+  return {
+    name: plan?.name ?? '',
+    description: plan?.description ?? '',
+    amountMonthly: plan?.amountMonthly ?? 0,
+    amountAnnually: plan?.amountAnnually ?? 0,
+    active: plan?.active ?? true,
+    freePlan: plan?.freePlan ?? false,
+    defaultPlan: plan?.defaultPlan ?? false,
+    custom: plan?.custom ?? false
+  };
+}
+
+const selectAll = (e: React.FocusEvent<HTMLInputElement>) => e.currentTarget.select();
+
 interface PlanFormSheetProps {
   plan?: Plan;
   open: boolean;
@@ -48,7 +63,6 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
       createPlanMutation.onSuccess?.(data, vars, ctx, mutation);
       toast.success('Plan created');
       onOpenChange(false);
-      form.reset();
     },
     onError: (error) => reportError(error, "Couldn't create plan. Try again.")
   });
@@ -85,16 +99,7 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
   }
 
   const form = useAppForm({
-    defaultValues: {
-      name: plan?.name ?? '',
-      description: plan?.description ?? '',
-      amountMonthly: plan?.amountMonthly ?? 0,
-      amountAnnually: plan?.amountAnnually ?? 0,
-      active: plan?.active ?? true,
-      freePlan: plan?.freePlan ?? false,
-      defaultPlan: plan?.defaultPlan ?? false,
-      custom: plan?.custom ?? false
-    } as PlanFormValues,
+    defaultValues: toDefaults(plan),
     validators: { onSubmit: planSchema },
     onSubmit: async ({ value }) => {
       const edited = {
@@ -126,8 +131,16 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  // One long-lived instance: each time the sheet opens (or is pointed at another plan) the
+  // values restart from that plan, instead of remounting the whole sheet.
+  useEffect(() => {
+    if (open) form.reset(toDefaults(plan));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- form is stable
+  }, [open, plan]);
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    // disablePointerDismissal: an outside click or focus change must not discard edits in progress.
+    <Sheet open={open} onOpenChange={onOpenChange} disablePointerDismissal>
       <SheetContent className='flex flex-col'>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit plan' : 'New plan'}</SheetTitle>
@@ -162,13 +175,25 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
                 <form.AppField
                   name='amountMonthly'
                   children={(field) => (
-                    <field.TextField label='Monthly ($)' required type='number' min={0} />
+                    <field.TextField
+                      label='Monthly ($)'
+                      required
+                      type='number'
+                      min={0}
+                      onFocus={selectAll}
+                    />
                   )}
                 />
                 <form.AppField
                   name='amountAnnually'
                   children={(field) => (
-                    <field.TextField label='Annual ($)' required type='number' min={0} />
+                    <field.TextField
+                      label='Annual ($)'
+                      required
+                      type='number'
+                      min={0}
+                      onFocus={selectAll}
+                    />
                   )}
                 />
               </div>

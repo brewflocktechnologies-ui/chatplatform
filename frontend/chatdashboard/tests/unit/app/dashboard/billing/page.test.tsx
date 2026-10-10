@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { makePage, makePlan } from '../../../features/billing/fixtures';
 
@@ -12,7 +12,9 @@ vi.mock('@/features/billing/api/service', () => ({
 vi.mock('next/navigation', () => ({ usePathname: () => '/dashboard/billing' }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 // Mutations invalidate through the shared client; point it at the test client.
-const { client } = vi.hoisted(() => ({ client: { current: null as unknown } }));
+const { client } = vi.hoisted(() => ({
+  client: { current: null as unknown as import('@tanstack/react-query').QueryClient }
+}));
 vi.mock('@/lib/query-client', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/query-client')>()),
   getQueryClient: () => client.current
@@ -385,6 +387,44 @@ describe('BillingPage', () => {
       expect(within(dialog).getByLabelText(/^Name/)).toHaveValue('Starter');
       expect(within(dialog).getByLabelText(/Monthly/)).toHaveValue(10);
       expect(within(dialog).getByLabelText(/Annual/)).toHaveValue(100);
+    });
+
+    it('starts from the clicked plan each time, discarding abandoned edits', async () => {
+      const dialog = await openEdit('Starter');
+      fireEvent.change(within(dialog).getByLabelText(/^Name/), { target: { value: 'Half typed' } });
+      fireEvent.click(within(dialog).getByRole('button', { name: 'Cancel' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+      // Same plan again: the abandoned edit is gone.
+      fireEvent.click(
+        within(row('Starter')).getByRole('button', { name: /Open menu for Starter/ })
+      );
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+      expect(await screen.findByLabelText(/^Name/)).toHaveValue('Starter');
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+      await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+      // A different plan: the same sheet instance shows that plan's values.
+      fireEvent.click(
+        within(row('Enterprise')).getByRole('button', { name: /Open menu for Enterprise/ })
+      );
+      fireEvent.click(await screen.findByRole('menuitem', { name: 'Edit' }));
+      expect(await screen.findByLabelText(/^Name/)).toHaveValue('Enterprise');
+      expect(screen.getByLabelText(/Monthly/)).toHaveValue(100);
+    });
+
+    it('keeps the typed values when the list refetches while the sheet is open', async () => {
+      const dialog = await openEdit('Starter');
+      fireEvent.change(within(dialog).getByLabelText(/^Name/), { target: { value: 'Typing…' } });
+
+      // Background refetch returns fresh data for the same plan.
+      vi.mocked(getPlans).mockResolvedValue(
+        makePage([{ ...starter, modifiedDate: '2026-10-10T00:00:00' }, free, custom])
+      );
+      await act(() => client.current.refetchQueries());
+
+      expect(screen.getByRole('dialog')).toBeInTheDocument();
+      expect(screen.getByLabelText(/^Name/)).toHaveValue('Typing…');
     });
 
     it('PUTs the full plan, preserving fields the form does not edit', async () => {

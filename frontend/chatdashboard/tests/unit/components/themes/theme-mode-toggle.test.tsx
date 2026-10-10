@@ -52,6 +52,16 @@ describe('ThemeModeToggle', () => {
     expect(setTheme).toHaveBeenCalledWith('light');
   });
 
+  it('ignores synthetic key events that carry no key (autofill, extensions)', () => {
+    render(<ThemeModeToggle />);
+    // Browser autofill and password managers dispatch KeyboardEvents without `key`;
+    // the listener must not throw on them.
+    expect(() =>
+      window.dispatchEvent(new KeyboardEvent('keydown', { ctrlKey: true }))
+    ).not.toThrow();
+    expect(setTheme).not.toHaveBeenCalled();
+  });
+
   it('ignores the shortcut when focused in an input', () => {
     render(<ThemeModeToggle />);
     const input = document.createElement('input');
