@@ -57,13 +57,15 @@ function SortableHead({
   label,
   sort,
   onSort,
-  align
+  align,
+  className
 }: {
   field: PlanSortField;
   label: string;
   sort: PlanSort;
   onSort: (field: PlanSortField) => void;
   align?: 'right';
+  className?: string;
 }) {
   const active = sort.field === field;
   const Icon = !active
@@ -73,7 +75,7 @@ function SortableHead({
       : Icons.chevronDown;
   return (
     <TableHead
-      className={align === 'right' ? 'text-right' : undefined}
+      className={cn(align === 'right' && 'text-right', className)}
       aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
     >
       <button
@@ -206,14 +208,21 @@ export function PlanAdmin() {
             </AlertDescription>
           </Alert>
         ) : (
-          <Table>
+          <Table className='min-w-[44rem] table-fixed'>
             <TableHeader>
               <TableRow>
-                <SortableHead field='name' label='Plan' sort={sort} onSort={changeSort} />
+                <SortableHead
+                  field='name'
+                  label='Plan'
+                  className='w-[34%]'
+                  sort={sort}
+                  onSort={changeSort}
+                />
                 <SortableHead
                   field='amountMonthly'
                   label='Monthly'
                   align='right'
+                  className='w-[15%]'
                   sort={sort}
                   onSort={changeSort}
                 />
@@ -221,12 +230,13 @@ export function PlanAdmin() {
                   field='amountAnnually'
                   label='Annual'
                   align='right'
+                  className='w-[15%]'
                   sort={sort}
                   onSort={changeSort}
                 />
-                <TableHead>Annual saving</TableHead>
-                <TableHead>Active</TableHead>
-                <TableHead className='w-10' />
+                <TableHead className='w-[17%]'>Annual saving</TableHead>
+                <TableHead className='w-[11%]'>Active</TableHead>
+                <TableHead className='w-[8%]' />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -249,7 +259,7 @@ export function PlanAdmin() {
                   const saving = annualSavings(plan);
                   return (
                     <TableRow key={plan.id}>
-                      <TableCell className='max-w-72'>
+                      <TableCell className='overflow-hidden'>
                         <div className='flex flex-wrap items-center gap-2'>
                           <span className='truncate font-medium'>{plan.name}</span>
                           {plan.freePlan && <Badge variant='secondary'>Free</Badge>}

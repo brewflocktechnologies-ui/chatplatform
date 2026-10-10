@@ -166,8 +166,9 @@ describe('BillingPage', () => {
       expect(header().closest('th')).toHaveAttribute('aria-sort', 'descending');
 
       fireEvent.click(header());
-      await waitFor(() => expect(lastFilters().sort).toEqual(DEFAULT_SORT));
-      expect(header().closest('th')).not.toHaveAttribute('aria-sort');
+      // Back on the default order, whose result is already cached, so assert on the UI
+      // rather than on another API call.
+      await waitFor(() => expect(header().closest('th')).not.toHaveAttribute('aria-sort'));
     });
 
     it('starts a different column ascending and returns to the first page', async () => {
