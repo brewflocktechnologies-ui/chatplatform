@@ -22,7 +22,12 @@ describe('planKeys', () => {
   });
 
   it('builds list keys from the filters', () => {
-    const filters = { page: 1, size: 10, status: 'active' as const };
+    const filters = {
+      page: 1,
+      size: 10,
+      status: 'active' as const,
+      sort: { field: 'name' as const, dir: 'asc' as const }
+    };
     expect(planKeys.list(filters)).toEqual(['plans', 'list', filters]);
   });
 });
@@ -32,7 +37,8 @@ describe('DEFAULT_PLAN_FILTERS', () => {
     expect(DEFAULT_PLAN_FILTERS).toEqual({
       page: 0,
       size: PLAN_PAGE_SIZE,
-      status: 'all'
+      status: 'all',
+      sort: { field: 'id', dir: 'desc' }
     });
   });
 });

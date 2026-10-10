@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createPlan, deletePlan, getPlans, updatePlan } from '@/features/billing/api/service';
 import { toPayload } from '@/features/billing/lib/plan-payload';
+import type { PlanFilters } from '@/features/billing/api/types';
 import { makePlan, makePage } from '../fixtures';
 
 const BASE = 'https://billing-service-eta.vercel.app';
@@ -26,28 +27,67 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+const filters: PlanFilters = {
+  page: 0,
+  size: 10,
+  status: 'all',
+  sort: { field: 'id', dir: 'desc' }
+};
+
+/** The URL getPlans last fetched, split so assertions don't depend on param order/encoding. */
+function lastRequest() {
+  const url = new URL(fetchMock.mock.calls.at(-1)![0]);
+  return { path: url.pathname, params: Object.fromEntries(url.searchParams) };
+}
+
 describe('getPlans', () => {
-  it('requests the paged list of all plans', async () => {
+  it('requests the paged, sorted list of all plans', async () => {
     const page = makePage([makePlan()]);
     respond(200, page);
 
-    await expect(getPlans({ page: 2, size: 10, status: 'all' })).resolves.toEqual(page);
-    expect(fetchMock).toHaveBeenCalledWith(`${BASE}/api/plans?page=2&size=10`, {
-      cache: 'no-store'
+    await expect(
+      getPlans({ ...filters, page: 2, sort: { field: 'name', dir: 'asc' } })
+    ).resolves.toEqual(page);
+
+    expect(lastRequest()).toEqual({
+      path: '/api/plans',
+      params: { page: '2', size: '10', sort: 'name,asc' }
     });
+    expect(fetchMock.mock.calls[0][1]).toEqual({ cache: 'no-store' });
   });
 
   it('uses the active endpoint for the active filter', async () => {
     respond(200, makePage([]));
-    await getPlans({ page: 0, size: 10, status: 'active' });
-    expect(fetchMock.mock.calls[0][0]).toBe(`${BASE}/api/plans/active?page=0&size=10`);
+    await getPlans({ ...filters, status: 'active' });
+    expect(lastRequest().path).toBe('/api/plans/active');
+  });
+
+  it('passes the requested page size through', async () => {
+    respond(200, makePage([]));
+    await getPlans({ ...filters, size: 50 });
+    expect(lastRequest().params.size).toBe('50');
+  });
+
+  it('falls back to the default sort for a field the API cannot sort by', async () => {
+    respond(200, makePage([]));
+    await getPlans({ ...filters, sort: { field: 'bogus', dir: 'asc' } as never });
+    expect(lastRequest().params.sort).toBe('id,desc');
+  });
+
+  it('normalises an unexpected direction and out-of-range paging values', async () => {
+    respond(200, makePage([]));
+    await getPlans({
+      page: -3,
+      size: 100000,
+      status: 'all',
+      sort: { field: 'name', dir: 'sideways' as never }
+    });
+    expect(lastRequest().params).toEqual({ page: '0', size: '100', sort: 'name,desc' });
   });
 
   it('throws when the API responds with an error', async () => {
     respond(500, {});
-    await expect(getPlans({ page: 0, size: 10, status: 'all' })).rejects.toThrow(
-      'Billing API responded with 500'
-    );
+    await expect(getPlans(filters)).rejects.toThrow('Billing API responded with 500');
   });
 });
 

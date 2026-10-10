@@ -1,15 +1,28 @@
 'use server';
 
-import type { Plan, PlanFilters, PlanMutationPayload, PlanResult, PlansPage } from './types';
+import { DEFAULT_PLAN_SORT } from '../lib/plan-sort';
+import {
+  PLAN_SORT_FIELDS,
+  type Plan,
+  type PlanFilters,
+  type PlanMutationPayload,
+  type PlanResult,
+  type PlansPage
+} from './types';
 
 const BILLING_API_URL = process.env.BILLING_API_URL ?? 'https://billing-service-eta.vercel.app';
 
 /** Runs on the server, so the browser never calls the billing origin. */
-export async function getPlans({ page, size, status }: PlanFilters): Promise<PlansPage> {
+export async function getPlans({ page, size, status, sort }: PlanFilters): Promise<PlansPage> {
   const path = status === 'active' ? '/api/plans/active' : '/api/plans';
-  const res = await fetch(`${BILLING_API_URL}${path}?page=${page}&size=${size}`, {
-    cache: 'no-store'
+  // Server actions take client input, and an unknown sort field makes the API return 500.
+  const { field, dir } = PLAN_SORT_FIELDS.includes(sort?.field) ? sort : DEFAULT_PLAN_SORT;
+  const params = new URLSearchParams({
+    page: String(Math.max(0, Math.trunc(page) || 0)),
+    size: String(Math.min(100, Math.max(1, Math.trunc(size) || 10))),
+    sort: `${field},${dir === 'asc' ? 'asc' : 'desc'}`
   });
+  const res = await fetch(`${BILLING_API_URL}${path}?${params}`, { cache: 'no-store' });
   if (!res.ok) throw new Error(`Billing API responded with ${res.status}`);
   return res.json();
 }

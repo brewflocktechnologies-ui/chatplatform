@@ -62,6 +62,8 @@ function renderPage() {
   );
 }
 
+const DEFAULT_SORT = { field: 'id', dir: 'desc' };
+
 const row = (name: string) => screen.getByText(name).closest('tr') as HTMLElement;
 
 beforeEach(() => {
@@ -83,7 +85,12 @@ describe('BillingPage', () => {
     expect(await screen.findByText('Starter')).toBeInTheDocument();
     expect(screen.getByText('Total plans').closest('[data-slot=card]')).toHaveTextContent('25');
     expect(screen.getByText('Page 1 of 3')).toBeInTheDocument();
-    expect(getPlans).toHaveBeenCalledWith({ page: 0, size: 10, status: 'all' });
+    expect(getPlans).toHaveBeenCalledWith({
+      page: 0,
+      size: 10,
+      status: 'all',
+      sort: { field: 'id', dir: 'desc' }
+    });
   });
 
   it('shows prices, annual savings and badges per plan', async () => {
@@ -122,7 +129,8 @@ describe('BillingPage', () => {
       expect(getPlans).toHaveBeenLastCalledWith({
         page: 1,
         size: 10,
-        status: 'all'
+        status: 'all',
+        sort: DEFAULT_SORT
       })
     );
 
@@ -131,9 +139,78 @@ describe('BillingPage', () => {
       expect(getPlans).toHaveBeenLastCalledWith({
         page: 0,
         size: 10,
-        status: 'active'
+        status: 'active',
+        sort: DEFAULT_SORT
       })
     );
+  });
+
+  describe('sorting', () => {
+    const lastFilters = () => vi.mocked(getPlans).mock.calls.at(-1)![0];
+
+    it('sorts ascending, then descending, then back to the default order', async () => {
+      renderPage();
+      await screen.findByText('Starter');
+      const header = () => screen.getByRole('button', { name: 'Monthly' });
+
+      fireEvent.click(header());
+      await waitFor(() =>
+        expect(lastFilters().sort).toEqual({ field: 'amountMonthly', dir: 'asc' })
+      );
+      expect(header().closest('th')).toHaveAttribute('aria-sort', 'ascending');
+
+      fireEvent.click(header());
+      await waitFor(() =>
+        expect(lastFilters().sort).toEqual({ field: 'amountMonthly', dir: 'desc' })
+      );
+      expect(header().closest('th')).toHaveAttribute('aria-sort', 'descending');
+
+      fireEvent.click(header());
+      await waitFor(() => expect(lastFilters().sort).toEqual(DEFAULT_SORT));
+      expect(header().closest('th')).not.toHaveAttribute('aria-sort');
+    });
+
+    it('starts a different column ascending and returns to the first page', async () => {
+      renderPage();
+      await screen.findByText('Starter');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+      await waitFor(() => expect(lastFilters().page).toBe(1));
+
+      fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+      await waitFor(() =>
+        expect(lastFilters()).toMatchObject({ page: 0, sort: { field: 'name', dir: 'asc' } })
+      );
+    });
+  });
+
+  describe('rows per page', () => {
+    it('defaults to 10 and refetches with the chosen size from the first page', async () => {
+      renderPage();
+      await screen.findByText('Starter');
+
+      const trigger = screen.getByRole('combobox', { name: 'Rows per page' });
+      expect(trigger).toHaveTextContent('10');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+      await waitFor(() => expect(vi.mocked(getPlans).mock.calls.at(-1)![0].page).toBe(1));
+
+      fireEvent.pointerDown(trigger);
+      fireEvent.click(trigger);
+      const option = await screen.findByRole('option', { name: '50' });
+      fireEvent.pointerDown(option);
+      fireEvent.click(option);
+
+      await waitFor(() =>
+        expect(getPlans).toHaveBeenLastCalledWith({
+          page: 0,
+          size: 50,
+          status: 'all',
+          sort: DEFAULT_SORT
+        })
+      );
+      expect(trigger).toHaveTextContent('50');
+    });
   });
 
   it('disables Previous on the first page and Next on the last', async () => {

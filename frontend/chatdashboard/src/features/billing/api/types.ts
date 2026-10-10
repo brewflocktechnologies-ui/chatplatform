@@ -31,10 +31,29 @@ export type PlansPage = {
 
 export type PlanStatusFilter = 'all' | 'active';
 
+/** Fields the billing API can sort by. Anything else makes it respond 500. */
+export const PLAN_SORT_FIELDS = [
+  'id',
+  'name',
+  'amountMonthly',
+  'amountAnnually',
+  'modifiedDate'
+] as const;
+export type PlanSortField = (typeof PLAN_SORT_FIELDS)[number];
+export type PlanSortDirection = 'asc' | 'desc';
+
+export type PlanSort = {
+  field: PlanSortField;
+  dir: PlanSortDirection;
+};
+
+export const PLAN_PAGE_SIZES = [10, 20, 50, 100] as const;
+
 export type PlanFilters = {
   page: number;
   size: number;
   status: PlanStatusFilter;
+  sort: PlanSort;
 };
 
 /**

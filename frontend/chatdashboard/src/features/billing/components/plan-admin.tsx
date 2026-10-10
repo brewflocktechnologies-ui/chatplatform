@@ -6,6 +6,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from '@/components/ui/select';
 import { Skeleton } from '@/components/ui/skeleton';
 import {
   Table,
@@ -17,8 +25,15 @@ import {
 } from '@/components/ui/table';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { DEFAULT_PLAN_FILTERS, PLAN_PAGE_SIZE, plansQueryOptions } from '../api/queries';
-import type { Plan, PlanStatusFilter } from '../api/types';
+import { DEFAULT_PLAN_FILTERS, plansQueryOptions } from '../api/queries';
+import {
+  PLAN_PAGE_SIZES,
+  type Plan,
+  type PlanSort,
+  type PlanSortField,
+  type PlanStatusFilter
+} from '../api/types';
+import { nextSort } from '../lib/plan-sort';
 import { PlanFormSheet } from './plan-form-sheet';
 import { PlanActiveSwitch, PlanDeleteModal, PlanRowActions } from './plan-row-actions';
 
@@ -35,6 +50,45 @@ function annualSavings(plan: Plan) {
   if (plan.freePlan || yearly <= 0) return null;
   const pct = Math.round((1 - plan.amountAnnually / yearly) * 100);
   return pct > 0 ? pct : null;
+}
+
+function SortableHead({
+  field,
+  label,
+  sort,
+  onSort,
+  align
+}: {
+  field: PlanSortField;
+  label: string;
+  sort: PlanSort;
+  onSort: (field: PlanSortField) => void;
+  align?: 'right';
+}) {
+  const active = sort.field === field;
+  const Icon = !active
+    ? Icons.chevronsUpDown
+    : sort.dir === 'asc'
+      ? Icons.chevronUp
+      : Icons.chevronDown;
+  return (
+    <TableHead
+      className={align === 'right' ? 'text-right' : undefined}
+      aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+    >
+      <button
+        type='button'
+        onClick={() => onSort(field)}
+        className={cn(
+          'hover:bg-accent focus-visible:ring-ring -mx-2 inline-flex h-8 items-center gap-1.5 rounded-md px-2 focus-visible:ring-1 focus-visible:outline-none',
+          align === 'right' && 'flex-row-reverse'
+        )}
+      >
+        {label}
+        <Icon className={cn('size-4 shrink-0', !active && 'text-muted-foreground')} />
+      </button>
+    </TableHead>
+  );
 }
 
 function StatTile({
@@ -62,6 +116,8 @@ function StatTile({
 export function PlanAdmin() {
   const [page, setPage] = useState(DEFAULT_PLAN_FILTERS.page);
   const [status, setStatus] = useState<PlanStatusFilter>(DEFAULT_PLAN_FILTERS.status);
+  const [size, setSize] = useState(DEFAULT_PLAN_FILTERS.size);
+  const [sort, setSort] = useState<PlanSort>(DEFAULT_PLAN_FILTERS.sort);
   // Edit/delete targets are snapshots taken on click. The nonce remounts the form
   // per open so it starts from fresh data and a refetch can't reset it mid-edit.
   const [edit, setEdit] = useState<{ plan: Plan; nonce: number } | null>(null);
@@ -70,7 +126,7 @@ export function PlanAdmin() {
   const [deleteOpen, setDeleteOpen] = useState(false);
 
   const { data, isPending, isError, isFetching, refetch } = useQuery(
-    plansQueryOptions({ page, size: PLAN_PAGE_SIZE, status })
+    plansQueryOptions({ page, size, status, sort })
   );
 
   const plans = data?.content ?? [];
@@ -79,6 +135,12 @@ export function PlanAdmin() {
     ? Math.round(paid.reduce((s, p) => s + p.amountMonthly, 0) / paid.length)
     : 0;
   const totalPages = data?.totalPages ?? 0;
+
+  // Any change to what the list contains starts again from the first page.
+  const changeSort = (field: PlanSortField) => {
+    setSort((current) => nextSort(current, field));
+    setPage(0);
+  };
 
   return (
     <div className='space-y-4'>
@@ -147,9 +209,21 @@ export function PlanAdmin() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Plan</TableHead>
-                <TableHead className='text-right'>Monthly</TableHead>
-                <TableHead className='text-right'>Annual</TableHead>
+                <SortableHead field='name' label='Plan' sort={sort} onSort={changeSort} />
+                <SortableHead
+                  field='amountMonthly'
+                  label='Monthly'
+                  align='right'
+                  sort={sort}
+                  onSort={changeSort}
+                />
+                <SortableHead
+                  field='amountAnnually'
+                  label='Annual'
+                  align='right'
+                  sort={sort}
+                  onSort={changeSort}
+                />
                 <TableHead>Annual saving</TableHead>
                 <TableHead>Active</TableHead>
                 <TableHead className='w-10' />
@@ -223,29 +297,57 @@ export function PlanAdmin() {
           </Table>
         )}
 
-        <div className='flex items-center justify-between border-t p-3'>
+        <div className='flex flex-wrap items-center justify-between gap-2 border-t p-3'>
           <p className='text-muted-foreground text-sm'>
             {totalPages > 0 ? `Page ${page + 1} of ${totalPages.toLocaleString()}` : ' '}
           </p>
-          <div className='flex gap-2'>
-            <Button
-              size='sm'
-              variant='outline'
-              disabled={page === 0}
-              onClick={() => setPage((p) => p - 1)}
-              aria-label='Previous page'
-            >
-              <Icons.chevronLeft className='h-4 w-4' />
-            </Button>
-            <Button
-              size='sm'
-              variant='outline'
-              disabled={page + 1 >= totalPages}
-              onClick={() => setPage((p) => p + 1)}
-              aria-label='Next page'
-            >
-              <Icons.chevronRight className='h-4 w-4' />
-            </Button>
+          <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-2'>
+              <p className='text-sm font-medium whitespace-nowrap'>Rows per page</p>
+              <Select
+                value={String(size)}
+                onValueChange={(value) => {
+                  setSize(Number(value));
+                  setPage(0);
+                }}
+              >
+                <SelectTrigger
+                  aria-label='Rows per page'
+                  className='h-8 w-[4.5rem] [&[data-size]]:h-8'
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent side='top'>
+                  <SelectGroup>
+                    {PLAN_PAGE_SIZES.map((n) => (
+                      <SelectItem key={n} value={String(n)}>
+                        {n}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className='flex gap-2'>
+              <Button
+                size='sm'
+                variant='outline'
+                disabled={page === 0}
+                onClick={() => setPage((p) => p - 1)}
+                aria-label='Previous page'
+              >
+                <Icons.chevronLeft className='h-4 w-4' />
+              </Button>
+              <Button
+                size='sm'
+                variant='outline'
+                disabled={page + 1 >= totalPages}
+                onClick={() => setPage((p) => p + 1)}
+                aria-label='Next page'
+              >
+                <Icons.chevronRight className='h-4 w-4' />
+              </Button>
+            </div>
           </div>
         </div>
       </Card>
