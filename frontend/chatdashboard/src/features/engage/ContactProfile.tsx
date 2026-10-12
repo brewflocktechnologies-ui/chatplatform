@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Icons } from '@/components/icons';
+import { cn } from '@/lib/utils';
 
 interface Contact {
   name: string;
@@ -22,7 +23,7 @@ const tabs = [
   { id: 'phone', icon: Icons.phone, label: 'Phone' },
   { id: 'address', icon: Icons.mapPin, label: 'Address' },
   { id: 'calendar', icon: Icons.calendar, label: 'Joined' },
-  { id: 'info', icon: Icons.info, label: 'More Info' },
+  { id: 'info', icon: Icons.info, label: 'More Info' }
 ];
 
 export default function ContactProfile({ contact, expanded, setExpanded }: ContactProfileProps) {
@@ -45,91 +46,94 @@ export default function ContactProfile({ contact, expanded, setExpanded }: Conta
   };
 
   return (
-    <div className="h-full flex flex-col bg-white dark:bg-gray-800">
-      {/* Collapsed Mode - Icon Stack */}
+    <div className='bg-card text-card-foreground flex h-full flex-col'>
+      {/* Collapsed mode: icon rail */}
       {!expanded && (
-        <div className="flex flex-col gap-3 p-1.5 bg-gray-100 dark:bg-gray-900 border-l border-gray-300 dark:border-gray-700 h-full">
+        <div className='bg-muted/40 flex h-full flex-col items-center gap-2 p-1.5'>
           {tabs.map((tab) => {
             const Icon = tab.icon;
             return (
               <button
                 key={tab.id}
+                type='button'
                 onClick={() => {
                   setActiveTab(tab.id);
                   setExpanded(true);
                 }}
-                className="p-1.5 hover:bg-gray-200 dark:hover:bg-gray-800"
+                className='hover:bg-accent rounded-md p-1.5 transition-colors'
                 title={tab.label}
               >
-                <Icon className="w-5 h-5 text-gray-600 dark:text-gray-300" />
+                <Icon className='text-muted-foreground h-5 w-5' />
               </button>
             );
           })}
         </div>
       )}
 
-      {/* Expanded Mode - Profile Panel */}
+      {/* Expanded mode: profile panel */}
       {expanded && (
-        <div className="flex flex-col h-full">
-          {/* Top header with icons and close button */}
-          <div className="flex items-center justify-between px-4 py-3 border-b dark:border-gray-700">
-            <div className="flex gap-3">
+        <div className='flex h-full min-h-0 flex-col'>
+          {/* Top header with tab icons and close button */}
+          <div className='border-border/60 flex items-center justify-between border-b px-4 py-3'>
+            <div className='flex gap-2'>
               {tabs.map((tab) => {
                 const Icon = tab.icon;
                 const isActive = activeTab === tab.id;
                 return (
                   <button
                     key={tab.id}
+                    type='button'
                     onClick={() => setActiveTab(tab.id)}
-                    className={`p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-800 ${
-                      isActive ? 'bg-gray-200 dark:bg-gray-700' : ''
-                    }`}
+                    className={cn(
+                      'hover:bg-accent rounded-md p-1.5 transition-colors',
+                      isActive && 'bg-primary/10'
+                    )}
                     title={tab.label}
                   >
                     <Icon
-                      className={`w-5 h-5 ${
-                        isActive ? 'text-blue-600 dark:text-blue-400' : 'text-gray-500'
-                      }`}
+                      className={cn('h-5 w-5', isActive ? 'text-primary' : 'text-muted-foreground')}
                     />
                   </button>
                 );
               })}
             </div>
-            <button onClick={() => setExpanded(false)} title="Close">
-              <Icons.close className="w-5 h-5 text-gray-500 hover:text-red-500" />
+            <button
+              type='button'
+              onClick={() => setExpanded(false)}
+              title='Close'
+              className='hover:bg-accent rounded-md p-1.5 transition-colors'
+            >
+              <Icons.close className='text-muted-foreground hover:text-destructive h-5 w-5' />
             </button>
           </div>
 
           {/* Profile info */}
           {contact ? (
-            <div className="flex flex-col items-center text-center p-6 overflow-y-auto">
+            <div className='flex flex-col items-center overflow-y-auto p-6 text-center'>
               <div
-                className="w-20 h-20 rounded-full mb-2 border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center bg-gray-200 dark:bg-zinc-700 text-xl font-semibold text-gray-600 dark:text-gray-300"
+                className='border-primary/30 bg-primary/10 text-primary mb-2 flex h-20 w-20 items-center justify-center rounded-full border-2 text-xl font-semibold'
                 aria-hidden
               >
                 {contact.name.charAt(0).toUpperCase()}
               </div>
-              <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
-                {contact.name}
-              </h2>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <h2 className='text-lg font-semibold'>{contact.name}</h2>
+              <p className='text-muted-foreground text-sm break-all'>
                 {`${contact.name.toLowerCase().replace(/\s+/g, '')}@example.com`}
               </p>
               <span
-                className={`mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium ${
+                className={cn(
+                  'mt-2 inline-block rounded-full px-3 py-1 text-xs font-medium',
                   contact.status === 'online'
-                    ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100'
-                    : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300'
-                }`}
+                    ? 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300'
+                    : 'bg-muted text-muted-foreground'
+                )}
               >
                 {contact.status}
               </span>
-              <div className="mt-4 text-sm text-gray-700 dark:text-gray-300">
-                {renderTabContent()}
-              </div>
+              <div className='mt-4 text-sm'>{renderTabContent()}</div>
             </div>
           ) : (
-            <div className="p-6 text-center text-sm text-gray-500 dark:text-gray-400">
+            <div className='text-muted-foreground p-6 text-center text-sm'>
               Select a contact to view their profile
             </div>
           )}

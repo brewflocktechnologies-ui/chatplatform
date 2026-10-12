@@ -24,7 +24,7 @@ const defaultData: Customer[] = [
     country: 'India',
     state: 'Maharashtra',
     activity: 'Chatting',
-    status: 'online',
+    status: 'online'
   },
   {
     name: 'Amit Shah',
@@ -33,7 +33,7 @@ const defaultData: Customer[] = [
     country: 'India',
     state: 'Delhi',
     activity: 'Browsing',
-    status: 'offline',
+    status: 'offline'
   },
   {
     name: 'Samantha',
@@ -42,11 +42,11 @@ const defaultData: Customer[] = [
     country: 'India',
     state: 'Karnataka',
     activity: 'Waiting for reply',
-    status: 'online',
-  },
+    status: 'online'
+  }
 ];
 
 export const useCustomerStore = create<CustomerStore>((set) => ({
   customerData: defaultData,
-  setCustomerData: (data) => set({ customerData: data }),
+  setCustomerData: (data) => set({ customerData: data })
 }));
