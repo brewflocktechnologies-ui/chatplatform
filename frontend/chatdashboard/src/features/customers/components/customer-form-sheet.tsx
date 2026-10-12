@@ -78,10 +78,14 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
         status: value.status,
         integrations: stringifyIntegrations({ crm: value.crm, analytics: value.analytics })
       };
-      if (isEdit) {
-        await updateMutation.mutateAsync({ id: customer.id, values: payload });
-      } else {
-        await createMutation.mutateAsync(payload);
+      try {
+        if (isEdit) {
+          await updateMutation.mutateAsync({ id: customer.id, values: payload });
+        } else {
+          await createMutation.mutateAsync(payload);
+        }
+      } catch {
+        // Already reported by the mutation's onError.
       }
     }
   });

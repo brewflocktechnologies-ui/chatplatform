@@ -15,7 +15,7 @@ e2e/
 │   ├── db.ts                # MongoDB seeding/cleanup (mirrors the app's data shapes)
 │   ├── fixtures.ts          # test.extend: `db` seeder fixture, `wsUrl`
 │   ├── visitor-client.ts    # chat-widget visitor simulator (raw WebSocket protocol)
-│   └── pages/               # page objects: sign-in, shell, data tables, chat
+│   └── pages/               # page objects: sign-in, shell, data tables, chat, billing, products
 └── tests/
     ├── auth.spec.ts             # login, validation, guard redirects, sign-out
     ├── navigation.spec.ts       # sidebar, kbar (Cmd+K), redirects, theme toggle
@@ -25,7 +25,15 @@ e2e/
     ├── widget-modifier.spec.ts  # customer→website cascade + deep links
     ├── engage.spec.ts           # engage tabs: traffic table/filters, profile, campaigns/goals
     ├── chat.spec.ts             # visitor⇄hub⇄agent realtime flows (serial)
-    └── ai-chat.spec.ts          # scripted streaming demo
+    ├── ai-chat.spec.ts          # scripted streaming demo
+    ├── profile-notifications.spec.ts  # profile form + notification center
+    ├── billing.spec.ts          # plans list/filter/sort, new-plan validation, failed-create path
+    ├── archives.spec.ts         # archived-chat viewer: search, tag filter, sort, notes, panels
+    ├── products.spec.ts         # product table, form validation, create/delete, edit page, 404
+    ├── forms.spec.ts            # basic / advanced / multi-step / sheet+dialog form demos
+    ├── misc-pages.spec.ts       # settings+theme persistence, exclusive, workspaces, icons,
+    │                            # react-query demo, 404s, sign-up + alias redirects
+    └── responsive-a11y.spec.ts  # mobile sidebar sheet, Ctrl+B collapse, skip link, kbar keyboard
 ```
 
 ## Running
@@ -43,6 +51,8 @@ reuses them if they are.
 
 ## Environment
 
+- `BILLING_API_URL` — optional; the billing spec reads the live billing service
+  (default `https://billing-service-eta.vercel.app`) and skips if unreachable.
 - `MONGODB_URI` (from `.env.local`) — required for the customers, websites and
   widget-modifier specs. Without it those specs **skip** instead of failing.
 - `NEXT_PUBLIC_CHAT_WS_URL` — optional; defaults to `ws://localhost:8088`.
@@ -57,6 +67,14 @@ them in teardown. A sweep also removes any prefixed rows older than an hour,
 so crashed runs cannot accumulate residue.
 
 ## Known product gaps encoded in the suite
+
+- Billing talks to a remote, shared service through Next **server actions**, so
+  `page.route()` cannot mock it and the suite deliberately never lets a
+  create/update/delete reach it (read-only + client-side validation + an
+  aborted-request error path). Plan CRUD success flows are therefore not covered.
+- `products.spec.ts` marks "deleted product disappears from the list" with
+  `test.fail()`: the row action overrides the shared mutation `onSuccess`,
+  dropping query invalidation, so the list goes stale. Remove the marker when fixed.
 
 - `chat.spec.ts` runs serial because every open dashboard receives all
   `demo-tenant` traffic — the tenant id is currently hardcoded in the app.

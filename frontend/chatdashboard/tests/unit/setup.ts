@@ -1,5 +1,10 @@
 import '@testing-library/jest-dom/vitest';
 import { vi } from 'vitest';
+import { configure } from '@testing-library/react';
+
+// Full-suite runs (especially with coverage) are CPU-bound; the 1s default for
+// findBy*/waitFor makes Suspense-backed components flaky.
+configure({ asyncUtilTimeout: 5000 });
 
 // jsdom does not implement these browser APIs used by the sidebar / Base UI.
 if (!window.matchMedia) {

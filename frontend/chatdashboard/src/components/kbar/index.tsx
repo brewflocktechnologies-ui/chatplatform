@@ -1,6 +1,14 @@
 'use client';
 import { navGroups } from '@/config/nav-config';
-import { KBarAnimator, KBarPortal, KBarPositioner, KBarProvider, KBarSearch, useKBar } from 'kbar';
+import {
+  KBarAnimator,
+  KBarPortal,
+  KBarPositioner,
+  KBarProvider,
+  KBarSearch,
+  VisualState,
+  useKBar
+} from 'kbar';
 import { Kbd } from '@/components/ui/kbd';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef } from 'react';
@@ -12,13 +20,7 @@ import { useFilteredNavGroups } from '@/hooks/use-nav';
 // inner component lives inside it and flips the palette open whenever the
 // gatekeeper asks (first mount or a subsequent toggle signal, e.g. a click on
 // the header SearchInput button).
-function KBarOpenSignal({
-  openOnMount,
-  openNonce
-}: {
-  openOnMount: boolean;
-  openNonce: number;
-}) {
+function KBarOpenSignal({ openOnMount, openNonce }: { openOnMount: boolean; openNonce: number }) {
   const { query } = useKBar();
   const openOnMountRef = useRef(openOnMount);
 
@@ -26,7 +28,9 @@ function KBarOpenSignal({
   // chunk has loaded — LazyKBar mounts us already "open").
   useEffect(() => {
     if (openOnMountRef.current) {
-      query.toggle();
+      // Idempotent open (not toggle): Strict Mode runs this effect twice in
+      // dev, and two toggles would leave the palette closed.
+      query.setVisualState((state) => (state === VisualState.hidden ? VisualState.showing : state));
     }
     // query is stable for the lifetime of the provider; openOnMountRef
     // intentionally captures only the mount-time intent.

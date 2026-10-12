@@ -24,8 +24,8 @@ describe('getQueryClient', () => {
   it('dehydrates default-dehydratable and pending queries only', async () => {
     vi.resetModules();
     const { getQueryClient } = await import('@/lib/query-client');
-    const shouldDehydrateQuery = getQueryClient().getDefaultOptions().dehydrate
-      ?.shouldDehydrateQuery;
+    const shouldDehydrateQuery =
+      getQueryClient().getDefaultOptions().dehydrate?.shouldDehydrateQuery;
 
     expect(shouldDehydrateQuery?.(fakeQuery('success'))).toBe(true);
     expect(shouldDehydrateQuery?.(fakeQuery('pending'))).toBe(true);

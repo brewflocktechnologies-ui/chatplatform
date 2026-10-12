@@ -33,9 +33,7 @@ describe('productSchema', () => {
   it('requires exactly one image', () => {
     expect(messages({ ...valid, image: [] })).toContain('Image is required.');
     expect(messages({ ...valid, image: undefined })).toContain('Image is required.');
-    expect(messages({ ...valid, image: [fakeFile(), fakeFile()] })).toContain(
-      'Image is required.'
-    );
+    expect(messages({ ...valid, image: [fakeFile(), fakeFile()] })).toContain('Image is required.');
   });
 
   it('rejects images over 5MB', () => {

@@ -15,11 +15,7 @@ vi.mock('@/features/websites/api/service', () => ({
   deleteWebsite: vi.fn()
 }));
 
-import {
-  createWebsite,
-  updateWebsite,
-  deleteWebsite
-} from '@/features/websites/api/service';
+import { createWebsite, updateWebsite, deleteWebsite } from '@/features/websites/api/service';
 import {
   createWebsiteMutation,
   updateWebsiteMutation,

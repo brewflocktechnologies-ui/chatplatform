@@ -9,21 +9,25 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    // Form/table component tests render large trees; the 5s default is too
+    // tight when the whole suite runs in parallel.
+    testTimeout: 30_000,
     environment: 'jsdom',
     setupFiles: ['tests/unit/setup.ts'],
     include: ['tests/unit/**/*.{test,spec}.{ts,tsx}'],
     exclude: ['node_modules', 'tests/e2e', '.next'],
     coverage: {
       provider: 'v8',
-      reporter: ['text-summary', 'lcov'],
+      reporter: ['text-summary', 'text', 'lcov'],
       reportsDirectory: 'coverage',
-      // Unit coverage measures the logic layer. UI components/pages (*.tsx,
-      // src/app) and infrastructure that only runs against live systems
+      // Unit coverage measures logic and UI components (shadcn primitives in
+      // src/components/ui are vendored). Route files (src/app) and infrastructure that only runs against live systems
       // (websocket hub, module federation, MongoDB, next/font, Sentry
       // instrumentation) are exercised by the Playwright e2e suite instead.
-      include: ['src/**/*.ts'],
+      include: ['src/**/*.{ts,tsx}'],
       exclude: [
-        'src/**/*.{test,spec}.ts',
+        'src/**/*.{test,spec}.{ts,tsx}',
+        'src/components/ui/**',
         'src/**/*.d.ts',
         'src/app/**',
         'src/types/**',

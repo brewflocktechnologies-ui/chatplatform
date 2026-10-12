@@ -32,9 +32,7 @@ describe('UserAvatarProfile', () => {
   });
 
   it('renders a status badge with the given class', () => {
-    const { container } = render(
-      <UserAvatarProfile user={user} badgeClassName='bg-green-500' />
-    );
+    const { container } = render(<UserAvatarProfile user={user} badgeClassName='bg-green-500' />);
     const badge = container.querySelector('.bg-green-500');
     expect(badge).toBeInTheDocument();
   });
