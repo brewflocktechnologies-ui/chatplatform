@@ -93,10 +93,14 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
         isActive: value.isActive,
         isVerified: value.isVerified
       };
-      if (isEdit) {
-        await updateMutation.mutateAsync({ id: website.id, values: payload });
-      } else {
-        await createMutation.mutateAsync(payload);
+      try {
+        if (isEdit) {
+          await updateMutation.mutateAsync({ id: website.id, values: payload });
+        } else {
+          await createMutation.mutateAsync(payload);
+        }
+      } catch {
+        // Already reported by the mutation's onError.
       }
     }
   });
