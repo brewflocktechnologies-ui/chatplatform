@@ -41,12 +41,7 @@ describe('getSortingStateParser', () => {
   });
 
   it('compares equal states as equal', () => {
-    expect(
-      parser.eq(
-        [{ id: 'name', desc: true }],
-        [{ id: 'name', desc: true }]
-      )
-    ).toBe(true);
+    expect(parser.eq([{ id: 'name', desc: true }], [{ id: 'name', desc: true }])).toBe(true);
   });
 
   it('compares states of different lengths as not equal', () => {
@@ -54,18 +49,8 @@ describe('getSortingStateParser', () => {
   });
 
   it('compares states with differing items as not equal', () => {
-    expect(
-      parser.eq(
-        [{ id: 'name', desc: true }],
-        [{ id: 'name', desc: false }]
-      )
-    ).toBe(false);
-    expect(
-      parser.eq(
-        [{ id: 'name', desc: true }],
-        [{ id: 'email', desc: true }]
-      )
-    ).toBe(false);
+    expect(parser.eq([{ id: 'name', desc: true }], [{ id: 'name', desc: false }])).toBe(false);
+    expect(parser.eq([{ id: 'name', desc: true }], [{ id: 'email', desc: true }])).toBe(false);
   });
 
   it('handles a missing counterpart item', () => {

@@ -38,7 +38,9 @@ describe('FullscreenToggle', () => {
   it('renders the enter-fullscreen control by default', () => {
     render(<FullscreenToggle />);
     expect(screen.getByText('Enter fullscreen')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /enter fullscreen|exit fullscreen/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /enter fullscreen|exit fullscreen/i })
+    ).toBeInTheDocument();
   });
 
   it('calls requestFullscreen when clicked outside fullscreen', () => {

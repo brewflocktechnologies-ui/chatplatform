@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import * as React from 'react';
 import { renderHook } from '@testing-library/react';
-import { fieldContext, formContext, useFieldContext, useFormContext, useFieldInvalid } from '@/lib/form-context';
+import {
+  fieldContext,
+  formContext,
+  useFieldContext,
+  useFormContext,
+  useFieldInvalid
+} from '@/lib/form-context';
 
 function makeField(isTouched: boolean, isValid: boolean) {
   return { state: { meta: { isTouched, isValid } } };
@@ -9,9 +15,7 @@ function makeField(isTouched: boolean, isValid: boolean) {
 
 function fieldWrapper(field: ReturnType<typeof makeField>) {
   return function Wrapper({ children }: { children: React.ReactNode }) {
-    return (
-      <fieldContext.Provider value={field as never}>{children}</fieldContext.Provider>
-    );
+    return <fieldContext.Provider value={field as never}>{children}</fieldContext.Provider>;
   };
 }
 

@@ -22,9 +22,7 @@ describe('SettingsPage', () => {
     renderPage();
     expect(screen.getByText('Settings')).toBeInTheDocument();
     expect(screen.getByText('Appearance')).toBeInTheDocument();
-    expect(
-      screen.getByText('Pick the theme used across the dashboard.')
-    ).toBeInTheDocument();
+    expect(screen.getByText('Pick the theme used across the dashboard.')).toBeInTheDocument();
     expect(screen.getByRole('combobox', { name: 'Theme' })).toBeInTheDocument();
   });
 

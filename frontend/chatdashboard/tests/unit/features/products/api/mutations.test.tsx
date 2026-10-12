@@ -15,11 +15,7 @@ vi.mock('@/features/products/api/service', () => ({
   deleteProduct: vi.fn()
 }));
 
-import {
-  createProduct,
-  updateProduct,
-  deleteProduct
-} from '@/features/products/api/service';
+import { createProduct, updateProduct, deleteProduct } from '@/features/products/api/service';
 import {
   createProductMutation,
   updateProductMutation,

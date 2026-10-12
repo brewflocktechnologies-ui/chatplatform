@@ -41,7 +41,12 @@ describe('composeRefs', () => {
     const plainFnRef = vi.fn();
     const node = document.createElement('div');
 
-    const composed = composeRefs<HTMLDivElement>(fnWithCleanupA, fnWithCleanupB, objRef, plainFnRef);
+    const composed = composeRefs<HTMLDivElement>(
+      fnWithCleanupA,
+      fnWithCleanupB,
+      objRef,
+      plainFnRef
+    );
     const dispose = composed(node);
 
     expect(objRef.current).toBe(node);

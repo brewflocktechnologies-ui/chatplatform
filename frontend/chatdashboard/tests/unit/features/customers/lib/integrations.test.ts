@@ -1,8 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import {
-  parseIntegrations,
-  stringifyIntegrations
-} from '@/features/customers/lib/integrations';
+import { parseIntegrations, stringifyIntegrations } from '@/features/customers/lib/integrations';
 
 describe('parseIntegrations', () => {
   it('parses yes/yes into true flags', () => {

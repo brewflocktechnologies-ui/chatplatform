@@ -36,7 +36,11 @@ export class DashboardShell {
   }
 
   async openKbar(): Promise<Locator> {
-    await this.page.getByRole('button', { name: /Search/ }).click();
+    // The header no longer renders a Search button; the palette opens on
+    // Cmd/Ctrl+K or the `kbar:open` window event (lazy-kbar.tsx). Wait for
+    // hydration so the lazy listener is attached before the event fires.
+    await this.page.waitForLoadState('networkidle');
+    await this.page.evaluate(() => window.dispatchEvent(new Event('kbar:open')));
     const input = this.page.locator('input[aria-controls="kbar-listbox"]');
     await input.waitFor({ state: 'visible' });
     return input;
