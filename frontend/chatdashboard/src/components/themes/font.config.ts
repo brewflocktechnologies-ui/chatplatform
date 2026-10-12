@@ -29,7 +29,8 @@ const fontGoogleSansFlex = Google_Sans_Flex({
   variable: '--font-google-sans-flex',
   // Next.js has no fallback metrics for this font — it warns on every compile
   // and skips the fallback anyway, so opt out explicitly to silence it.
-  adjustFontFallback: false
+  adjustFontFallback: false,
+  fallback: ['ui-sans-serif', 'system-ui', 'sans-serif']
 });
 
 const fontSourceCodePro = Source_Code_Pro({
