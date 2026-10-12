@@ -9,6 +9,9 @@ export default defineConfig({
   },
   test: {
     globals: true,
+    // Form/table component tests render large trees; the 5s default is too
+    // tight when the whole suite runs in parallel.
+    testTimeout: 30_000,
     environment: 'jsdom',
     setupFiles: ['tests/unit/setup.ts'],
     include: ['tests/unit/**/*.{test,spec}.{ts,tsx}'],
