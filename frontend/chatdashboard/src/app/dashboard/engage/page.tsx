@@ -1,30 +1,35 @@
 'use client';
 
 import { useState } from 'react';
-import clsx from 'clsx';
 import TrafficView from '@/features/engage/TrafficView';
+import { cn } from '@/lib/utils';
+
+const TABS = ['traffic', 'campaigns', 'goals'] as const;
+type Tab = (typeof TABS)[number];
 
 export default function EngagePage() {
-  const [activeTab, setActiveTab] = useState<'traffic' | 'campaigns' | 'goals'>('traffic');
+  const [activeTab, setActiveTab] = useState<Tab>('traffic');
 
   return (
-    <div className="flex w-full flex-1 h-[calc(100dvh-4rem)] overflow-hidden md:h-[calc(100dvh-3.5rem)]">
-      {/* Left Sidebar */}
-      <div className="w-[220px] shrink-0 border-r p-4 bg-gray-50 dark:bg-zinc-900">
-        <h2 className="text-xl font-semibold mb-4 dark:text-white">Engage</h2>
-        <nav className="flex flex-col gap-2">
-          {['traffic', 'campaigns', 'goals'].map((tab) => (
+    <div className='bg-background text-foreground flex h-[calc(100dvh-4rem)] w-0 min-w-full flex-1 flex-col overflow-hidden md:h-[calc(100dvh-3.5rem)] md:flex-row'>
+      {/* Tab navigation: horizontal scroller on phones, side rail from md up */}
+      <div className='border-border/60 bg-muted/30 shrink-0 border-b p-3 md:w-52 md:border-r md:border-b-0 md:p-4 lg:w-56'>
+        <h2 className='mb-3 text-xl font-semibold max-md:sr-only'>Engage</h2>
+        <nav
+          aria-label='Engage sections'
+          className='flex gap-1.5 overflow-x-auto md:flex-col md:gap-1 md:overflow-visible'
+        >
+          {TABS.map((tab) => (
             <button
               key={tab}
-              onClick={() => setActiveTab(tab as typeof activeTab)}
-              className={clsx(
-                'text-left px-3 py-2 rounded-md text-sm font-medium capitalize',
-                {
-                  'bg-blue-100 text-blue-900 dark:bg-blue-800 dark:text-white':
-                    activeTab === tab,
-                  'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-zinc-800':
-                    activeTab !== tab,
-                }
+              type='button'
+              onClick={() => setActiveTab(tab)}
+              aria-current={activeTab === tab ? 'page' : undefined}
+              className={cn(
+                'focus-visible:ring-ring shrink-0 rounded-md px-3 py-2 text-left text-sm font-medium capitalize transition-colors outline-none focus-visible:ring-2',
+                activeTab === tab
+                  ? 'bg-primary/10 text-primary'
+                  : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground'
               )}
             >
               {tab}
@@ -33,8 +38,8 @@ export default function EngagePage() {
         </nav>
       </div>
 
-      {/* Right Content View */}
-      <div className="flex-1 min-w-0 h-full flex flex-col">
+      {/* Right content view */}
+      <div className='flex h-full min-h-0 min-w-0 flex-1 flex-col'>
         {activeTab === 'traffic' && <TrafficView />}
         {activeTab === 'campaigns' && <CampaignsView />}
         {activeTab === 'goals' && <GoalsView />}
@@ -43,12 +48,10 @@ export default function EngagePage() {
   );
 }
 
-
-
 function CampaignsView() {
-  return <div className="p-6 text-xl font-bold">🎯 Marketing Campaigns</div>;
+  return <div className='p-4 text-lg font-bold sm:p-6 sm:text-xl'>🎯 Marketing Campaigns</div>;
 }
 
 function GoalsView() {
-  return <div className="p-6 text-xl font-bold">🏁 Engagement Goals</div>;
+  return <div className='p-4 text-lg font-bold sm:p-6 sm:text-xl'>🏁 Engagement Goals</div>;
 }
