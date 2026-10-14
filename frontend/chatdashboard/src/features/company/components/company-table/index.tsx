@@ -57,13 +57,13 @@ export function CompanyTable() {
     shallow: true,
     debounceMs: 500,
     initialState: {
-      columnVisibility: { plans: false, customers: false },
+      columnVisibility: { phone:false, pinCode: false, plans: false, customers: false },
       columnPinning: { right: ['actions'] }
     }
   });
 
   return (
-    <DataTable table={table}>
+    <DataTable table={table} minTableWidth>
       <DataTableToolbar table={table} actions={<CompanyFormSheetTrigger />}>
         {search && all.isFetching && !all.data && (
           <span className='text-muted-foreground flex items-center gap-2 text-sm' role='status'>

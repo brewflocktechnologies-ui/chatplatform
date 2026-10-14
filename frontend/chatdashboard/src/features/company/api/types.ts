@@ -30,7 +30,11 @@ export const COMPANY_SORT_FIELDS = [
   'companyDetails.contactEmail',
   'companyDetails.industry',
   'companyDetails.employeeCount',
-  'headquarters.city'
+  'companyDetails.contactPhone',
+  'headquarters.city',
+  'headquarters.state',
+  'headquarters.country',
+  'headquarters.postalCode'
 ] as const;
 
 export type CompanySortField = (typeof COMPANY_SORT_FIELDS)[number];

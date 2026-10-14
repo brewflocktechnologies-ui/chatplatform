@@ -5,7 +5,11 @@ export const COLUMN_SORT_FIELDS: Record<string, CompanySortField> = {
   name: 'name',
   email: 'companyDetails.contactEmail',
   industry: 'companyDetails.industry',
-  headquarters: 'headquarters.city',
+  phone: 'companyDetails.contactPhone',
+  city: 'headquarters.city',
+  state: 'headquarters.state',
+  country: 'headquarters.country',
+  pinCode: 'headquarters.postalCode',
   employees: 'companyDetails.employeeCount'
 };
 

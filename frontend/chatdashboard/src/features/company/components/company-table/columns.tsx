@@ -17,6 +17,7 @@ const sortableHeader =
 export const columns: ColumnDef<Company>[] = [
   {
     id: 'name',
+    size: 240,
     accessorKey: 'name',
     header: sortableHeader('Name'),
     cell: ({ row }) => <span className='font-medium'>{row.original.name}</span>,
@@ -30,36 +31,64 @@ export const columns: ColumnDef<Company>[] = [
   },
   {
     id: 'email',
+    size: 260,
     header: sortableHeader('Email'),
     cell: ({ row }) => row.original.companyDetails?.contactEmail ?? dash
   },
   {
+    id: 'phone',
+    size: 150,
+    header: sortableHeader('Phone'),
+    cell: ({ row }) => row.original.companyDetails?.contactPhone ?? dash
+  },
+  {
     id: 'industry',
+    size: 150,
     header: sortableHeader('Industry'),
     cell: ({ row }) => row.original.companyDetails?.industry ?? dash
   },
   {
-    id: 'headquarters',
-    header: sortableHeader('Headquarters'),
-    cell: ({ row }) => {
-      const hq = row.original.headquarters;
-      return [hq?.city, hq?.country].filter(Boolean).join(', ') || dash;
-    }
+    id: 'city',
+    size: 130,
+    header: sortableHeader('City'),
+    cell: ({ row }) => row.original.headquarters?.city ?? dash
+  },
+  {
+    id: 'state',
+    size: 140,
+    header: sortableHeader('State'),
+    cell: ({ row }) => row.original.headquarters?.state ?? dash
+  },
+  {
+    id: 'country',
+    size: 130,
+    header: sortableHeader('Country'),
+    cell: ({ row }) => row.original.headquarters?.country ?? dash
+  },
+  {
+    id: 'pinCode',
+    size: 110,
+    header: sortableHeader('Pin Code'),
+    meta: { label: 'Pin Code' },
+    cell: ({ row }) => row.original.headquarters?.postalCode ?? dash
   },
   {
     id: 'employees',
+    size: 130,
     header: sortableHeader('Employees'),
     cell: ({ row }) => row.original.companyDetails?.employeeCount?.toLocaleString() ?? dash
   },
   {
     id: 'plans',
-    header: 'PLANS',
+    size: 100,
+    header: 'Plans',
     enableSorting: false,
     cell: ({ row }) => <Badge variant='outline'>{row.original.customPlanIds.length}</Badge>
   },
   {
     id: 'customers',
-    header: 'CUSTOMERS',
+    size: 120,
+    header: 'Customers',
     enableSorting: false,
     cell: ({ row }) => <Badge variant='outline'>{row.original.customerIds.length}</Badge>
   },
