@@ -1,6 +1,6 @@
 'use client';
 
-import type { Table } from '@tanstack/react-table';
+import type { Column, Table } from '@tanstack/react-table';
 import { Icons } from '@/components/icons';
 
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,16 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 import * as React from 'react';
 
+/** meta.label, else a plain-string header, else the column id as words (`activePlanName` → `Active Plan Name`). */
+function columnLabel<TData>(column: Column<TData>) {
+  const { meta, header } = column.columnDef;
+  if (meta?.label) return meta.label;
+  if (typeof header === 'string') return header;
+  return column.id
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/^./, (c) => c.toUpperCase());
+}
+
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
 }
@@ -23,9 +33,7 @@ interface DataTableViewOptionsProps<TData> {
 export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps<TData>) {
   const columns = React.useMemo(
     () =>
-      table
-        .getAllColumns()
-        .filter((column) => typeof column.accessorFn !== 'undefined' && column.getCanHide()),
+      table.getAllColumns().filter((column) => column.getCanHide()),
     [table]
   );
 
@@ -56,7 +64,7 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
                   key={column.id}
                   onSelect={() => column.toggleVisibility(!column.getIsVisible())}
                 >
-                  <span className='truncate'>{column.columnDef.meta?.label ?? column.id}</span>
+                  <span className='truncate'>{columnLabel(column)}</span>
                   <Icons.check
                     className={cn(
                       'ml-auto size-4 shrink-0',

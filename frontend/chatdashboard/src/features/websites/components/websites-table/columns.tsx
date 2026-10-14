@@ -127,6 +127,7 @@ export const columns: ColumnDef<Website>[] = [
   },
   {
     id: 'actions',
+    enableHiding: false,
     header: () => <span className='block text-center'>ACTIONS</span>,
     size: 80,
     cell: ({ row }) => (

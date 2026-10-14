@@ -24,7 +24,9 @@ export function DataTable<TData>({ table, actionBar, children }: DataTableProps<
       {children}
       <div className='relative flex flex-1'>
         <div className='absolute inset-0 flex overflow-hidden rounded-lg border'>
-          <ScrollArea className='h-full w-full'>
+          {/* The Table wrapper scrolls horizontally, which would make it the sticky
+              header's scroll container; let the ScrollArea own both axes instead. */}
+          <ScrollArea className='h-full w-full [&_[data-slot=table-container]]:overflow-visible'>
             <Table>
               <TableHeader className='bg-muted sticky top-0 z-10'>
                 {table.getHeaderGroups().map((headerGroup) => (
