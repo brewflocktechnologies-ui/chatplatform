@@ -4,7 +4,7 @@ import { toPayload } from '@/features/billing/lib/plan-payload';
 import type { PlanFilters } from '@/features/billing/api/types';
 import { makePlan, makePage } from '../fixtures';
 
-const BASE = 'https://billing-service-eta.vercel.app';
+const BASE = 'https://billing-service-iota.vercel.app';
 const fetchMock = vi.fn();
 
 function respond(status: number, body: unknown) {
@@ -53,7 +53,7 @@ describe('getPlans', () => {
       path: '/api/plans',
       params: { page: '2', size: '10', sort: 'name,asc' }
     });
-    expect(fetchMock.mock.calls[0][1]).toEqual({ cache: 'no-store' });
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'GET', cache: 'no-store' });
   });
 
   it('uses the active endpoint for the active filter', async () => {
