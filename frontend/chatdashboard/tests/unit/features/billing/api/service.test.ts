@@ -21,10 +21,13 @@ function respond(status: number, body: unknown) {
 beforeEach(() => {
   fetchMock.mockReset();
   vi.stubGlobal('fetch', fetchMock);
+  // Pin the origin so the suite doesn't depend on the developer's .env.local.
+  vi.stubEnv('BILLING_API_URL', BASE);
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 const filters: PlanFilters = {
