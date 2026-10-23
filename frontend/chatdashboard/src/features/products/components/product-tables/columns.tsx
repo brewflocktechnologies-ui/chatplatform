@@ -77,6 +77,7 @@ export const columns: ColumnDef<Product>[] = [
 
   {
     id: 'actions',
+    enableHiding: false,
     header: () => <span className='block text-center'>ACTIONS</span>,
     size: 80,
     cell: ({ row }) => (

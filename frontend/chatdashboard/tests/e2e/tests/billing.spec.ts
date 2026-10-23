@@ -12,7 +12,7 @@ import { BillingPage } from '../support/pages/billing-page';
  * Everything skips when the billing service is unreachable.
  */
 
-const BILLING_URL = process.env.BILLING_API_URL ?? 'https://billing-service-eta.vercel.app';
+const BILLING_URL = process.env.BILLING_API_URL ?? 'https://billing-service-iota.vercel.app';
 
 test.describe('Billing & Plans', () => {
   // The remote billing service is slow (~20s per list request) and the page

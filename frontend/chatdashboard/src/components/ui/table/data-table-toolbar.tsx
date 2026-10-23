@@ -14,11 +14,14 @@ import { Icons } from '@/components/icons';
 
 interface DataTableToolbarProps<TData> extends React.ComponentProps<'div'> {
   table: Table<TData>;
+  /** Rendered after the view-options button, at the far right. */
+  actions?: React.ReactNode;
 }
 
 export function DataTableToolbar<TData>({
   table,
   children,
+  actions,
   className,
   ...props
 }: DataTableToolbarProps<TData>) {
@@ -60,6 +63,7 @@ export function DataTableToolbar<TData>({
       <div className='flex items-center gap-2'>
         {children}
         <DataTableViewOptions table={table} />
+        {actions}
       </div>
     </div>
   );

@@ -52,7 +52,7 @@ reuses them if they are.
 ## Environment
 
 - `BILLING_API_URL` — optional; the billing spec reads the live billing service
-  (default `https://billing-service-eta.vercel.app`) and skips if unreachable.
+  (default `https://billing-service-iota.vercel.app`) and skips if unreachable.
 - `MONGODB_URI` (from `.env.local`) — required for the customers, websites and
   widget-modifier specs. Without it those specs **skip** instead of failing.
 - `NEXT_PUBLIC_CHAT_WS_URL` — optional; defaults to `ws://localhost:8088`.

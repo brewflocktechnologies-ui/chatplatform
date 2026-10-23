@@ -3,7 +3,7 @@
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableToolbar } from '@/components/ui/table/data-table-toolbar';
 import { useDataTable } from '@/hooks/use-data-table';
-import { useSuspenseQuery } from '@tanstack/react-query';
+import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { getSortingStateParser } from '@/lib/parsers';
 import { customersQueryOptions } from '../../api/queries';
@@ -30,12 +30,18 @@ export function CustomersTable() {
     ...(params.sort.length > 0 && { sort: JSON.stringify(params.sort) })
   };
 
-  const { data } = useSuspenseQuery(customersQueryOptions(filters));
+  // useQuery (not useSuspenseQuery): getCustomers is a server action, and invoking it
+  // during render when the filters change makes Next update the Router mid-render.
+  // keepPreviousData keeps the old rows on screen while the new page loads.
+  const { data } = useQuery({
+    ...customersQueryOptions(filters),
+    placeholderData: keepPreviousData
+  });
 
-  const pageCount = Math.ceil(data.total_customers / params.perPage);
+  const pageCount = Math.ceil((data?.total_customers ?? 0) / params.perPage);
 
   const { table } = useDataTable({
-    data: data.customers,
+    data: data?.customers ?? [],
     columns,
     pageCount,
     shallow: true,
