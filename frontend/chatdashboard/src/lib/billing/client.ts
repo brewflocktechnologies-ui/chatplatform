@@ -62,6 +62,8 @@ export function sortParam<F extends string>(
 }
 
 type RequestOptions = {
+  /** Overrides BILLING_API_URL for resources hosted on a different deployment. */
+  origin?: string;
   query?: URLSearchParams;
   body?: unknown;
   /** The service maps many failures to 404, so each resource words it for itself. */
@@ -72,13 +74,13 @@ type RequestOptions = {
 export async function billingRequest<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
-  { query, body, notFoundMessage }: RequestOptions = {}
+  { origin, query, body, notFoundMessage }: RequestOptions = {}
 ): Promise<ApiResult<T>> {
   const qs = query?.size ? `?${query}` : '';
 
   let res: Response;
   try {
-    res = await fetch(`${baseUrl()}${path}${qs}`, {
+    res = await fetch(`${origin?.replace(/\/+$/, '') ?? baseUrl()}${path}${qs}`, {
       method,
       cache: 'no-store',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

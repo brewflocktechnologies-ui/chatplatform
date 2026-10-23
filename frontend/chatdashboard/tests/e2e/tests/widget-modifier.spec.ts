@@ -1,4 +1,5 @@
 import { expect, skipWithoutDb, test } from '../support/fixtures';
+import { firstLiveCustomer } from '../support/customers-api';
 
 /**
  * Widget Modifier workflows: the Customer -> Website -> Config selection
@@ -6,7 +7,8 @@ import { expect, skipWithoutDb, test } from '../support/fixtures';
  *
  * The MFE itself (localhost:5001 / GitHub Pages remote) is an external
  * deployable, so these tests cover the dashboard-owned shell: selection
- * state, deep-link URL params, and data loading from MongoDB.
+ * state, deep-link URL params, and data loading (customers from the billing
+ * API, websites and configs from MongoDB).
  */
 
 test.beforeEach(() => skipWithoutDb());
@@ -19,8 +21,12 @@ test.describe('Widget Modifier', () => {
     await expect(page.getByText('Pick a customer first')).toBeVisible();
   });
 
-  test('choosing a customer cascades into the website select and the URL', async ({ page, db }) => {
-    const customer = await db.seedCustomer();
+  test('choosing a customer cascades into the website select and the URL', async ({
+    page,
+    db,
+    request
+  }) => {
+    const customer = await firstLiveCustomer(request);
     const website = await db.seedWebsite(customer);
 
     await page.goto('/dashboard/widget-modifier');
@@ -42,9 +48,10 @@ test.describe('Widget Modifier', () => {
 
   test('the websites table deep-links into the modifier with selection pinned', async ({
     page,
-    db
+    db,
+    request
   }) => {
-    const customer = await db.seedCustomer();
+    const customer = await firstLiveCustomer(request);
     const website = await db.seedWebsite(customer);
 
     await page.goto(`/dashboard/widget-modifier?customerId=${customer.id}&websiteId=${website.id}`);

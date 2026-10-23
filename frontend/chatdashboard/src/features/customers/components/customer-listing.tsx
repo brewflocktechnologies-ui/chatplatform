@@ -2,28 +2,17 @@ import { HydrationBoundary, dehydrate } from '@tanstack/react-query';
 import { getQueryClient } from '@/lib/query-client';
 import { searchParamsCache } from '@/lib/searchparams';
 import { customersQueryOptions } from '../api/queries';
+import { parseSortParam } from '../lib/customer-sort';
 import { CustomersTable } from './customers-table';
 
 export default function CustomerListingPage() {
   const page = searchParamsCache.get('page');
-  const search = searchParamsCache.get('name');
   const pageLimit = searchParamsCache.get('perPage');
-  const status = searchParamsCache.get('status');
-  const plan = searchParamsCache.get('plan');
-  const sort = searchParamsCache.get('sort');
-
-  const filters = {
-    page,
-    limit: pageLimit,
-    ...(search && { search }),
-    ...(status && { status }),
-    ...(plan && { plan }),
-    ...(sort && { sort })
-  };
+  const sort = parseSortParam(searchParamsCache.get('sort'));
 
   const queryClient = getQueryClient();
 
-  void queryClient.prefetchQuery(customersQueryOptions(filters));
+  void queryClient.prefetchQuery(customersQueryOptions({ page: page - 1, size: pageLimit, sort }));
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

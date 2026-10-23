@@ -3,7 +3,6 @@ import CustomerListingPage from '@/features/customers/components/customer-listin
 import { searchParamsCache } from '@/lib/searchparams';
 import type { SearchParams } from 'nuqs/server';
 import { customersInfoContent } from '@/features/customers/info-content';
-import { CustomerFormSheetTrigger } from '@/features/customers/components/customer-form-sheet';
 
 export const metadata = {
   title: 'Dashboard: Customers'

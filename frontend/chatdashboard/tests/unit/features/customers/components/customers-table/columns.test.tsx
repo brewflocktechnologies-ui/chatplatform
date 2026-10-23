@@ -1,10 +1,6 @@
 import { describe, expect, it, vi, afterEach } from 'vitest';
 import { cleanup, render, screen } from '@testing-library/react';
-import type { ColumnDef } from '@tanstack/react-table';
 
-vi.mock('@/features/customers/components/customers-table/cell-action', () => ({
-  CellAction: ({ data }: { data: { id: string } }) => <div data-testid='cell-action'>{data.id}</div>
-}));
 vi.mock('@/components/ui/table/data-table-column-header', () => ({
   DataTableColumnHeader: ({ title }: { title: string }) => <span>{title}</span>
 }));
@@ -15,95 +11,115 @@ import type { Customer } from '@/features/customers/api/types';
 afterEach(cleanup);
 
 const row: Customer = {
-  id: 'c1',
-  name: 'Acme',
-  email: 'team@acme.com',
-  country: 'india',
-  dateAdded: '2026-01-02T12:00:00Z',
-  integrations: '{"crm":"yes","analytics":"yes"}',
-  activePlanName: 'Basic',
-  status: 'active'
+  id: 53,
+  externalId: 'cust-aadhi-98765',
+  email: 'aadhi@example.com',
+  activePlan: { id: 2, name: 'Premium' },
+  billingAddress: {
+    line1: '456 Oak Avenue',
+    line2: 'Suite 200',
+    city: 'San Francisco',
+    state: 'CA',
+    postalCode: '94105',
+    country: 'USA'
+  },
+  creditCard: { brand: 'MasterCard', numberLastFourDigits: '5678' },
+  invoices: []
 };
 
-const col = (key: string) =>
-  columns.find((c) => c.id === key || (c as { accessorKey?: string }).accessorKey === key)!;
+const bare: Customer = {
+  ...row,
+  activePlan: null,
+  billingAddress: null,
+  creditCard: null
+};
 
-function renderCell(key: string, data: Customer = row) {
-  const c = col(key) as ColumnDef<Customer> & { accessorKey: keyof Customer };
-  const value = data[c.accessorKey];
-  const node = (c.cell as (ctx: unknown) => React.ReactNode)({
-    row: { original: data },
-    cell: { getValue: () => value }
-  });
+const col = (id: string) => columns.find((c) => c.id === id)!;
+
+function renderCell(id: string, data: Customer = row) {
+  const node = (col(id).cell as (ctx: unknown) => React.ReactNode)({ row: { original: data } });
   return render(<>{node}</>);
 }
 
-function renderHeader(key: string) {
-  const header = col(key).header as unknown;
-  if (typeof header === 'string') return render(<>{header}</>);
-  return render(<>{(header as (ctx: unknown) => React.ReactNode)({ column: {} })}</>);
+function renderHeader(id: string) {
+  const header = col(id).header as (ctx: unknown) => React.ReactNode;
+  return render(<>{header({ column: {} })}</>);
 }
 
 describe('customers columns', () => {
   it.each([
-    ['name', 'Name'],
-    ['email', 'EMAIL'],
-    ['country', 'COUNTRY'],
-    ['dateAdded', 'Date Added'],
-    ['integrations', 'INTEGRATIONS'],
-    ['activePlanName', 'Active Plan'],
-    ['status', 'Status'],
-    ['actions', 'ACTIONS']
-  ])('renders the %s header', (key, text) => {
-    renderHeader(key);
+    ['email', 'Email'],
+    ['externalId', 'External ID'],
+    ['city', 'City'],
+    ['state', 'State'],
+    ['country', 'Country'],
+    ['card', 'Card'],
+    ['activePlan', 'Active Plan'],
+    ['invoices', 'Invoices']
+  ])('renders the %s header', (id, text) => {
+    renderHeader(id);
     expect(screen.getByText(text)).toBeInTheDocument();
   });
 
-  it('renders name, country and plan cells', () => {
-    renderCell('name');
-    expect(screen.getByText('Acme')).toHaveClass('font-medium');
-    cleanup();
-    renderCell('country');
-    expect(screen.getByText('india')).toHaveClass('capitalize');
-    cleanup();
-    renderCell('activePlanName');
-    expect(screen.getByText('Basic')).toBeInTheDocument();
+  it('makes email the searchable column', () => {
+    expect(col('email').enableColumnFilter).toBe(true);
+    expect(col('email').meta).toMatchObject({ variant: 'text' });
   });
 
-  it('formats the date, falling back for missing or invalid values', () => {
-    renderCell('dateAdded');
-    expect(screen.getByText('Jan 2, 2026')).toBeInTheDocument();
+  it('only leaves plan and invoices unsortable', () => {
+    expect(columns.filter((c) => c.enableSorting === false).map((c) => c.id)).toEqual([
+      'activePlan',
+      'invoices'
+    ]);
+  });
+
+  it('renders email and external id', () => {
+    renderCell('email');
+    expect(screen.getByText('aadhi@example.com')).toHaveClass('font-medium');
     cleanup();
-    renderCell('dateAdded', { ...row, dateAdded: '' });
+    renderCell('externalId');
+    expect(screen.getByText('cust-aadhi-98765')).toBeInTheDocument();
+  });
+
+  it('renders address cells, with a dash when there is no address', () => {
+    for (const [id, text] of [
+      ['city', 'San Francisco'],
+      ['state', 'CA'],
+      ['country', 'USA']
+    ]) {
+      renderCell(id);
+      expect(screen.getByText(text)).toBeInTheDocument();
+      cleanup();
+      renderCell(id, bare);
+      expect(screen.getByText('—')).toBeInTheDocument();
+      cleanup();
+    }
+  });
+
+  it('renders the card brand with its last four digits, or a dash', () => {
+    renderCell('card');
+    expect(screen.getByText('MasterCard •••• 5678')).toBeInTheDocument();
+    cleanup();
+    renderCell('card', bare);
     expect(screen.getByText('—')).toBeInTheDocument();
-    cleanup();
-    renderCell('dateAdded', { ...row, dateAdded: 'not-a-date' });
-    expect(screen.getByText('not-a-date')).toBeInTheDocument();
   });
 
-  it('lists active integrations as badges, or None', () => {
-    renderCell('integrations');
-    expect(screen.getByText('crm')).toBeInTheDocument();
-    expect(screen.getByText('analytics')).toBeInTheDocument();
+  it('renders the active plan as a badge, or a dash', () => {
+    renderCell('activePlan');
+    expect(screen.getByText('Premium')).toBeInTheDocument();
     cleanup();
-    renderCell('integrations', { ...row, integrations: '{"crm":"yes","analytics":"no"}' });
-    expect(screen.getByText('crm')).toBeInTheDocument();
-    expect(screen.queryByText('analytics')).not.toBeInTheDocument();
-    cleanup();
-    renderCell('integrations', { ...row, integrations: '{"crm":"no","analytics":"no"}' });
-    expect(screen.getByText('None')).toBeInTheDocument();
+    renderCell('activePlan', bare);
+    expect(screen.getByText('—')).toBeInTheDocument();
   });
 
-  it('renders the status badge for active and inactive customers', () => {
-    renderCell('status');
-    expect(screen.getByText('active')).toBeInTheDocument();
+  it('renders the invoice count', () => {
+    renderCell('invoices');
+    expect(screen.getByText('0')).toBeInTheDocument();
     cleanup();
-    renderCell('status', { ...row, status: 'inactive' });
-    expect(screen.getByText('inactive')).toBeInTheDocument();
-  });
-
-  it('renders the row actions', () => {
-    renderCell('actions');
-    expect(screen.getByTestId('cell-action')).toHaveTextContent('c1');
+    renderCell('invoices', {
+      ...row,
+      invoices: [{ id: 1 }, { id: 2 }] as unknown as Customer['invoices']
+    });
+    expect(screen.getByText('2')).toBeInTheDocument();
   });
 });

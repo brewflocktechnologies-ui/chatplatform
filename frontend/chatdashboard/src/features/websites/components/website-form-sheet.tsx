@@ -18,10 +18,15 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createWebsiteMutation, updateWebsiteMutation } from '../api/mutations';
 import { websiteKeys } from '../api/queries';
 import type { Website, WebsiteMutationPayload } from '../api/types';
-import { customersQueryOptions } from '@/features/customers/api/queries';
+import { allCustomersQueryOptions } from '@/features/customers/api/queries';
+import type { CustomerSort } from '@/features/customers/api/types';
+import { toCustomerOption } from '@/features/customers/lib/customer-options';
 import { toast } from 'sonner';
 import { websiteSchema, type WebsiteFormValues } from '../schemas/website';
 import { PROTOCOL_OPTIONS, CATEGORY_OPTIONS } from './websites-table/options';
+
+// The API has no name, so the picker is sorted by email for scanning.
+const CUSTOMER_SORT: CustomerSort = { field: 'email', dir: 'asc' };
 
 interface WebsiteFormSheetProps {
   website?: Website;
@@ -33,16 +38,12 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
   const isEdit = !!website;
   const queryClient = useQueryClient();
 
-  // Customers from MongoDB feed the owner dropdown.
-  const { data: customersData } = useQuery({
-    ...customersQueryOptions({ page: 1, limit: 100 }),
+  // Customers from the billing API feed the owner dropdown.
+  const { data: customers = [] } = useQuery({
+    ...allCustomersQueryOptions(CUSTOMER_SORT),
     enabled: open
   });
-  const customers = customersData?.customers ?? [];
-  const customerOptions = customers.map((c) => ({
-    value: c.id,
-    label: c.email ? `${c.name} (${c.email})` : c.name
-  }));
+  const customerOptions = customers.map(toCustomerOption);
 
   const createMutation = useMutation({
     ...createWebsiteMutation,
@@ -80,12 +81,12 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
       onSubmit: websiteSchema
     },
     onSubmit: async ({ value }) => {
-      const customer = customers.find((c) => c.id === value.customerId);
+      const customer = customerOptions.find((o) => o.value === value.customerId);
       const payload: WebsiteMutationPayload = {
         protocol: value.protocol,
         domain: value.domain,
         customerId: value.customerId,
-        customerName: customer?.name ?? website?.customerName ?? '',
+        customerName: customer?.label ?? website?.customerName ?? '',
         companyId: value.customerId,
         businessCategory: value.businessCategory,
         flavour: value.flavour,

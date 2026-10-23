@@ -92,7 +92,7 @@ export class TestDb {
   }
 
   async seedWebsite(
-    customer: SeededCustomer,
+    customer: Pick<SeededCustomer, 'id' | 'name'>,
     overrides: Partial<Record<string, unknown>> = {}
   ): Promise<SeededWebsite> {
     const now = new Date().toISOString();

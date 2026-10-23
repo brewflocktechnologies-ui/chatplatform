@@ -34,7 +34,9 @@ import {
 } from '@/components/ui/select';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
-import { customersQueryOptions } from '@/features/customers/api/queries';
+import { allCustomersQueryOptions } from '@/features/customers/api/queries';
+import type { CustomerSort } from '@/features/customers/api/types';
+import { toCustomerOption } from '@/features/customers/lib/customer-options';
 import { websitesQueryOptions } from '@/features/websites/api/queries';
 import { widgetConfigsQueryOptions, widgetConfigKeys } from '../api/queries';
 import {
@@ -52,6 +54,9 @@ function handleRefresh() {
   toast.info('Widget preview refreshed');
 }
 
+// The API has no name, so the picker is sorted by email for scanning.
+const CUSTOMER_SORT: CustomerSort = { field: 'email', dir: 'asc' };
+
 export function WidgetModifierView() {
   const queryClient = useQueryClient();
 
@@ -62,8 +67,8 @@ export function WidgetModifierView() {
     configId: parseAsString
   });
 
-  const { data: customersData } = useQuery(customersQueryOptions({ page: 1, limit: 100 }));
-  const customers = useMemo(() => customersData?.customers ?? [], [customersData]);
+  const { data: customersData } = useQuery(allCustomersQueryOptions(CUSTOMER_SORT));
+  const customers = useMemo(() => (customersData ?? []).map(toCustomerOption), [customersData]);
 
   const { data: websitesData, isLoading: loadingWebsites } = useQuery({
     ...websitesQueryOptions({ page: 1, limit: 100, customerId: params.customerId ?? undefined }),
@@ -291,8 +296,8 @@ export function WidgetModifierView() {
             </SelectTrigger>
             <SelectContent>
               {customers.map((c) => (
-                <SelectItem key={c.id} value={c.id}>
-                  {c.name}
+                <SelectItem key={c.value} value={c.value}>
+                  {c.label}
                 </SelectItem>
               ))}
             </SelectContent>

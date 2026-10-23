@@ -1,17 +1,35 @@
-import { queryOptions } from '@tanstack/react-query';
-import { getCustomers } from './service';
-import type { Customer, CustomerFilters } from './types';
+import { keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { getAllCustomers, getCustomers } from './service';
+import type { Customer, CustomerFilters, CustomerSort } from './types';
 
 export type { Customer };
+
+export const CUSTOMER_PAGE_SIZE = 10;
+
+/** `page` is 0-based, as the billing API expects. */
+export const DEFAULT_CUSTOMER_FILTERS: CustomerFilters = {
+  page: 0,
+  size: CUSTOMER_PAGE_SIZE
+};
 
 export const customerKeys = {
   all: ['customers'] as const,
   list: (filters: CustomerFilters) => [...customerKeys.all, 'list', filters] as const,
-  detail: (id: string) => [...customerKeys.all, 'detail', id] as const
+  everything: (sort?: CustomerSort) => [...customerKeys.all, 'all', sort ?? null] as const
 };
 
 export const customersQueryOptions = (filters: CustomerFilters) =>
   queryOptions({
     queryKey: customerKeys.list(filters),
-    queryFn: () => getCustomers(filters)
+    queryFn: () => getCustomers(filters),
+    placeholderData: keepPreviousData
+  });
+
+/** Every customer, for client-side search and the customer dropdowns. */
+export const allCustomersQueryOptions = (sort?: CustomerSort) =>
+  queryOptions({
+    queryKey: customerKeys.everything(sort),
+    queryFn: () => getAllCustomers(sort),
+    staleTime: 5 * 60 * 1000,
+    placeholderData: keepPreviousData
   });

@@ -77,6 +77,14 @@ export const navGroups: NavGroup[] = [
         items: []
       },
       {
+        title: 'POC Website',
+        url: '/dashboard/poc-website',
+        icon: 'globe',
+        shortcut: ['p', 'w'],
+        isActive: false,
+        items: []
+      },
+      {
         title: 'Engage',
         url: '/dashboard/engage',
         icon: 'engage',
@@ -89,6 +97,22 @@ export const navGroups: NavGroup[] = [
         url: '/dashboard/widget-modifier',
         icon: 'adjustments',
         shortcut: ['w', 'm'],
+        isActive: false,
+        items: []
+      },
+      {
+        title: 'POC Widget',
+        url: '/dashboard/widget',
+        icon: 'adjustments',
+        shortcut: ['w', 'g'],
+        isActive: false,
+        items: []
+      },
+      {
+        title: 'POC Config',
+        url: '/dashboard/widget-config',
+        icon: 'settings',
+        shortcut: ['p', 'c'],
         isActive: false,
         items: []
       },

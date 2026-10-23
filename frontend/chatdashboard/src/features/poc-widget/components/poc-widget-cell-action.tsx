@@ -1,4 +1,9 @@
 'use client';
+
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useMutation } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { AlertModal } from '@/components/modal/alert-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,35 +14,26 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { deleteCustomerMutation } from '../../api/mutations';
-import { customerKeys } from '../../api/queries';
-import type { Customer } from '../../api/types';
 import { Icons } from '@/components/icons';
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
-import { CustomerFormSheet } from '../customer-form-sheet';
+import { ApiError, unwrap } from '@/lib/billing/errors';
+import { deletePocWidget } from '../api/service';
+import type { PocWidget } from '../api/types';
+import { PocWidgetFormSheet } from './poc-widget-form-sheet';
 
-interface CellActionProps {
-  data: Customer;
-}
-
-export function CellAction({ data }: CellActionProps) {
+export function PocWidgetCellAction({ data }: { data: PocWidget }) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
-  const queryClient = useQueryClient();
+  const router = useRouter();
 
   const deleteMutation = useMutation({
-    ...deleteCustomerMutation,
-    // Overriding onSuccess replaces the base invalidation — re-do it here.
+    mutationFn: async (id: number) => unwrap(await deletePocWidget(id)),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: customerKeys.all });
-      toast.success('Customer deleted successfully');
+      router.refresh();
+      toast.success('Widget deleted successfully');
       setDeleteOpen(false);
     },
-    onError: () => {
-      toast.error('Failed to delete customer');
-    }
+    onError: (error) =>
+      toast.error(error instanceof ApiError ? error.message : 'Failed to delete widget')
   });
 
   return (
@@ -48,7 +44,7 @@ export function CellAction({ data }: CellActionProps) {
         onConfirm={() => deleteMutation.mutate(data.id)}
         loading={deleteMutation.isPending}
       />
-      <CustomerFormSheet customer={data} open={editOpen} onOpenChange={setEditOpen} />
+      <PocWidgetFormSheet widget={data} open={editOpen} onOpenChange={setEditOpen} />
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
           <span className='sr-only'>Open menu</span>

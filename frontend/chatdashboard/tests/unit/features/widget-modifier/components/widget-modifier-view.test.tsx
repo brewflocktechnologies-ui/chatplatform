@@ -39,9 +39,9 @@ vi.mock('nuqs', async () => {
 });
 vi.mock('sonner', () => ({ toast: h.toast }));
 vi.mock('@/features/customers/api/queries', () => ({
-  customersQueryOptions: () => ({
+  allCustomersQueryOptions: () => ({
     queryKey: ['customers'],
-    queryFn: async () => ({ customers: h.customers })
+    queryFn: async () => h.customers
   })
 }));
 vi.mock('@/features/websites/api/queries', () => ({
@@ -174,7 +174,7 @@ async function loadSelected() {
 
 beforeEach(() => {
   h.initialParams = { customerId: null, websiteId: null, configId: null };
-  h.customers = [{ id: 'cu1', name: 'Acme' }];
+  h.customers = [{ id: 'cu1', email: 'acme@example.com' }];
   h.websites = [
     { id: 'w1', domain: 'acme.com', configId: 'cfg1', configName: 'Default' },
     { id: 'w2', domain: 'b.com' }
