@@ -7,8 +7,18 @@ import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { IconX } from '@tabler/icons-react';
 
-function Sheet({ ...props }: SheetPrimitive.Root.Props) {
-  return <SheetPrimitive.Root data-slot='sheet' {...props} />;
+/**
+ * Sheets hold forms, so a click on the backdrop must not discard what was typed. They still close
+ * with Escape, the close button, or `onOpenChange`; pass `disablePointerDismissal={false}` to opt out.
+ */
+function Sheet({ disablePointerDismissal = true, ...props }: SheetPrimitive.Root.Props) {
+  return (
+    <SheetPrimitive.Root
+      data-slot='sheet'
+      disablePointerDismissal={disablePointerDismissal}
+      {...props}
+    />
+  );
 }
 
 function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
