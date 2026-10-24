@@ -50,6 +50,8 @@ export function CompanyTable() {
     };
   }, [search, paged.data, all.data, params.page, params.perPage]);
 
+  const active = search ? all : paged;
+
   const { table } = useDataTable({
     data: rows,
     columns,
@@ -63,7 +65,14 @@ export function CompanyTable() {
   });
 
   return (
-    <DataTable table={table} minTableWidth>
+    <DataTable
+      table={table}
+      minTableWidth
+      isLoading={active.isPending}
+      isError={active.isError}
+      onRetry={() => void active.refetch()}
+      isRefreshing={active.isFetching && !active.isPending}
+    >
       <DataTableToolbar table={table} actions={<CompanyFormSheetTrigger />}>
         {search && all.isFetching && !all.data && (
           <span className='text-muted-foreground flex items-center gap-2 text-sm' role='status'>

@@ -13,7 +13,8 @@ describe('cachePolicy', () => {
   it('orders tiers from least to most cached', () => {
     expect(CACHE_TIERS.live.staleTime).toBeLessThan(CACHE_TIERS.list.staleTime);
     expect(CACHE_TIERS.list.staleTime).toBeLessThan(CACHE_TIERS.reference.staleTime);
-    expect(cachePolicy('reference')).toEqual({ staleTime: 5 * 60 * 1000, gcTime: 30 * 60 * 1000 });
+    expect(cachePolicy('reference')).toEqual({ staleTime: 5 * 60 * 1000, gcTime: 60 * 60 * 1000 });
+    expect(cachePolicy('list').gcTime).toBe(60 * 60 * 1000);
   });
 });
 

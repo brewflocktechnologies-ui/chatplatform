@@ -21,6 +21,32 @@ describe('getQueryClient', () => {
     expect(first.getDefaultOptions().queries).toMatchObject({ staleTime: 60 * 1000 });
   });
 
+  it('keeps list data for an hour and fetches even when the browser reports offline', async () => {
+    vi.resetModules();
+    const { getQueryClient } = await import('@/lib/query-client');
+    const options = getQueryClient().getDefaultOptions();
+
+    expect(options.queries).toMatchObject({
+      gcTime: 60 * 60 * 1000,
+      networkMode: 'always',
+      retry: 1,
+      refetchOnWindowFocus: true,
+      refetchOnReconnect: 'always'
+    });
+    expect(options.mutations).toMatchObject({ networkMode: 'always' });
+  });
+
+  it('does not retry a failed prefetch on the server', async () => {
+    vi.resetModules();
+    vi.doMock('@tanstack/react-query', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('@tanstack/react-query')>();
+      return { ...actual, isServer: true };
+    });
+    const { getQueryClient } = await import('@/lib/query-client');
+
+    expect(getQueryClient().getDefaultOptions().queries?.retry).toBe(0);
+  });
+
   it('dehydrates default-dehydratable and pending queries only', async () => {
     vi.resetModules();
     const { getQueryClient } = await import('@/lib/query-client');
