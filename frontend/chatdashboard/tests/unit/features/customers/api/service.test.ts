@@ -162,6 +162,11 @@ describe('getCustomer', () => {
     expect(await getCustomer('1')).toBeNull();
   });
 
+  it('skips the request for a non-numeric id, which the API answers with a 500', async () => {
+    expect(await getCustomer('6a8954401414ed899126ff36')).toBeNull();
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
   it('throws on any other failure so the query enters its error state', async () => {
     respond(500, { message: 'boom' });
     await expect(getCustomer('1')).rejects.toThrow('Customers API responded with 500');

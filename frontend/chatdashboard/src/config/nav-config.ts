@@ -55,6 +55,7 @@ export const navGroups: NavGroup[] = [
       {
         title: 'Customers',
         url: '/dashboard/customers',
+        api: true,
         icon: 'customers',
         shortcut: ['u', 'u'],
         isActive: false,
@@ -63,6 +64,7 @@ export const navGroups: NavGroup[] = [
       {
         title: 'Company',
         url: '/dashboard/company',
+        api: true,
         icon: 'company',
         shortcut: ['c', 'o'],
         isActive: false,
@@ -79,6 +81,7 @@ export const navGroups: NavGroup[] = [
       {
         title: 'POC Website',
         url: '/dashboard/poc-website',
+        api: true,
         icon: 'globe',
         shortcut: ['p', 'w'],
         isActive: false,
@@ -100,17 +103,19 @@ export const navGroups: NavGroup[] = [
         isActive: false,
         items: []
       },
-      {
-        title: 'POC Widget',
-        url: '/dashboard/widget',
-        icon: 'adjustments',
-        shortcut: ['w', 'g'],
-        isActive: false,
-        items: []
-      },
+      // {
+      //   title: 'POC Widget',
+      //   url: '/dashboard/widget',
+      //   api: true,
+      //   icon: 'adjustments',
+      //   shortcut: ['w', 'g'],
+      //   isActive: false,
+      //   items: []
+      // },
       {
         title: 'POC Config',
         url: '/dashboard/widget-config',
+        api: true,
         icon: 'settings',
         shortcut: ['p', 'c'],
         isActive: false,

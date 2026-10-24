@@ -67,6 +67,21 @@ describe('AppSidebar', () => {
     }
   });
 
+  it('tags only billing-backed tabs with a superscript API marker', () => {
+    renderSidebar();
+    const billingTabs = ['Customers', 'Company', 'POC Website', 'POC Widget', 'POC Config'];
+    for (const item of navGroups.flatMap((g) => g.items)) {
+      const tag = screen.getByRole('link', { name: item.title }).querySelector('sup');
+      if (item.api) {
+        expect(billingTabs).toContain(item.title);
+        expect(tag).toHaveTextContent('API');
+      } else {
+        expect(tag).toBeNull();
+      }
+    }
+    expect(screen.getByRole('link', { name: 'Customers' }).querySelector('sup')).not.toBeNull();
+  });
+
   it('renders the group label', () => {
     renderSidebar();
     expect(screen.getByText('Overview')).toBeInTheDocument();

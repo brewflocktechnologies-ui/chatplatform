@@ -56,6 +56,8 @@ export async function getAllCustomers(sort?: CustomerSort): Promise<Customer[]> 
  * customer without waiting for the full list, which takes many seconds to walk.
  */
 export async function getCustomer(id: string): Promise<Customer | null> {
+  // Customer ids are numeric; older websites store a Mongo id here, which the API answers with a 500.
+  if (!/^\d+$/.test(id)) return null;
   const result = await billingRequest<Customer>('GET', endpoints.customers.item(id), {
     origin: origins.customers(),
     notFoundMessage: 'Customer not found'
