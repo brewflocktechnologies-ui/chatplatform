@@ -1,7 +1,7 @@
 'use server';
 
+import { endpoints, origins } from '@/config/api-endpoints';
 import { billingRequest, pageParams, sortParam } from '@/lib/billing/client';
-import { CUSTOMERS_PATH, customersOrigin } from './config';
 import type { Customer, CustomerFilters, CustomerSort, CustomersPage } from './types';
 import { CUSTOMER_SORT_FIELDS } from './types';
 
@@ -12,8 +12,8 @@ export async function getCustomers({ page, size, sort }: CustomerFilters): Promi
   const sortValue = sortParam(sort, CUSTOMER_SORT_FIELDS);
   if (sortValue) params.set('sort', sortValue);
 
-  const result = await billingRequest<CustomersPage>('GET', CUSTOMERS_PATH, {
-    origin: customersOrigin(),
+  const result = await billingRequest<CustomersPage>('GET', endpoints.customers.list, {
+    origin: origins.customers(),
     query: params
   });
   if (!result.ok) throw new Error(`Customers API responded with ${result.status}`);

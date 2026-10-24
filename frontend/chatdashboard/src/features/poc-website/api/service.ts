@@ -1,7 +1,7 @@
 'use server';
 
+import { endpoints, origins } from '@/config/api-endpoints';
 import { billingRequest, pageParams, type PageResponse } from '@/lib/billing/client';
-import { POC_WEBSITES_PATH, pocWebsitesOrigin } from './config';
 import type { PocWebsite, PocWebsiteMutationPayload } from './types';
 
 const writeWebsite = (
@@ -10,13 +10,10 @@ const writeWebsite = (
   body?: PocWebsiteMutationPayload
 ) =>
   billingRequest<PocWebsite | null>(method, path, {
-    origin: pocWebsitesOrigin(),
+    origin: origins.pocWebsites(),
     body,
     notFoundMessage: 'Website not found'
   });
-
-/** Ids are opaque strings, and server actions take client input, so never splice them raw. */
-const itemPath = (id: string) => `${POC_WEBSITES_PATH}/${encodeURIComponent(id)}`;
 
 /**
  * Every registered website. The API ignores customer/company filters, so callers
@@ -24,8 +21,8 @@ const itemPath = (id: string) => `${POC_WEBSITES_PATH}/${encodeURIComponent(id)}
  */
 export async function getAllPocWebsites(): Promise<PocWebsite[]> {
   const fetchPage = async (page: number) => {
-    const result = await billingRequest<PageResponse<PocWebsite>>('GET', POC_WEBSITES_PATH, {
-      origin: pocWebsitesOrigin(),
+    const result = await billingRequest<PageResponse<PocWebsite>>('GET', endpoints.pocWebsites.list, {
+      origin: origins.pocWebsites(),
       query: pageParams(page, 100)
     });
     if (!result.ok) throw new Error(`Websites API responded with ${result.status}`);
@@ -41,14 +38,14 @@ export async function getAllPocWebsites(): Promise<PocWebsite[]> {
 
 /** POST /api/v1/websites → the created website. */
 export async function createPocWebsite(data: PocWebsiteMutationPayload) {
-  return writeWebsite('POST', POC_WEBSITES_PATH, data);
+  return writeWebsite('POST', endpoints.pocWebsites.list, data);
 }
 
 /** PUT /api/v1/websites/{id} → the updated website. */
 export async function updatePocWebsite(id: string, data: PocWebsiteMutationPayload) {
-  return writeWebsite('PUT', itemPath(id), data);
+  return writeWebsite('PUT', endpoints.pocWebsites.item(id), data);
 }
 
 export async function deletePocWebsite(id: string) {
-  return writeWebsite('DELETE', itemPath(id));
+  return writeWebsite('DELETE', endpoints.pocWebsites.item(id));
 }

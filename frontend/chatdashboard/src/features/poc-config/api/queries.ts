@@ -1,3 +1,4 @@
+import { endpoints } from '@/config/api-endpoints';
 import {
   billingRequest,
   pageParams,
@@ -26,7 +27,7 @@ export async function loadConfigs(
   const sortValue = sortParam(sort, POC_CONFIG_SORT_FIELDS);
   if (sortValue) query.set('sort', sortValue);
 
-  const result = await billingRequest<PageResponse<PocConfig>>('GET', '/api/v1/widget-configs', {
+  const result = await billingRequest<PageResponse<PocConfig>>('GET', endpoints.pocConfigs.list, {
     query
   });
   return result.ok

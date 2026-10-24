@@ -1,15 +1,11 @@
 'use server';
 
+import { endpoints } from '@/config/api-endpoints';
 import { billingRequest } from '@/lib/billing/client';
 import type { PocConfig, PocConfigMutationPayload, PocConfigWriteBody } from './types';
 
-const CONFIGS_PATH = '/api/v1/widget-configs';
-
 // The dashboard has no real user identity for this API yet, so audit fields carry a fixed name.
 const AUDIT_USER = 'me';
-
-/** Ids are opaque strings, and server actions take client input, so never splice them raw. */
-const itemPath = (id: string) => `${CONFIGS_PATH}/${encodeURIComponent(id)}`;
 
 const writeConfig = (method: 'POST' | 'PUT' | 'DELETE', path: string, body?: PocConfigWriteBody) =>
   billingRequest<PocConfig | null>(method, path, {
@@ -19,7 +15,7 @@ const writeConfig = (method: 'POST' | 'PUT' | 'DELETE', path: string, body?: Poc
 
 /** POST /api/v1/widget-configs → the created config. */
 export async function createPocConfig(data: PocConfigMutationPayload) {
-  return writeConfig('POST', CONFIGS_PATH, {
+  return writeConfig('POST', endpoints.pocConfigs.list, {
     ...data,
     createdBy: AUDIT_USER,
     updatedBy: AUDIT_USER,
@@ -38,7 +34,7 @@ export async function updatePocConfig(
   version: number,
   createdBy: string | null
 ) {
-  return writeConfig('PUT', itemPath(id), {
+  return writeConfig('PUT', endpoints.pocConfigs.item(id), {
     ...data,
     id,
     createdBy: createdBy ?? AUDIT_USER,
@@ -49,5 +45,5 @@ export async function updatePocConfig(
 }
 
 export async function deletePocConfig(id: string) {
-  return writeConfig('DELETE', itemPath(id));
+  return writeConfig('DELETE', endpoints.pocConfigs.item(id));
 }

@@ -1,4 +1,5 @@
 import PageContainer from '@/components/layout/page-container';
+import { endpoints } from '@/config/api-endpoints';
 import { billingGet, pageParams, type PageResponse } from '@/lib/billing/client';
 import type { PocWidget } from '@/features/poc-widget/api/types';
 import { PocWidgetCellAction } from '@/features/poc-widget/components/poc-widget-cell-action';
@@ -26,8 +27,6 @@ export const metadata = {
   title: 'Dashboard: Widget'
 };
 
-const WIDGETS_PATH = '/api/chat-assistant/widgets';
-
 // Keys shown as table columns; everything else goes into the config popup.
 const TABLE_KEYS = [
   'id',
@@ -45,7 +44,7 @@ const fmt = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : '—');
 
 async function loadWidgets() {
   try {
-    const page = await billingGet<PageResponse<PocWidget>>(WIDGETS_PATH, pageParams(0, 100));
+    const page = await billingGet<PageResponse<PocWidget>>(endpoints.pocWidgets.list, pageParams(0, 100));
     return { widgets: page.content };
   } catch {
     return { error: 'Widgets API is unreachable' };

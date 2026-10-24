@@ -1,5 +1,6 @@
 'use server';
 
+import { endpoints } from '@/config/api-endpoints';
 import { billingGet, billingRequest, pageParams, sortParam } from '@/lib/billing/client';
 import { DEFAULT_PLAN_SORT } from '../lib/plan-sort';
 import {
@@ -18,7 +19,7 @@ export async function getPlans({ page, size, status, sort }: PlanFilters): Promi
     'sort',
     sortParam(sort, PLAN_SORT_FIELDS, { fallback: DEFAULT_PLAN_SORT, defaultDir: 'desc' })!
   );
-  return billingGet(status === 'active' ? '/api/plans/active' : '/api/plans', params);
+  return billingGet(status === 'active' ? endpoints.plans.active : endpoints.plans.list, params);
 }
 
 const writePlan = (method: 'POST' | 'PUT' | 'DELETE', path: string, body?: PlanMutationPayload) =>
@@ -30,14 +31,14 @@ const writePlan = (method: 'POST' | 'PUT' | 'DELETE', path: string, body?: PlanM
 
 /** POST /api/plans → 201 with the created plan. */
 export async function createPlan(data: PlanMutationPayload) {
-  return writePlan('POST', '/api/plans', data);
+  return writePlan('POST', endpoints.plans.list, data);
 }
 
 /** PUT /api/plans/{id} → 200 with the updated plan. Full replace. */
 export async function updatePlan(id: number, data: PlanMutationPayload) {
-  return writePlan('PUT', `/api/plans/${id}`, data);
+  return writePlan('PUT', endpoints.plans.item(id), data);
 }
 
 export async function deletePlan(id: number) {
-  return writePlan('DELETE', `/api/plans/${id}`);
+  return writePlan('DELETE', endpoints.plans.item(id));
 }

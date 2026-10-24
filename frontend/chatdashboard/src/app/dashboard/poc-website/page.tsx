@@ -1,7 +1,7 @@
 import type { SearchParams } from 'nuqs/server';
 import PageContainer from '@/components/layout/page-container';
 import { searchParamsCache } from '@/lib/searchparams';
-import { POC_WEBSITES_PATH, pocWebsitesOrigin } from '@/features/poc-website/api/config';
+import { endpoints, origins } from '@/config/api-endpoints';
 import { PocWebsiteFormSheetTrigger } from '@/features/poc-website/components/poc-website-form-sheet';
 import { PocWebsiteTable, type PocWebsite } from './poc-website-table';
 
@@ -34,7 +34,7 @@ async function loadWebsites(page: number, size: number, sort?: string) {
   if (sort) params.set('sort', sort);
 
   try {
-    const res = await fetch(`${pocWebsitesOrigin()}${POC_WEBSITES_PATH}?${params}`, {
+    const res = await fetch(`${origins.pocWebsites()}${endpoints.pocWebsites.list}?${params}`, {
       cache: 'no-store'
     });
     if (!res.ok) return { error: `Websites API responded with ${res.status}` };
