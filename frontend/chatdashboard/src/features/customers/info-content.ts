@@ -1,12 +1,12 @@
 import type { InfobarContent } from '@/components/ui/infobar';
 
 export const customersInfoContent: InfobarContent = {
-  title: 'Customers — MongoDB + React Query',
+  title: 'Customers — Billing API + React Query',
   sections: [
     {
       title: 'Overview',
       description:
-        'This page lists customers stored in MongoDB. Data is fetched through server actions (direct MongoDB access on the server) and cached client-side with React Query. Search, filters, sorting, and pagination run as real MongoDB queries.',
+        'This page lists customers from the billing service (GET /api/customers). Data is fetched through server actions, so the browser never calls the billing origin, and cached client-side with React Query. Pagination and sorting run on the API.',
       links: [
         {
           title: 'TanStack Query SSR Docs',
@@ -15,15 +15,15 @@ export const customersInfoContent: InfobarContent = {
       ]
     },
     {
-      title: 'CRUD',
+      title: 'Search',
       description:
-        'Create and edit open a sheet form (TanStack Form + Zod); delete confirms first. All mutations write to the MongoDB customers collection and invalidate the React Query cache so the table refreshes automatically.',
+        'The API has no search parameter, so searching loads every customer once and filters them in the browser across email, external ID, address, and card.',
       links: []
     },
     {
       title: 'URL State with nuqs',
       description:
-        'Pagination, search, plan, and status filters are synced to the URL via nuqs. When the URL changes, React Query refetches because the query key includes the filters.',
+        'Pagination, search, and sorting are synced to the URL via nuqs. When the URL changes, React Query refetches because the query key includes the filters.',
       links: [
         {
           title: 'nuqs Documentation',

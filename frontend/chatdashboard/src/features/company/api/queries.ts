@@ -1,4 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { entityRoots } from '@/lib/cache/keys';
+import { cachePolicy } from '@/lib/cache/policy';
 import { getAllCompanies, getCompanies } from './service';
 import type { CompanyFilters, CompanySort } from './types';
 
@@ -11,7 +13,7 @@ export const DEFAULT_COMPANY_FILTERS: CompanyFilters = {
 };
 
 export const companyKeys = {
-  all: ['companies'] as const,
+  all: entityRoots.companies,
   list: (filters: CompanyFilters) => [...companyKeys.all, 'list', filters] as const,
   everything: (sort?: CompanySort) => [...companyKeys.all, 'all', sort ?? null] as const
 };
@@ -28,6 +30,6 @@ export const allCompaniesQueryOptions = (sort?: CompanySort) =>
   queryOptions({
     queryKey: companyKeys.everything(sort),
     queryFn: () => getAllCompanies(sort),
-    staleTime: 5 * 60 * 1000,
+    ...cachePolicy('reference'),
     placeholderData: keepPreviousData
   });

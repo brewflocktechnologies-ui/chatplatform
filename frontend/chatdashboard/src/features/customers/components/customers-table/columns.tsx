@@ -1,30 +1,28 @@
 'use client';
-import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-header';
-import type { Customer } from '../../api/types';
-import { Column, ColumnDef } from '@tanstack/react-table';
 import { Icons } from '@/components/icons';
-import { parseIntegrations } from '../../lib/integrations';
+import type { Column, ColumnDef } from '@tanstack/react-table';
+import type { Customer } from '../../api/types';
 import { CellAction } from './cell-action';
-import { PLAN_OPTIONS, STATUS_OPTIONS } from './options';
 
-function formatDate(value: string | undefined) {
-  if (!value) return '—';
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : format(date, 'MMM d, yyyy');
-}
+const dash = <span className='text-muted-foreground'>—</span>;
+
+const sortableHeader =
+  (title: string) =>
+  ({ column }: { column: Column<Customer, unknown> }) => (
+    <DataTableColumnHeader column={column} title={title} />
+  );
 
 export const columns: ColumnDef<Customer>[] = [
   {
-    id: 'name',
-    accessorKey: 'name',
-    header: ({ column }: { column: Column<Customer, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Name' />
-    ),
-    cell: ({ row }) => <span className='font-medium'>{row.original.name}</span>,
+    id: 'email',
+    size: 280,
+    accessorKey: 'email',
+    header: sortableHeader('Email'),
+    cell: ({ row }) => <span className='font-medium'>{row.original.email}</span>,
     meta: {
-      label: 'Name',
+      label: 'Email',
       placeholder: 'Search customers...',
       variant: 'text' as const,
       icon: Icons.text
@@ -32,85 +30,68 @@ export const columns: ColumnDef<Customer>[] = [
     enableColumnFilter: true
   },
   {
-    accessorKey: 'email',
-    header: 'EMAIL'
+    id: 'externalId',
+    size: 240,
+    accessorKey: 'externalId',
+    header: sortableHeader('External ID'),
+    cell: ({ row }) => <span className='font-mono text-xs'>{row.original.externalId}</span>
   },
   {
-    accessorKey: 'country',
-    header: 'COUNTRY',
-    cell: ({ cell }) => <span className='capitalize'>{cell.getValue<string>()}</span>
+    id: 'city',
+    size: 140,
+    header: sortableHeader('City'),
+    cell: ({ row }) => row.original.billingAddress?.city || dash
   },
   {
-    id: 'dateAdded',
-    accessorKey: 'dateAdded',
-    header: ({ column }: { column: Column<Customer, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Date Added' />
-    ),
-    cell: ({ cell }) => formatDate(cell.getValue<string>())
+    id: 'state',
+    size: 140,
+    header: sortableHeader('State'),
+    cell: ({ row }) => row.original.billingAddress?.state || dash
   },
   {
-    accessorKey: 'integrations',
-    header: 'INTEGRATIONS',
-    cell: ({ cell }) => {
-      const flags = parseIntegrations(cell.getValue<string>());
-      const active = Object.entries(flags)
-        .filter(([, on]) => on)
-        .map(([key]) => key);
-
-      if (active.length === 0) {
-        return <span className='text-muted-foreground text-sm'>None</span>;
-      }
+    id: 'country',
+    size: 140,
+    header: sortableHeader('Country'),
+    cell: ({ row }) => row.original.billingAddress?.country || dash
+  },
+  {
+    id: 'card',
+    size: 190,
+    header: sortableHeader('Card'),
+    cell: ({ row }) => {
+      const card = row.original.creditCard;
+      if (!card) return dash;
       return (
-        <div className='flex gap-1'>
-          {active.map((key) => (
-            <Badge key={key} variant='outline' className='uppercase'>
-              {key}
-            </Badge>
-          ))}
-        </div>
+        <span>
+          {card.brand ?? 'Card'}
+          {card.numberLastFourDigits && ` •••• ${card.numberLastFourDigits}`}
+        </span>
       );
     }
   },
   {
-    id: 'activePlanName',
-    accessorKey: 'activePlanName',
+    id: 'activePlan',
+    size: 140,
     enableSorting: false,
-    header: ({ column }: { column: Column<Customer, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Active Plan' />
-    ),
-    cell: ({ cell }) => <Badge variant='outline'>{cell.getValue<string>()}</Badge>,
-    enableColumnFilter: true,
-    meta: {
-      label: 'Plan',
-      variant: 'multiSelect' as const,
-      options: PLAN_OPTIONS
-    }
+    header: sortableHeader('Active Plan'),
+    cell: ({ row }) =>
+      row.original.activePlan ? (
+        <Badge variant='outline'>{row.original.activePlan.name}</Badge>
+      ) : (
+        dash
+      )
   },
   {
-    id: 'status',
-    accessorKey: 'status',
+    id: 'invoices',
+    size: 100,
     enableSorting: false,
-    header: ({ column }: { column: Column<Customer, unknown> }) => (
-      <DataTableColumnHeader column={column} title='Status' />
-    ),
-    cell: ({ cell }) => {
-      const status = cell.getValue<string>();
-      return (
-        <Badge variant={status === 'active' ? 'default' : 'secondary'} className='capitalize'>
-          {status}
-        </Badge>
-      );
-    },
-    enableColumnFilter: true,
-    meta: {
-      label: 'Status',
-      variant: 'multiSelect' as const,
-      options: STATUS_OPTIONS
-    }
+    header: sortableHeader('Invoices'),
+    cell: ({ row }) => row.original.invoices.length
   },
   {
     id: 'actions',
     enableHiding: false,
+    enableSorting: false,
     header: () => <span className='block text-center'>ACTIONS</span>,
     size: 80,
     cell: ({ row }) => (

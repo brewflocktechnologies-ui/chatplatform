@@ -31,7 +31,7 @@ export function WebsitesTable() {
   // useQuery (not useSuspenseQuery): getWebsites is a server action, and invoking it
   // during render when the filters change makes Next update the Router mid-render.
   // keepPreviousData keeps the old rows on screen while the new page loads.
-  const { data } = useQuery({
+  const { data, isPending, isError, isFetching, refetch } = useQuery({
     ...websitesQueryOptions(filters),
     placeholderData: keepPreviousData
   });
@@ -50,7 +50,13 @@ export function WebsitesTable() {
   });
 
   return (
-    <DataTable table={table}>
+    <DataTable
+      table={table}
+      isLoading={isPending}
+      isError={isError}
+      onRetry={() => void refetch()}
+      isRefreshing={isFetching && !isPending}
+    >
       <DataTableToolbar table={table} />
     </DataTable>
   );

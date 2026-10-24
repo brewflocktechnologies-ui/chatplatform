@@ -6,45 +6,45 @@ import { Suspense } from 'react';
 
 vi.mock('@/features/customers/api/service', () => ({
   getCustomers: vi.fn(),
-  createCustomer: vi.fn(),
-  updateCustomer: vi.fn(),
-  deleteCustomer: vi.fn()
-}));
-vi.mock('@/features/customers/components/customers-table/cell-action', () => ({
-  CellAction: () => <span>actions</span>
+  getAllCustomers: vi.fn()
 }));
 
-import { getCustomers } from '@/features/customers/api/service';
+import { getAllCustomers, getCustomers } from '@/features/customers/api/service';
 import {
   CustomersTable,
   CustomersTableSkeleton
 } from '@/features/customers/components/customers-table';
-import {
-  PLAN_OPTIONS,
-  STATUS_OPTIONS
-} from '@/features/customers/components/customers-table/options';
+import type { Customer } from '@/features/customers/api/types';
 
 afterEach(cleanup);
+
+const customer = (id: number, email: string, city: string | null = null): Customer => ({
+  id,
+  externalId: `ext-${id}`,
+  email,
+  activePlan: null,
+  billingAddress: city
+    ? { line1: null, line2: null, city, state: null, postalCode: null, country: 'USA' }
+    : null,
+  creditCard: null,
+  invoices: []
+});
+
+const acme = customer(1, 'team@acme.com', 'Berlin');
+const globex = customer(2, 'ops@globex.com', 'Paris');
+
 beforeEach(() => {
   // jsdom lacks the Web Animations API that Base UI's scroll area polls for.
   Element.prototype.getAnimations ??= () => [];
   vi.clearAllMocks();
   vi.mocked(getCustomers).mockResolvedValue({
-    success: true,
-    total_customers: 25,
-    customers: [
-      {
-        id: 'c1',
-        name: 'Acme',
-        email: 'team@acme.com',
-        country: 'india',
-        dateAdded: '2026-01-02T12:00:00Z',
-        integrations: '{}',
-        activePlanName: 'Basic',
-        status: 'active'
-      }
-    ]
-  } as never);
+    content: [acme],
+    totalElements: 25,
+    totalPages: 3,
+    number: 0,
+    size: 10
+  });
+  vi.mocked(getAllCustomers).mockResolvedValue([acme, globex]);
 });
 
 function renderTable(searchParams = '') {
@@ -61,27 +61,31 @@ function renderTable(searchParams = '') {
 }
 
 describe('CustomersTable', () => {
-  it('fetches with default pagination and renders rows', async () => {
+  it('fetches the first page (0-based) and renders rows', async () => {
     renderTable();
-    expect(await screen.findByText('Acme')).toBeInTheDocument();
-    expect(getCustomers).toHaveBeenCalledWith({ page: 1, limit: 10 });
-    expect(screen.getByText('team@acme.com')).toBeInTheDocument();
+    expect(await screen.findByText('team@acme.com')).toBeInTheDocument();
+    expect(getCustomers).toHaveBeenCalledWith({ page: 0, size: 10, sort: undefined });
+    expect(getAllCustomers).not.toHaveBeenCalled();
+    expect(screen.getByText('Berlin')).toBeInTheDocument();
   });
 
-  it('maps url params onto the query filters', async () => {
-    const sort = JSON.stringify([{ id: 'name', desc: false }]);
-    renderTable(
-      `?page=2&perPage=20&name=ac&status=active&plan=Basic&sort=${encodeURIComponent(sort)}`
-    );
-    await screen.findByText('Acme');
+  it('maps url page, size and sort onto the API query', async () => {
+    const sort = JSON.stringify([{ id: 'email', desc: true }]);
+    renderTable(`?page=2&perPage=20&sort=${encodeURIComponent(sort)}`);
+    await screen.findByText('team@acme.com');
     expect(getCustomers).toHaveBeenCalledWith({
-      page: 2,
-      limit: 20,
-      search: 'ac',
-      status: 'active',
-      plan: 'Basic',
-      sort
+      page: 1,
+      size: 20,
+      sort: { field: 'email', dir: 'desc' }
     });
+  });
+
+  it('searches client-side across all customers when a search is set', async () => {
+    renderTable('?email=globex');
+    expect(await screen.findByText('ops@globex.com')).toBeInTheDocument();
+    expect(screen.queryByText('team@acme.com')).not.toBeInTheDocument();
+    expect(getAllCustomers).toHaveBeenCalled();
+    expect(getCustomers).not.toHaveBeenCalled();
   });
 });
 
@@ -89,12 +93,5 @@ describe('CustomersTableSkeleton', () => {
   it('renders placeholder blocks', () => {
     const { container } = render(<CustomersTableSkeleton />);
     expect(container.querySelectorAll('.bg-muted')).toHaveLength(3);
-  });
-});
-
-describe('customer options', () => {
-  it('exposes plan and status options', () => {
-    expect(PLAN_OPTIONS.map((o) => o.value)).toEqual(['Free', 'Basic', 'Premium', 'Enterprise']);
-    expect(STATUS_OPTIONS.map((o) => o.value)).toEqual(['active', 'inactive']);
   });
 });

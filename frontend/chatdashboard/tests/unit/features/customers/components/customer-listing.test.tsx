@@ -28,7 +28,7 @@ function params(values: Record<string, unknown>) {
 beforeEach(() => vi.clearAllMocks());
 
 describe('CustomerListingPage', () => {
-  it('prefetches with only the provided filters', () => {
+  it('prefetches the first page, converting the 1-based URL page to the 0-based API page', () => {
     params({ page: 1, perPage: 10 });
     render(<CustomerListingPage />);
 
@@ -37,28 +37,18 @@ describe('CustomerListingPage', () => {
     expect(prefetchQuery.mock.calls[0][0].queryKey).toEqual([
       'customers',
       'list',
-      { page: 1, limit: 10 }
+      { page: 0, size: 10 }
     ]);
   });
 
-  it('includes search, status, plan and sort when present', () => {
-    params({
-      page: 2,
-      perPage: 20,
-      name: 'ac',
-      status: 'active',
-      plan: 'Basic',
-      sort: '[]'
-    });
+  it('includes the sort when the URL has a sortable column', () => {
+    params({ page: 3, perPage: 20, sort: '[{"id":"city","desc":true}]' });
     render(<CustomerListingPage />);
 
     expect(prefetchQuery.mock.calls[0][0].queryKey[2]).toEqual({
       page: 2,
-      limit: 20,
-      search: 'ac',
-      status: 'active',
-      plan: 'Basic',
-      sort: '[]'
+      size: 20,
+      sort: { field: 'billingAddress.city', dir: 'desc' }
     });
   });
 });

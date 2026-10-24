@@ -14,14 +14,13 @@ vi.mock('@/features/websites/api/service', () => ({
 }));
 vi.mock('@/features/customers/api/service', () => ({
   getCustomers: vi.fn(),
-  createCustomer: vi.fn(),
-  updateCustomer: vi.fn(),
-  deleteCustomer: vi.fn()
+  getAllCustomers: vi.fn(),
+  getCustomer: vi.fn().mockResolvedValue(null)
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import { createWebsite, updateWebsite } from '@/features/websites/api/service';
-import { getCustomers } from '@/features/customers/api/service';
+import { getAllCustomers } from '@/features/customers/api/service';
 import { toast } from 'sonner';
 import {
   WebsiteFormSheet,
@@ -33,7 +32,7 @@ const website: Website = {
   id: 'w1',
   protocol: 'HTTP',
   domain: 'example.com',
-  companyId: 'c1',
+  companyId: '1',
   customerId: undefined as unknown as string,
   customerName: 'Old Name',
   flavour: 'Orange',
@@ -60,20 +59,16 @@ async function selectOption(trigger: HTMLElement, option: string | RegExp) {
 
 beforeEach(() => {
   vi.clearAllMocks();
-  vi.mocked(getCustomers).mockResolvedValue({
-    success: true,
-    total_customers: 2,
-    customers: [
-      { id: 'c1', name: 'Acme', email: 'team@acme.com' },
-      { id: 'c2', name: 'NoMail', email: '' }
-    ]
-  } as never);
+  vi.mocked(getAllCustomers).mockResolvedValue([
+    { id: 1, email: 'team@acme.com' },
+    { id: 2, email: 'ops@globex.com' }
+  ] as never);
 });
 afterEach(cleanup);
 
 async function fillCreate(dialog: HTMLElement) {
   fireEvent.change(within(dialog).getByLabelText(/^Domain/), { target: { value: 'site.io' } });
-  await selectOption(within(dialog).getByRole('combobox', { name: /Customer/ }), /Acme/);
+  await selectOption(within(dialog).getByRole('combobox', { name: /Customer/ }), /team@acme.com/);
   await selectOption(within(dialog).getByRole('combobox', { name: /Business Category/ }), 'Retail');
   fireEvent.change(within(dialog).getByLabelText(/^Flavour/), { target: { value: 'Blue' } });
 }
@@ -84,7 +79,7 @@ describe('WebsiteFormSheet (create)', () => {
     const dialog = await screen.findByRole('dialog');
 
     expect(within(dialog).getByText('New Website')).toBeInTheDocument();
-    expect(getCustomers).toHaveBeenCalledWith({ page: 1, limit: 100 });
+    expect(getAllCustomers).toHaveBeenCalledWith({ field: 'email', dir: 'asc' });
 
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create Website' }));
     expect(await within(dialog).findByText('Domain is required')).toBeInTheDocument();
@@ -92,8 +87,8 @@ describe('WebsiteFormSheet (create)', () => {
 
     fireEvent.pointerDown(within(dialog).getByRole('combobox', { name: /Customer/ }));
     fireEvent.click(within(dialog).getByRole('combobox', { name: /Customer/ }));
-    expect(await screen.findByRole('option', { name: 'Acme (team@acme.com)' })).toBeInTheDocument();
-    expect(screen.getByRole('option', { name: 'NoMail' })).toBeInTheDocument();
+    expect(await screen.findByRole('option', { name: 'team@acme.com' })).toBeInTheDocument();
+    expect(screen.getByRole('option', { name: 'ops@globex.com' })).toBeInTheDocument();
   });
 
   it('submits the payload with the selected customer name', async () => {
@@ -109,9 +104,9 @@ describe('WebsiteFormSheet (create)', () => {
     expect(createWebsite).toHaveBeenCalledWith({
       protocol: 'HTTPS',
       domain: 'site.io',
-      customerId: 'c1',
-      customerName: 'Acme',
-      companyId: 'c1',
+      customerId: '1',
+      customerName: 'team@acme.com',
+      companyId: '1',
       businessCategory: 'Retail',
       flavour: 'Blue',
       configName: 'Blue',
@@ -145,7 +140,7 @@ describe('WebsiteFormSheet (create)', () => {
 
   it('does not load customers while closed', () => {
     wrap(<WebsiteFormSheet open={false} onOpenChange={vi.fn()} />);
-    expect(getCustomers).not.toHaveBeenCalled();
+    expect(getAllCustomers).not.toHaveBeenCalled();
   });
 });
 
@@ -166,7 +161,7 @@ describe('WebsiteFormSheet (edit)', () => {
     const onOpenChange = vi.fn();
     wrap(<WebsiteFormSheet website={website} open onOpenChange={onOpenChange} />);
     const dialog = await screen.findByRole('dialog');
-    await waitFor(() => expect(getCustomers).toHaveBeenCalled());
+    await waitFor(() => expect(getAllCustomers).toHaveBeenCalled());
 
     fireEvent.change(within(dialog).getByLabelText(/^Domain/), { target: { value: 'new.io' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Update Website' }));
@@ -175,9 +170,9 @@ describe('WebsiteFormSheet (edit)', () => {
     expect(updateWebsite).toHaveBeenCalledWith('w1', {
       protocol: 'HTTP',
       domain: 'new.io',
-      customerId: 'c1',
-      customerName: 'Acme',
-      companyId: 'c1',
+      customerId: '1',
+      customerName: 'team@acme.com',
+      companyId: '1',
       businessCategory: 'Saas',
       flavour: 'Orange',
       configName: 'Orange',
@@ -189,7 +184,7 @@ describe('WebsiteFormSheet (edit)', () => {
   });
 
   it('keeps the stored customer name when the owner is not in the loaded list', async () => {
-    vi.mocked(getCustomers).mockResolvedValue({ success: true, customers: [] } as never);
+    vi.mocked(getAllCustomers).mockResolvedValue([]);
     vi.mocked(updateWebsite).mockResolvedValue({ success: true } as never);
     wrap(
       <WebsiteFormSheet
@@ -211,7 +206,7 @@ describe('WebsiteFormSheet (edit)', () => {
   });
 
   it('falls back to an empty customer name when nothing matches', async () => {
-    vi.mocked(getCustomers).mockResolvedValue({ success: true, customers: [] } as never);
+    vi.mocked(getAllCustomers).mockResolvedValue([]);
     vi.mocked(updateWebsite).mockResolvedValue({ success: true } as never);
     wrap(
       <WebsiteFormSheet

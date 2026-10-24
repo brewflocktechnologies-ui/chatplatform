@@ -39,6 +39,18 @@ import { OrgSwitcher } from '../org-switcher';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
+/** Superscript tag for tabs that read from the billing API. Hidden when the sidebar is icon-only. */
+function ApiTag() {
+  return (
+    <sup
+      title='Uses the billing API'
+      className='-ml-1 self-start text-[0.55rem] leading-none font-semibold tracking-wide text-muted-foreground uppercase group-data-[collapsible=icon]:hidden'
+    >
+      API
+    </sup>
+  );
+}
+
 export default function AppSidebar() {
   const pathname = usePathname();
   const { isOpen } = useMediaQuery();
@@ -98,6 +110,7 @@ export default function AppSidebar() {
                     >
                       {item.icon && <Icon />}
                       <span>{item.title}</span>
+                      {item.api && <ApiTag />}
                       <Icons.chevronRight className='ml-auto transition-transform duration-200 group-data-panel-open/collapsible:rotate-90 group-data-[collapsible=icon]:hidden' />
                     </CollapsibleTrigger>
                     <CollapsibleContent>
@@ -109,6 +122,7 @@ export default function AppSidebar() {
                               isActive={pathname === subItem.url}
                             >
                               <span>{subItem.title}</span>
+                              {subItem.api && <ApiTag />}
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
                         ))}
@@ -124,6 +138,7 @@ export default function AppSidebar() {
                     >
                       <Icon />
                       <span>{item.title}</span>
+                      {item.api && <ApiTag />}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

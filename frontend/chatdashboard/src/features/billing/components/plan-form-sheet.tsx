@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
   Sheet,
@@ -141,7 +141,7 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
   return (
     // disablePointerDismissal: an outside click or focus change must not discard edits in progress.
     <Sheet open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-      <SheetContent className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit plan' : 'New plan'}</SheetTitle>
           <SheetDescription>
@@ -160,43 +160,45 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
+            <FormGrid>
+              <FormRow>
+                <form.AppField
+                  name='name'
+                  children={(field) => <field.TextField label='Name' required placeholder='Growth' />}
+                />
+              </FormRow>
+              <FormRow>
+                <form.AppField
+                  name='description'
+                  children={(field) => (
+                    <field.TextareaField label='Description' placeholder='Who is this plan for?' />
+                  )}
+                />
+              </FormRow>
               <form.AppField
-                name='name'
-                children={(field) => <field.TextField label='Name' required placeholder='Growth' />}
-              />
-              <form.AppField
-                name='description'
+                name='amountMonthly'
                 children={(field) => (
-                  <field.TextareaField label='Description' placeholder='Who is this plan for?' />
+                  <field.TextField
+                    label='Monthly ($)'
+                    required
+                    type='number'
+                    min={0}
+                    onFocus={selectAll}
+                  />
                 )}
               />
-              <div className='grid grid-cols-2 gap-4'>
-                <form.AppField
-                  name='amountMonthly'
-                  children={(field) => (
-                    <field.TextField
-                      label='Monthly ($)'
-                      required
-                      type='number'
-                      min={0}
-                      onFocus={selectAll}
-                    />
-                  )}
-                />
-                <form.AppField
-                  name='amountAnnually'
-                  children={(field) => (
-                    <field.TextField
-                      label='Annual ($)'
-                      required
-                      type='number'
-                      min={0}
-                      onFocus={selectAll}
-                    />
-                  )}
-                />
-              </div>
+              <form.AppField
+                name='amountAnnually'
+                children={(field) => (
+                  <field.TextField
+                    label='Annual ($)'
+                    required
+                    type='number'
+                    min={0}
+                    onFocus={selectAll}
+                  />
+                )}
+              />
               <form.AppField
                 name='active'
                 children={(field) => (
@@ -233,7 +235,7 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
                   />
                 )}
               />
-            </FieldGroup>
+            </FormGrid>
           </form>
         </div>
 

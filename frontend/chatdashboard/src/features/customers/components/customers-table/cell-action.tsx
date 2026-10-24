@@ -1,4 +1,7 @@
 'use client';
+import { useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
 import { AlertModal } from '@/components/modal/alert-modal';
 import { Button } from '@/components/ui/button';
 import {
@@ -9,13 +12,11 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
-import { deleteCustomerMutation } from '../../api/mutations';
-import { customerKeys } from '../../api/queries';
-import type { Customer } from '../../api/types';
 import { Icons } from '@/components/icons';
-import { useState } from 'react';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { invalidateEntity } from '@/lib/cache/invalidation';
+import { deleteCustomerMutation } from '../../api/mutations';
+import { CustomerApiError } from '../../api/errors';
+import type { Customer } from '../../api/types';
 import { CustomerFormSheet } from '../customer-form-sheet';
 
 interface CellActionProps {
@@ -31,12 +32,13 @@ export function CellAction({ data }: CellActionProps) {
     ...deleteCustomerMutation,
     // Overriding onSuccess replaces the base invalidation — re-do it here.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: customerKeys.all });
+      invalidateEntity('customers', queryClient);
       toast.success('Customer deleted successfully');
       setDeleteOpen(false);
     },
-    onError: () => {
-      toast.error('Failed to delete customer');
+    onError: (error) => {
+      toast.error(error instanceof CustomerApiError ? error.message : 'Failed to delete customer');
+      setDeleteOpen(false);
     }
   });
 

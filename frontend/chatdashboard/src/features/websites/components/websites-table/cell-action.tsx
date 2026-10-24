@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { deleteWebsiteMutation } from '../../api/mutations';
-import { websiteKeys } from '../../api/queries';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import type { Website } from '../../api/types';
 import { Icons } from '@/components/icons';
 import { useState } from 'react';
@@ -35,7 +35,7 @@ export function CellAction({ data }: CellActionProps) {
     ...deleteWebsiteMutation,
     // Overriding onSuccess replaces the base invalidation — re-do it here.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: websiteKeys.all });
+      invalidateEntity('websites', queryClient);
       toast.success('Website deleted successfully');
       setDeleteOpen(false);
     },

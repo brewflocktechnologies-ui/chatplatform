@@ -8,6 +8,7 @@ import { ConversationList } from './conversation-list';
 import { ChatArea } from './chat-area';
 import { ChatDetails } from './chat-details';
 import { chatDashboardSocket } from '../services/chat-socket-client';
+import { chatSocketUrl } from '@/config/api-endpoints';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -40,7 +41,7 @@ export function Messenger() {
 
   // Initialize socket on mount
   useEffect(() => {
-    const wsUrl = process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8088';
+    const wsUrl = chatSocketUrl();
     initSocket(wsUrl, 'demo-tenant');
   }, [initSocket]);
 
