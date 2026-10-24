@@ -6,16 +6,20 @@ import { Dialog as SheetPrimitive } from '@base-ui/react/dialog';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { IconX } from '@tabler/icons-react';
+import { useSheetDebugLog } from './sheet-debug-log';
 
 /**
  * Sheets hold forms, so a click on the backdrop must not discard what was typed. They still close
  * with Escape, the close button, or `onOpenChange`; pass `disablePointerDismissal={false}` to opt out.
  */
-function Sheet({ disablePointerDismissal = true, ...props }: SheetPrimitive.Root.Props) {
+function Sheet({ disablePointerDismissal = true, onOpenChange, ...props }: SheetPrimitive.Root.Props) {
+  // TEMPORARY dev-only logging of every open/close and its reason; see sheet-debug-log.ts.
+  const loggedOnOpenChange = useSheetDebugLog(props.open, onOpenChange);
   return (
     <SheetPrimitive.Root
       data-slot='sheet'
       disablePointerDismissal={disablePointerDismissal}
+      onOpenChange={loggedOnOpenChange}
       {...props}
     />
   );

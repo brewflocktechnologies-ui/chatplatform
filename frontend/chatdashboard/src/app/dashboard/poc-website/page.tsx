@@ -1,5 +1,6 @@
 import type { SearchParams } from 'nuqs/server';
 import PageContainer from '@/components/layout/page-container';
+import { KeepLastGood } from '@/components/layout/keep-last-good';
 import { searchParamsCache } from '@/lib/searchparams';
 import { endpoints, origins } from '@/config/api-endpoints';
 import { PocWebsiteFormSheetTrigger } from '@/features/poc-website/components/poc-website-form-sheet';
@@ -59,11 +60,12 @@ export default async function PocWebsitePage(props: PageProps) {
       pageDescription='Websites registered with the billing service.'
       pageHeaderAction={<PocWebsiteFormSheetTrigger />}
     >
-      {'error' in result ? (
-        <div className='text-destructive rounded-lg border p-6 text-sm'>{result.error}</div>
-      ) : (
-        <PocWebsiteTable websites={result.websites} pageCount={result.pageCount} />
-      )}
+      {/* A failed refresh keeps the last table (and any open row form) and shows a banner. */}
+      <KeepLastGood error={'error' in result ? result.error : undefined}>
+        {'error' in result ? null : (
+          <PocWebsiteTable websites={result.websites} pageCount={result.pageCount} />
+        )}
+      </KeepLastGood>
     </PageContainer>
   );
 }
