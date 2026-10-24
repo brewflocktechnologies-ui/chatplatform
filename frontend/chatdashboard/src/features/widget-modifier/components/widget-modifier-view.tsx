@@ -38,7 +38,8 @@ import { allCustomersQueryOptions } from '@/features/customers/api/queries';
 import type { CustomerSort } from '@/features/customers/api/types';
 import { toCustomerOption } from '@/features/customers/lib/customer-options';
 import { websitesQueryOptions } from '@/features/websites/api/queries';
-import { widgetConfigsQueryOptions, widgetConfigKeys } from '../api/queries';
+import { invalidateEntity } from '@/lib/cache/invalidation';
+import { widgetConfigsQueryOptions } from '../api/queries';
 import {
   createWidgetConfig,
   deleteWidgetConfig,
@@ -143,7 +144,7 @@ export function WidgetModifierView() {
       // Refetching updates the stored config, whose payload is exactly what
       // the MFE reported — so the baseline converges and dirty clears.
       setMfeState((prev) => (prev ? { ...prev, dirty: false } : prev));
-      queryClient.invalidateQueries({ queryKey: widgetConfigKeys.all });
+      invalidateEntity('widgetConfigs', queryClient);
       toast.success('Config saved successfully');
     },
     onError: (err: Error) => toast.error(err.message || 'Failed to save config')
@@ -237,7 +238,7 @@ export function WidgetModifierView() {
   const [renameName, setRenameName] = useState('');
   const [deleteTarget, setDeleteTarget] = useState<WidgetConfig | null>(null);
 
-  const invalidateConfigs = () => queryClient.invalidateQueries({ queryKey: widgetConfigKeys.all });
+  const invalidateConfigs = () => invalidateEntity('widgetConfigs', queryClient);
 
   const createMutation = useMutation({
     mutationFn: (name: string) => createWidgetConfig(name),
@@ -257,7 +258,6 @@ export function WidgetModifierView() {
       toast.success(`Config renamed to "${vars.name}"`);
       setRenameTarget(null);
       invalidateConfigs();
-      queryClient.invalidateQueries({ queryKey: ['websites'] });
     },
     onError: (err: Error) => toast.error(err.message || 'Failed to rename config')
   });
@@ -269,7 +269,6 @@ export function WidgetModifierView() {
       setDeleteTarget(null);
       if (params.configId === id) void setParams({ configId: null });
       invalidateConfigs();
-      queryClient.invalidateQueries({ queryKey: ['websites'] });
     },
     onError: (err: Error) => toast.error(err.message || 'Failed to delete config')
   });

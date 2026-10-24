@@ -1,11 +1,10 @@
 import { mutationOptions } from '@tanstack/react-query';
-import { getQueryClient } from '@/lib/query-client';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import { unwrap } from './errors';
 import { createPlan, deletePlan, updatePlan } from './service';
-import { planKeys } from './queries';
 import type { PlanMutationPayload } from './types';
 
-const invalidate = () => getQueryClient().invalidateQueries({ queryKey: planKeys.all });
+const invalidate = () => invalidateEntity('plans');
 
 export const createPlanMutation = mutationOptions({
   mutationFn: async (data: PlanMutationPayload) => unwrap(await createPlan(data)),

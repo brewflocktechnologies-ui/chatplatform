@@ -18,7 +18,7 @@ describe('getQueryClient', () => {
     const second = getQueryClient();
 
     expect(first).toBe(second);
-    expect(first.getDefaultOptions().queries?.staleTime).toBe(60 * 1000);
+    expect(first.getDefaultOptions().queries).toMatchObject({ staleTime: 60 * 1000 });
   });
 
   it('dehydrates default-dehydratable and pending queries only', async () => {

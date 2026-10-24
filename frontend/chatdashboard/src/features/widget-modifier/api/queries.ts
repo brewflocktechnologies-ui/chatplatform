@@ -1,11 +1,12 @@
 import { queryOptions } from '@tanstack/react-query';
+import { entityRoots } from '@/lib/cache/keys';
 import { getWidgetConfig, getWidgetConfigs } from './service';
 import type { WidgetConfig } from './types';
 
 export type { WidgetConfig };
 
 export const widgetConfigKeys = {
-  all: ['widget-configs'] as const,
+  all: entityRoots.widgetConfigs,
   list: () => [...widgetConfigKeys.all, 'list'] as const,
   detail: (id: string) => [...widgetConfigKeys.all, 'detail', id] as const
 };

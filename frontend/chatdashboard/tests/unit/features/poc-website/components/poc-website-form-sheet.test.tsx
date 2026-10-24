@@ -56,7 +56,10 @@ describe('PocWebsiteFormSheet customer picker', () => {
 
     fireEvent.change(within(dialog).getByLabelText(/^Domain/), { target: { value: 'site.io' } });
     await selectOption(within(dialog).getByRole('combobox', { name: /Customer/ }), /mode2/);
-    await selectOption(within(dialog).getByRole('combobox', { name: /Business Category/ }), 'Retail');
+    await selectOption(
+      within(dialog).getByRole('combobox', { name: /Business Category/ }),
+      'Retail'
+    );
     fireEvent.change(within(dialog).getByLabelText(/^Flavour/), { target: { value: 'Blue' } });
     fireEvent.click(within(dialog).getByRole('button', { name: 'Create Website' }));
 

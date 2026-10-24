@@ -1,11 +1,10 @@
 import { mutationOptions } from '@tanstack/react-query';
-import { getQueryClient } from '@/lib/query-client';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import { unwrap } from './errors';
 import { createCompany, deleteCompany, updateCompany } from './service';
-import { companyKeys } from './queries';
 import type { CompanyMutationPayload } from './types';
 
-const invalidate = () => getQueryClient().invalidateQueries({ queryKey: companyKeys.all });
+const invalidate = () => invalidateEntity('companies');
 
 export const createCompanyMutation = mutationOptions({
   mutationFn: async (data: CompanyMutationPayload) => unwrap(await createCompany(data)),

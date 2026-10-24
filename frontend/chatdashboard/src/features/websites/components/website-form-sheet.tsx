@@ -16,7 +16,7 @@ import {
 import { Icons } from '@/components/icons';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createWebsiteMutation, updateWebsiteMutation } from '../api/mutations';
-import { websiteKeys } from '../api/queries';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import type { Website, WebsiteMutationPayload } from '../api/types';
 import { allCustomersQueryOptions } from '@/features/customers/api/queries';
 import type { CustomerSort } from '@/features/customers/api/types';
@@ -44,12 +44,21 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
     enabled: open
   });
   const customerOptions = customers.map(toCustomerOption);
+  // Until the list loads (or if the owner is missing from it), keep the stored name rather than showing the raw id.
+  const storedCustomerId = website?.customerId ?? website?.companyId;
+  if (
+    storedCustomerId &&
+    website?.customerName &&
+    !customerOptions.some((o) => o.value === storedCustomerId)
+  ) {
+    customerOptions.unshift({ value: storedCustomerId, label: website.customerName });
+  }
 
   const createMutation = useMutation({
     ...createWebsiteMutation,
     // Overriding onSuccess replaces the base invalidation — re-do it here.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: websiteKeys.all });
+      invalidateEntity('websites', queryClient);
       toast.success('Website created');
       onOpenChange(false);
       form.reset();
@@ -60,7 +69,7 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
   const updateMutation = useMutation({
     ...updateWebsiteMutation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: websiteKeys.all });
+      invalidateEntity('websites', queryClient);
       toast.success('Website updated');
       onOpenChange(false);
     },

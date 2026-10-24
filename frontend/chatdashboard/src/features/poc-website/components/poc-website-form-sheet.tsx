@@ -18,6 +18,7 @@ import {
 import { Icons } from '@/components/icons';
 import { useAppForm } from '@/lib/form';
 import { ApiError, unwrap } from '@/lib/billing/errors';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import {
   CATEGORY_OPTIONS,
   PROTOCOL_OPTIONS
@@ -49,6 +50,7 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
   const createMutation = useMutation({
     mutationFn: async (data: PocWebsiteMutationPayload) => unwrap(await createPocWebsite(data)),
     onSuccess: () => {
+      void invalidateEntity('pocWebsites');
       router.refresh();
       toast.success('Website created');
       onOpenChange(false);
@@ -61,6 +63,7 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
     mutationFn: async ({ id, values }: { id: string; values: PocWebsiteMutationPayload }) =>
       unwrap(await updatePocWebsite(id, values)),
     onSuccess: () => {
+      void invalidateEntity('pocWebsites');
       router.refresh();
       toast.success('Website updated');
       onOpenChange(false);

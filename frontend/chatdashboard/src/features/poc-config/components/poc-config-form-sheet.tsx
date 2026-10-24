@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQuery } from '@tanstack/react-query';
+import { useStore } from '@tanstack/react-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
@@ -18,6 +19,15 @@ import {
 import { Icons } from '@/components/icons';
 import { useAppForm } from '@/lib/form';
 import { ApiError, unwrap } from '@/lib/billing/errors';
+import { allCustomersQueryOptions } from '@/features/customers/api/queries';
+import type { CustomerSort } from '@/features/customers/api/types';
+import { toCustomerOption } from '@/features/customers/lib/customer-options';
+import { allPocWebsitesQueryOptions } from '@/features/poc-website/api/queries';
+import {
+  belongsToCustomer,
+  tenantIdOf,
+  websiteLink
+} from '@/features/poc-website/lib/website-link';
 import { createPocConfig, updatePocConfig } from '../api/service';
 import type { PocConfig, PocConfigMutationPayload } from '../api/types';
 import { pocConfigSchema, type PocConfigFormValues } from '../schemas/poc-config';
@@ -27,6 +37,9 @@ interface PocConfigFormSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
+
+// The API has no name, so the picker is sorted by email for scanning.
+const CUSTOMER_SORT: CustomerSort = { field: 'email', dir: 'asc' };
 
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof ApiError ? error.message : fallback;
@@ -120,6 +133,42 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
 
   const isPending = createMutation.isPending || updateMutation.isPending;
 
+  const {
+    data: customers,
+    isLoading: customersLoading,
+    isError: customersError
+  } = useQuery({ ...allCustomersQueryOptions(CUSTOMER_SORT), enabled: open });
+  const {
+    data: websites,
+    isLoading: websitesLoading,
+    isError: websitesError
+  } = useQuery({ ...allPocWebsitesQueryOptions(), enabled: open });
+
+  const clientId = useStore(form.store, (state) => state.values.clientId);
+
+  const customerOptions = useMemo(() => {
+    const options = (customers ?? []).map(toCustomerOption);
+    // Keep the saved customer selectable on edit even if it isn't in the fetched list.
+    if (config?.clientId && !options.some((o) => o.value === config.clientId)) {
+      options.unshift({ value: config.clientId, label: config.clientName || config.clientId });
+    }
+    return options;
+  }, [customers, config]);
+
+  const websiteOptions = useMemo(() => {
+    const options = (websites ?? [])
+      .filter((w) => belongsToCustomer(w, clientId))
+      .map((w) => ({ value: w.id, label: websiteLink(w) }));
+    // Keep the saved website selectable on edit even if it isn't in the fetched list.
+    if (config?.websiteId && !options.some((o) => o.value === config.websiteId)) {
+      options.unshift({
+        value: config.websiteId,
+        label: config.websiteLink || config.websiteId
+      });
+    }
+    return options;
+  }, [websites, clientId, config]);
+
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className='flex flex-col'>
@@ -148,30 +197,86 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
                   <field.TextField label='Config Name' required placeholder='Deploy Test' />
                 )}
               />
+              {/* Picking a customer sets the client id and name, then its website. */}
+              <form.AppField
+                name='clientId'
+                listeners={{
+                  onChange: ({ value }) => {
+                    const match = customerOptions.find((o) => o.value === value);
+                    if (match) form.setFieldValue('clientName', match.label);
+                    const sites = (websites ?? []).filter((w) => belongsToCustomer(w, value));
+                    // A customer with one website needs no second choice.
+                    form.setFieldValue('websiteId', sites.length === 1 ? sites[0].id : '');
+                    if (sites.length !== 1) {
+                      form.setFieldValue('websiteLink', '');
+                      form.setFieldValue('tenantId', '');
+                    }
+                  }
+                }}
+                children={(field) => (
+                  <field.ComboboxField
+                    label='Customer'
+                    required
+                    options={customerOptions}
+                    placeholder={customersLoading ? 'Loading customers...' : 'Select customer'}
+                    searchPlaceholder='Search customers...'
+                    emptyMessage={
+                      customersError ? "Couldn't load customers." : 'No customers found.'
+                    }
+                  />
+                )}
+              />
+              {/* Picking a website sets the website link and the tenant (its company). */}
+              <form.AppField
+                name='websiteId'
+                listeners={{
+                  onChange: ({ value }) => {
+                    const site = websites?.find((w) => w.id === value);
+                    if (!site) return;
+                    form.setFieldValue('websiteLink', websiteLink(site));
+                    form.setFieldValue('tenantId', tenantIdOf(site));
+                  }
+                }}
+                children={(field) => (
+                  <field.ComboboxField
+                    label='Website'
+                    required
+                    options={websiteOptions}
+                    placeholder={
+                      !clientId
+                        ? 'Select a customer first'
+                        : websitesLoading
+                          ? 'Loading websites...'
+                          : 'Select website'
+                    }
+                    searchPlaceholder='Search websites...'
+                    emptyMessage={
+                      websitesError
+                        ? "Couldn't load websites."
+                        : 'This customer has no websites yet.'
+                    }
+                  />
+                )}
+              />
               <form.AppField
                 name='tenantId'
                 children={(field) => (
-                  <field.TextField label='Tenant ID' required placeholder='t-deploy-test' />
+                  <field.TextField
+                    label='Tenant ID'
+                    required
+                    readOnly
+                    description="Taken from the selected website's company."
+                  />
                 )}
-              />
-              <div className='grid grid-cols-2 gap-4'>
-                <form.AppField
-                  name='clientId'
-                  children={(field) => <field.TextField label='Client ID' required />}
-                />
-                <form.AppField
-                  name='clientName'
-                  children={(field) => <field.TextField label='Client Name' required />}
-                />
-              </div>
-              <form.AppField
-                name='websiteId'
-                children={(field) => <field.TextField label='Website ID' required />}
               />
               <form.AppField
                 name='websiteLink'
                 children={(field) => (
-                  <field.TextField label='Website Link' placeholder='https://example.com' />
+                  <field.TextField
+                    label='Website Link'
+                    readOnly
+                    description='Taken from the selected website.'
+                  />
                 )}
               />
               <form.AppField

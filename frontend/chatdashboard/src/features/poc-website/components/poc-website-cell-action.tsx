@@ -16,6 +16,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Icons } from '@/components/icons';
 import { ApiError, unwrap } from '@/lib/billing/errors';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import { deletePocWebsite } from '../api/service';
 import type { PocWebsite } from '../api/types';
 import { PocWebsiteFormSheet } from './poc-website-form-sheet';
@@ -28,6 +29,8 @@ export function PocWebsiteCellAction({ data }: { data: PocWebsite }) {
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => unwrap(await deletePocWebsite(id)),
     onSuccess: () => {
+      // The config form's website picker is cached client-side; refresh() alone doesn't touch it.
+      void invalidateEntity('pocWebsites');
       router.refresh();
       toast.success('Website deleted successfully');
       setDeleteOpen(false);

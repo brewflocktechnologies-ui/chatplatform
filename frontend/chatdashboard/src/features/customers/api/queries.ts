@@ -1,4 +1,6 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
+import { entityRoots } from '@/lib/cache/keys';
+import { cachePolicy } from '@/lib/cache/policy';
 import { getAllCustomers, getCustomers } from './service';
 import type { Customer, CustomerFilters, CustomerSort } from './types';
 
@@ -13,7 +15,7 @@ export const DEFAULT_CUSTOMER_FILTERS: CustomerFilters = {
 };
 
 export const customerKeys = {
-  all: ['customers'] as const,
+  all: entityRoots.customers,
   list: (filters: CustomerFilters) => [...customerKeys.all, 'list', filters] as const,
   everything: (sort?: CustomerSort) => [...customerKeys.all, 'all', sort ?? null] as const
 };
@@ -30,6 +32,6 @@ export const allCustomersQueryOptions = (sort?: CustomerSort) =>
   queryOptions({
     queryKey: customerKeys.everything(sort),
     queryFn: () => getAllCustomers(sort),
-    staleTime: 5 * 60 * 1000,
+    ...cachePolicy('reference'),
     placeholderData: keepPreviousData
   });

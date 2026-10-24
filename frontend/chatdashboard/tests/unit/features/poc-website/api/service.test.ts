@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import {
   createPocWebsite,
+  getAllPocWebsites,
   deletePocWebsite,
   updatePocWebsite
 } from '@/features/poc-website/api/service';
@@ -108,5 +109,44 @@ describe('deletePocWebsite', () => {
     expect(url).toBe(`${POC_BASE}/api/v1/websites/w-1`);
     expect(init.method).toBe('DELETE');
     expect(init.body).toBeUndefined();
+  });
+});
+
+describe('getAllPocWebsites', () => {
+  const site = (id: string) => ({ id, ...payload });
+  const page = (content: unknown[], totalPages: number) => ({
+    content,
+    totalPages,
+    totalElements: content.length,
+    number: 0,
+    size: 100
+  });
+
+  it('reads one page from the POC host with the maximum page size', async () => {
+    respond(200, page([site('a')], 1));
+
+    await expect(getAllPocWebsites()).resolves.toEqual([site('a')]);
+
+    const url = new URL(lastRequest().url);
+    expect(url.origin).toBe(POC_BASE);
+    expect(url.pathname).toBe('/api/v1/websites');
+    expect(url.searchParams.get('page')).toBe('0');
+    expect(url.searchParams.get('size')).toBe('100');
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('walks the remaining pages', async () => {
+    respond(200, page([site('a')], 2));
+    respond(200, page([site('b')], 2));
+
+    const all = await getAllPocWebsites();
+
+    expect(all.map((w) => w.id)).toEqual(['a', 'b']);
+    expect(new URL(lastRequest().url).searchParams.get('page')).toBe('1');
+  });
+
+  it('throws when the API fails', async () => {
+    respond(500, { message: 'boom' });
+    await expect(getAllPocWebsites()).rejects.toThrow('Websites API responded with 500');
   });
 });

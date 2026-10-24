@@ -10,7 +10,7 @@ import {
   DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { deleteCompanyMutation } from '../../api/mutations';
-import { companyKeys } from '../../api/queries';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import { CompanyApiError } from '../../api/errors';
 import type { Company } from '../../api/types';
 import { Icons } from '@/components/icons';
@@ -32,7 +32,7 @@ export function CellAction({ data }: CellActionProps) {
     ...deleteCompanyMutation,
     // Overriding onSuccess replaces the base invalidation — re-do it here.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: companyKeys.all });
+      invalidateEntity('companies', queryClient);
       toast.success('Company deleted successfully');
       setDeleteOpen(false);
     },

@@ -17,7 +17,7 @@ import { Icons } from '@/components/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createCompanyMutation, updateCompanyMutation } from '../api/mutations';
-import { companyKeys } from '../api/queries';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import { CompanyApiError } from '../api/errors';
 import type { Company, CompanyMutationPayload } from '../api/types';
 import { companySchema, type CompanyFormValues } from '../schemas/company';
@@ -42,7 +42,7 @@ export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormShe
     ...createCompanyMutation,
     // Overriding onSuccess replaces the base invalidation — re-do it here.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: companyKeys.all });
+      invalidateEntity('companies', queryClient);
       toast.success('Company created');
       onOpenChange(false);
       form.reset();
@@ -53,7 +53,7 @@ export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormShe
   const updateMutation = useMutation({
     ...updateCompanyMutation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: companyKeys.all });
+      invalidateEntity('companies', queryClient);
       toast.success('Company updated');
       onOpenChange(false);
     },

@@ -30,8 +30,10 @@ export function SelectField({
         {label}
         {required && ' *'}
       </FieldLabel>
+      {/* `items` lets the closed trigger show the option's label; without it Base UI shows the raw value. */}
       <Select
         name={field.name}
+        items={options}
         value={field.state.value}
         onValueChange={(value) => field.handleChange(value ?? '')}
       >
