@@ -19,9 +19,8 @@ import {
 import { Icons } from '@/components/icons';
 import { useAppForm } from '@/lib/form';
 import { ApiError, unwrap } from '@/lib/billing/errors';
-import { allCustomersQueryOptions } from '@/features/customers/api/queries';
+import { useCustomerOptions } from '@/features/customers/hooks/use-customer-options';
 import type { CustomerSort } from '@/features/customers/api/types';
-import { toCustomerOption } from '@/features/customers/lib/customer-options';
 import { allPocWebsitesQueryOptions } from '@/features/poc-website/api/queries';
 import {
   belongsToCustomer,
@@ -134,10 +133,15 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const {
-    data: customers,
+    options: customerOptions,
     isLoading: customersLoading,
     isError: customersError
-  } = useQuery({ ...allCustomersQueryOptions(CUSTOMER_SORT), enabled: open });
+  } = useCustomerOptions({
+    sort: CUSTOMER_SORT,
+    savedId: config?.clientId,
+    savedName: config?.clientName,
+    enabled: open
+  });
   const {
     data: websites,
     isLoading: websitesLoading,
@@ -145,15 +149,6 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
   } = useQuery({ ...allPocWebsitesQueryOptions(), enabled: open });
 
   const clientId = useStore(form.store, (state) => state.values.clientId);
-
-  const customerOptions = useMemo(() => {
-    const options = (customers ?? []).map(toCustomerOption);
-    // Keep the saved customer selectable on edit even if it isn't in the fetched list.
-    if (config?.clientId && !options.some((o) => o.value === config.clientId)) {
-      options.unshift({ value: config.clientId, label: config.clientName || config.clientId });
-    }
-    return options;
-  }, [customers, config]);
 
   const websiteOptions = useMemo(() => {
     const options = (websites ?? [])

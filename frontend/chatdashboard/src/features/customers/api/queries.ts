@@ -1,7 +1,7 @@
 import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { entityRoots } from '@/lib/cache/keys';
 import { cachePolicy } from '@/lib/cache/policy';
-import { getAllCustomers, getCustomers } from './service';
+import { getAllCustomers, getCustomer, getCustomers } from './service';
 import type { Customer, CustomerFilters, CustomerSort } from './types';
 
 export type { Customer };
@@ -17,7 +17,8 @@ export const DEFAULT_CUSTOMER_FILTERS: CustomerFilters = {
 export const customerKeys = {
   all: entityRoots.customers,
   list: (filters: CustomerFilters) => [...customerKeys.all, 'list', filters] as const,
-  everything: (sort?: CustomerSort) => [...customerKeys.all, 'all', sort ?? null] as const
+  everything: (sort?: CustomerSort) => [...customerKeys.all, 'all', sort ?? null] as const,
+  detail: (id: string) => [...customerKeys.all, 'detail', id] as const
 };
 
 export const customersQueryOptions = (filters: CustomerFilters) =>
@@ -34,4 +35,12 @@ export const allCustomersQueryOptions = (sort?: CustomerSort) =>
     queryFn: () => getAllCustomers(sort),
     ...cachePolicy('reference'),
     placeholderData: keepPreviousData
+  });
+
+/** A single customer, for labelling a saved id before (or without) the full list. */
+export const customerQueryOptions = (id: string) =>
+  queryOptions({
+    queryKey: customerKeys.detail(id),
+    queryFn: () => getCustomer(id),
+    ...cachePolicy('reference')
   });

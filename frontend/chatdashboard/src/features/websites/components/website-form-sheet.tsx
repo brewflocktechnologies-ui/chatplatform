@@ -14,13 +14,12 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createWebsiteMutation, updateWebsiteMutation } from '../api/mutations';
 import { invalidateEntity } from '@/lib/cache/invalidation';
 import type { Website, WebsiteMutationPayload } from '../api/types';
-import { allCustomersQueryOptions } from '@/features/customers/api/queries';
+import { useCustomerOptions } from '@/features/customers/hooks/use-customer-options';
 import type { CustomerSort } from '@/features/customers/api/types';
-import { toCustomerOption } from '@/features/customers/lib/customer-options';
 import { toast } from 'sonner';
 import { websiteSchema, type WebsiteFormValues } from '../schemas/website';
 import { PROTOCOL_OPTIONS, CATEGORY_OPTIONS } from './websites-table/options';
@@ -39,20 +38,12 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
   const queryClient = useQueryClient();
 
   // Customers from the billing API feed the owner dropdown.
-  const { data: customers = [] } = useQuery({
-    ...allCustomersQueryOptions(CUSTOMER_SORT),
+  const { options: customerOptions } = useCustomerOptions({
+    sort: CUSTOMER_SORT,
+    savedId: website?.customerId ?? website?.companyId,
+    savedName: website?.customerName,
     enabled: open
   });
-  const customerOptions = customers.map(toCustomerOption);
-  // Until the list loads (or if the owner is missing from it), keep the stored name rather than showing the raw id.
-  const storedCustomerId = website?.customerId ?? website?.companyId;
-  if (
-    storedCustomerId &&
-    website?.customerName &&
-    !customerOptions.some((o) => o.value === storedCustomerId)
-  ) {
-    customerOptions.unshift({ value: storedCustomerId, label: website.customerName });
-  }
 
   const createMutation = useMutation({
     ...createWebsiteMutation,

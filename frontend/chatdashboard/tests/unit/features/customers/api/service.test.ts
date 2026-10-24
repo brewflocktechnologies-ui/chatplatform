@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getAllCustomers, getCustomers } from '@/features/customers/api/service';
+import { getAllCustomers, getCustomer, getCustomers } from '@/features/customers/api/service';
 import type { Customer } from '@/features/customers/api/types';
 
 const CUSTOMERS_BASE = 'https://customers.test';
@@ -124,5 +124,46 @@ describe('getAllCustomers', () => {
     for (let i = 0; i < 3; i++) {
       expect(requestedUrl(i).searchParams.get('sort')).toBe('email,asc');
     }
+  });
+});
+
+describe('getAllCustomers concurrency', () => {
+  it('keeps at most six page requests in flight', async () => {
+    let inFlight = 0;
+    let peak = 0;
+    fetchMock.mockImplementation(async (url: string) => {
+      inFlight++;
+      peak = Math.max(peak, inFlight);
+      await new Promise((r) => setTimeout(r, 5));
+      inFlight--;
+      const n = Number(new URL(url).searchParams.get('page'));
+      return { ok: true, status: 200, json: async () => page([customer(n)], 20, n) };
+    });
+
+    const all = await getAllCustomers();
+
+    expect(all.map((c) => c.id)).toEqual(Array.from({ length: 20 }, (_, i) => i));
+    expect(peak).toBeLessThanOrEqual(6);
+    expect(peak).toBeGreaterThan(1);
+  });
+});
+
+describe('getCustomer', () => {
+  it('reads one customer by id from the customers host', async () => {
+    respond(200, customer(7953));
+    expect(await getCustomer('7953')).toEqual(customer(7953));
+    const url = requestedUrl();
+    expect(url.origin).toBe(CUSTOMERS_BASE);
+    expect(url.pathname).toBe('/api/customers/7953');
+  });
+
+  it('returns null when the customer does not exist', async () => {
+    respond(404, { message: 'nope' });
+    expect(await getCustomer('1')).toBeNull();
+  });
+
+  it('throws on any other failure so the query enters its error state', async () => {
+    respond(500, { message: 'boom' });
+    await expect(getCustomer('1')).rejects.toThrow('Customers API responded with 500');
   });
 });

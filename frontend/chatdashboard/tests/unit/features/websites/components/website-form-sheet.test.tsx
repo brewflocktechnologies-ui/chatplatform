@@ -14,7 +14,8 @@ vi.mock('@/features/websites/api/service', () => ({
 }));
 vi.mock('@/features/customers/api/service', () => ({
   getCustomers: vi.fn(),
-  getAllCustomers: vi.fn()
+  getAllCustomers: vi.fn(),
+  getCustomer: vi.fn().mockResolvedValue(null)
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 

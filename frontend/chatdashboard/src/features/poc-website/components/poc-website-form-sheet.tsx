@@ -1,8 +1,8 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { FieldGroup } from '@/components/ui/field';
@@ -23,9 +23,8 @@ import {
   CATEGORY_OPTIONS,
   PROTOCOL_OPTIONS
 } from '@/features/websites/components/websites-table/options';
-import { allCustomersQueryOptions } from '@/features/customers/api/queries';
+import { useCustomerOptions } from '@/features/customers/hooks/use-customer-options';
 import type { CustomerSort } from '@/features/customers/api/types';
-import { toCustomerOption } from '@/features/customers/lib/customer-options';
 import { createPocWebsite, updatePocWebsite } from '../api/service';
 import type { PocWebsite, PocWebsiteMutationPayload } from '../api/types';
 import { pocWebsiteSchema, type PocWebsiteFormValues } from '../schemas/poc-website';
@@ -116,23 +115,15 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   const {
-    data: customersData,
+    options: customerOptions,
     isLoading: customersLoading,
     isError: customersError
-  } = useQuery({ ...allCustomersQueryOptions(CUSTOMER_SORT), enabled: open });
-
-  const customerOptions = useMemo(() => {
-    const options = (customersData ?? []).map(toCustomerOption);
-    // Keep the saved customer selectable on edit even if it isn't in the fetched list.
-    const savedId = website?.customerId ?? website?.companyId;
-    if (savedId && !options.some((o) => o.value === savedId)) {
-      options.unshift({
-        value: savedId,
-        label: website?.customerName || savedId
-      });
-    }
-    return options;
-  }, [customersData, website]);
+  } = useCustomerOptions({
+    sort: CUSTOMER_SORT,
+    savedId: website?.customerId ?? website?.companyId,
+    savedName: website?.customerName,
+    enabled: open
+  });
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>

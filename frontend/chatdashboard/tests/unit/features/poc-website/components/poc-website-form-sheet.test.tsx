@@ -11,12 +11,13 @@ vi.mock('@/features/poc-website/api/service', () => ({
 }));
 vi.mock('@/features/customers/api/service', () => ({
   getCustomers: vi.fn(),
-  getAllCustomers: vi.fn()
+  getAllCustomers: vi.fn(),
+  getCustomer: vi.fn().mockResolvedValue(null)
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
 import { createPocWebsite } from '@/features/poc-website/api/service';
-import { getAllCustomers } from '@/features/customers/api/service';
+import { getAllCustomers, getCustomer } from '@/features/customers/api/service';
 import { PocWebsiteFormSheet } from '@/features/poc-website/components/poc-website-form-sheet';
 import type { PocWebsite } from '@/features/poc-website/api/types';
 
@@ -111,5 +112,33 @@ describe('PocWebsiteFormSheet customer picker', () => {
     expect(within(dialog).getByRole('combobox', { name: /Customer/ })).toHaveTextContent(
       'old@example.com'
     );
+  });
+
+  it('labels a saved customer with a nameless website by looking it up, not by showing the id', async () => {
+    // The full list never arrives; the single lookup still resolves the label.
+    vi.mocked(getAllCustomers).mockReturnValue(new Promise(() => {}));
+    vi.mocked(getCustomer).mockResolvedValue({ id: 7953, email: 'ref1@example.com' } as never);
+    const website = {
+      id: 'w2',
+      protocol: 'HTTPS',
+      domain: 'ref-test.example.com',
+      companyId: '7953',
+      customerId: '7953',
+      customerName: '',
+      flavour: 'Orange',
+      businessCategory: 'Saas',
+      dateAdded: null,
+      isActive: true,
+      isVerified: false,
+      configName: 'Orange',
+      configId: null
+    } satisfies PocWebsite;
+    wrap(<PocWebsiteFormSheet website={website} open onOpenChange={vi.fn()} />);
+    const dialog = await screen.findByRole('dialog');
+    const trigger = within(dialog).getByRole('combobox', { name: /Customer/ });
+
+    await waitFor(() => expect(trigger).toHaveTextContent('ref1@example.com'));
+    expect(getCustomer).toHaveBeenCalledWith('7953');
+    expect(trigger).not.toHaveTextContent('7953');
   });
 });

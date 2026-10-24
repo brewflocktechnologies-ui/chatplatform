@@ -46,7 +46,8 @@ export const endpoints = {
     item: (id: number) => `/api/v1/companies/${numericId(id)}`
   },
   customers: {
-    list: '/api/customers'
+    list: '/api/customers',
+    item: (id: string) => `/api/customers/${opaqueId(id)}`
   },
   pocWebsites: {
     list: '/api/v1/websites',

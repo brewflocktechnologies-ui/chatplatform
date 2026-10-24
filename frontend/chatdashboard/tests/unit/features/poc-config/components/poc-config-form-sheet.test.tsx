@@ -11,7 +11,8 @@ vi.mock('@/features/poc-config/api/service', () => ({
 }));
 vi.mock('@/features/customers/api/service', () => ({
   getCustomers: vi.fn(),
-  getAllCustomers: vi.fn()
+  getAllCustomers: vi.fn(),
+  getCustomer: vi.fn().mockResolvedValue(null)
 }));
 vi.mock('@/features/poc-website/api/service', () => ({
   getAllPocWebsites: vi.fn(),
