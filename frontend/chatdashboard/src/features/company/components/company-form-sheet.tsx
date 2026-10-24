@@ -117,7 +117,7 @@ export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormShe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='flex flex-col'>
+      <SheetContent side='center' className='flex flex-col'>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Company' : 'New Company'}</SheetTitle>
           <SheetDescription>

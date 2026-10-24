@@ -4,6 +4,7 @@ import { DataTableColumnHeader } from '@/components/ui/table/data-table-column-h
 import { Icons } from '@/components/icons';
 import type { Column, ColumnDef } from '@tanstack/react-table';
 import type { Customer } from '../../api/types';
+import { CellAction } from './cell-action';
 
 const dash = <span className='text-muted-foreground'>—</span>;
 
@@ -39,19 +40,19 @@ export const columns: ColumnDef<Customer>[] = [
     id: 'city',
     size: 140,
     header: sortableHeader('City'),
-    cell: ({ row }) => row.original.billingAddress?.city ?? dash
+    cell: ({ row }) => row.original.billingAddress?.city || dash
   },
   {
     id: 'state',
     size: 140,
     header: sortableHeader('State'),
-    cell: ({ row }) => row.original.billingAddress?.state ?? dash
+    cell: ({ row }) => row.original.billingAddress?.state || dash
   },
   {
     id: 'country',
     size: 140,
     header: sortableHeader('Country'),
-    cell: ({ row }) => row.original.billingAddress?.country ?? dash
+    cell: ({ row }) => row.original.billingAddress?.country || dash
   },
   {
     id: 'card',
@@ -86,5 +87,17 @@ export const columns: ColumnDef<Customer>[] = [
     enableSorting: false,
     header: sortableHeader('Invoices'),
     cell: ({ row }) => row.original.invoices.length
+  },
+  {
+    id: 'actions',
+    enableHiding: false,
+    enableSorting: false,
+    header: () => <span className='block text-center'>ACTIONS</span>,
+    size: 80,
+    cell: ({ row }) => (
+      <div className='flex justify-center'>
+        <CellAction data={row.original} />
+      </div>
+    )
   }
 ];

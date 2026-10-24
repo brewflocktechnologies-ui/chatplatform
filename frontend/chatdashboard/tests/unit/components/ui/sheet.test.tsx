@@ -36,6 +36,20 @@ describe('Sheet', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false, expect.anything());
   });
 
+  it('renders a centered modal when side is center', () => {
+    render(
+      <Sheet open>
+        <SheetContent side='center'>
+          <SheetHeader>
+            <SheetTitle>Edit</SheetTitle>
+            <SheetDescription>Form</SheetDescription>
+          </SheetHeader>
+        </SheetContent>
+      </Sheet>
+    );
+    expect(screen.getByRole('dialog')).toHaveAttribute('data-side', 'center');
+  });
+
   it('can opt back in to closing on outside click', () => {
     const onOpenChange = renderSheet({ disablePointerDismissal: false });
     fireEvent.pointerDown(backdrop());

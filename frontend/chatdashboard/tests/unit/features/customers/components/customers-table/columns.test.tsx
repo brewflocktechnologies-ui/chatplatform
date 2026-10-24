@@ -69,7 +69,8 @@ describe('customers columns', () => {
   it('only leaves plan and invoices unsortable', () => {
     expect(columns.filter((c) => c.enableSorting === false).map((c) => c.id)).toEqual([
       'activePlan',
-      'invoices'
+      'invoices',
+      'actions'
     ]);
   });
 

@@ -166,7 +166,7 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='flex flex-col'>
+      <SheetContent side='center' className='flex flex-col'>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Config' : 'New Config'}</SheetTitle>
           <SheetDescription>

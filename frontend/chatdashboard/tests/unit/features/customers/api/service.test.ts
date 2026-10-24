@@ -1,5 +1,12 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { getAllCustomers, getCustomer, getCustomers } from '@/features/customers/api/service';
+import {
+  createCustomer,
+  deleteCustomer,
+  getAllCustomers,
+  getCustomer,
+  getCustomers,
+  updateCustomer
+} from '@/features/customers/api/service';
 import type { Customer } from '@/features/customers/api/types';
 
 const CUSTOMERS_BASE = 'https://customers.test';
@@ -170,5 +177,60 @@ describe('getCustomer', () => {
   it('throws on any other failure so the query enters its error state', async () => {
     respond(500, { message: 'boom' });
     await expect(getCustomer('1')).rejects.toThrow('Customers API responded with 500');
+  });
+});
+
+describe('customer writes', () => {
+  it('POSTs the payload to /api/customers on the customers host', async () => {
+    respond(201, customer(8003));
+    const payload = { email: 'new@example.com', externalId: null };
+
+    const result = await createCustomer(payload);
+
+    expect(result).toEqual({ ok: true, data: customer(8003) });
+    const url = requestedUrl();
+    expect(url.origin).toBe(CUSTOMERS_BASE);
+    expect(url.pathname).toBe('/api/customers');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({
+      method: 'POST',
+      body: JSON.stringify(payload)
+    });
+  });
+
+  it('hands validation errors back as data', async () => {
+    respond(400, { message: 'Input validation errors', fieldErrors: { email: 'bad' } });
+
+    const result = await createCustomer({ email: 'bad' });
+
+    expect(result).toMatchObject({ ok: false, status: 400, fieldErrors: { email: 'bad' } });
+  });
+
+  it('PUTs to /api/customers/{id}, truncating the id', async () => {
+    respond(200, customer(8003));
+
+    await updateCustomer(8003.9, { email: 'a@b.co' });
+
+    expect(requestedUrl().pathname).toBe('/api/customers/8003');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'PUT' });
+  });
+
+  it('words a failed DELETE as unsupported, since the API has no delete route', async () => {
+    respond(500, { message: 'An unexpected error occurred' });
+
+    const result = await deleteCustomer(8003);
+
+    expect(requestedUrl().pathname).toBe('/api/customers/8003');
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: 'DELETE' });
+    expect(result).toEqual({
+      ok: false,
+      status: 500,
+      message: 'The customers API does not support deleting customers yet.'
+    });
+  });
+
+  it('keeps a 404 DELETE worded as not found', async () => {
+    respond(404, { message: 'nope' });
+
+    expect(await deleteCustomer(1)).toMatchObject({ ok: false, message: 'Customer not found' });
   });
 });

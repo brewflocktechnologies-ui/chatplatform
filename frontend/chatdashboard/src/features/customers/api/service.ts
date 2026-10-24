@@ -2,7 +2,13 @@
 
 import { endpoints, origins } from '@/config/api-endpoints';
 import { billingRequest, pageParams, sortParam } from '@/lib/billing/client';
-import type { Customer, CustomerFilters, CustomerSort, CustomersPage } from './types';
+import type {
+  Customer,
+  CustomerFilters,
+  CustomerMutationPayload,
+  CustomerSort,
+  CustomersPage
+} from './types';
 import { CUSTOMER_SORT_FIELDS } from './types';
 
 // The API serves pages slowly (a few seconds each) and queues parallel requests, so firing every
@@ -65,4 +71,41 @@ export async function getCustomer(id: string): Promise<Customer | null> {
   if (result.ok) return result.data;
   if (result.status === 404) return null;
   throw new Error(`Customers API responded with ${result.status}`);
+}
+
+const writeCustomer = (
+  method: 'POST' | 'PUT' | 'DELETE',
+  path: string,
+  body?: CustomerMutationPayload
+) =>
+  billingRequest<Customer | null>(method, path, {
+    origin: origins.customers(),
+    body,
+    notFoundMessage: 'Customer not found'
+  });
+
+/** Ids are numeric, and server actions take client input, so never splice anything else in. */
+const itemPath = (id: number) => endpoints.customers.item(String(Math.trunc(id)));
+
+/** POST /api/customers → the created customer. */
+export async function createCustomer(data: CustomerMutationPayload) {
+  return writeCustomer('POST', endpoints.customers.list, data);
+}
+
+/** PUT /api/customers/{id} → the updated customer. Fields left out keep their stored value. */
+export async function updateCustomer(id: number, data: CustomerMutationPayload) {
+  return writeCustomer('PUT', itemPath(id), data);
+}
+
+/**
+ * The customers API has no DELETE route yet and answers it with a 500, so a failure here is
+ * reported as unsupported instead of as a server fault.
+ */
+export async function deleteCustomer(id: number) {
+  const result = await writeCustomer('DELETE', itemPath(id));
+  if (result.ok || result.status === 404) return result;
+  return {
+    ...result,
+    message: 'The customers API does not support deleting customers yet.'
+  };
 }

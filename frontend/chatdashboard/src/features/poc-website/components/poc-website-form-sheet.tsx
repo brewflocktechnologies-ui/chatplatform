@@ -127,7 +127,7 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='flex flex-col'>
+      <SheetContent side='center' className='flex flex-col'>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Website' : 'New Website'}</SheetTitle>
           <SheetDescription>

@@ -58,3 +58,23 @@ export type CustomerFilters = {
 
 /** Spring Data `Page` envelope returned by GET /api/customers. */
 export type CustomersPage = PageResponse<Customer>;
+
+/** Billing address as the API accepts it; every part is optional. */
+export type CustomerAddressPayload = {
+  line1: string | null;
+  line2: string | null;
+  city: string | null;
+  state: string | null;
+  postalCode: string | null;
+  country: string | null;
+};
+
+/**
+ * Body of POST /api/customers and PUT /api/customers/{id}. Only `email` is required. PUT merges:
+ * an omitted or null field keeps its stored value, and an empty string clears it.
+ */
+export type CustomerMutationPayload = {
+  email: string;
+  externalId?: string | null;
+  billingAddress?: CustomerAddressPayload;
+};

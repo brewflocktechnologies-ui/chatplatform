@@ -141,7 +141,7 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
   return (
     // disablePointerDismissal: an outside click or focus change must not discard edits in progress.
     <Sheet open={open} onOpenChange={onOpenChange} disablePointerDismissal>
-      <SheetContent className='flex flex-col'>
+      <SheetContent side='center' className='flex flex-col'>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit plan' : 'New plan'}</SheetTitle>
           <SheetDescription>

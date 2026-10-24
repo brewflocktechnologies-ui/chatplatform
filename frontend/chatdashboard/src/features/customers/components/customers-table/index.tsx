@@ -11,6 +11,7 @@ import { getSortingStateParser } from '@/lib/parsers';
 import { allCustomersQueryOptions, customersQueryOptions } from '../../api/queries';
 import { matchesSearch } from '../../lib/customer-search';
 import { parseSortParam } from '../../lib/customer-sort';
+import { CustomerFormSheetTrigger } from '../customer-form-sheet';
 import { columns } from './columns';
 
 const columnIds = columns.map((c) => c.id).filter(Boolean) as string[];
@@ -64,7 +65,7 @@ export function CustomersTable() {
 
   return (
     <DataTable table={table} minTableWidth>
-      <DataTableToolbar table={table}>
+      <DataTableToolbar table={table} actions={<CustomerFormSheetTrigger />}>
         {search && all.isFetching && !all.data && (
           <span className='text-muted-foreground flex items-center gap-2 text-sm' role='status'>
             <Icons.spinner className='h-4 w-4 animate-spin' />
