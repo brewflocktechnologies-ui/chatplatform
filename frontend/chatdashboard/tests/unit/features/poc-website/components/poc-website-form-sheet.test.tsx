@@ -16,7 +16,7 @@ vi.mock('@/features/customers/api/service', () => ({
 }));
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
-import { createPocWebsite } from '@/features/poc-website/api/service';
+import { createPocWebsite, updatePocWebsite } from '@/features/poc-website/api/service';
 import { getAllCustomers, getCustomer } from '@/features/customers/api/service';
 import { PocWebsiteFormSheet } from '@/features/poc-website/components/poc-website-form-sheet';
 import type { PocWebsite } from '@/features/poc-website/api/types';
@@ -140,5 +140,43 @@ describe('PocWebsiteFormSheet customer picker', () => {
     await waitFor(() => expect(trigger).toHaveTextContent('ref1@example.com'));
     expect(getCustomer).toHaveBeenCalledWith('7953');
     expect(trigger).not.toHaveTextContent('7953');
+  });
+
+  it('saves an edit of a website that has no stored customer name', async () => {
+    // Older rows carry only the customer id; the form has no field for the name, so it must
+    // fill it in from the customer instead of silently refusing to submit.
+    vi.mocked(getAllCustomers).mockReturnValue(new Promise(() => {}));
+    vi.mocked(getCustomer).mockResolvedValue({ id: 7953, email: 'ref1@example.com' } as never);
+    vi.mocked(updatePocWebsite).mockResolvedValue({ ok: true, data: null });
+    const website = {
+      id: 'w3',
+      protocol: 'HTTPS',
+      domain: 'ref-test.example.com',
+      companyId: '7953',
+      customerId: '7953',
+      customerName: '',
+      flavour: 'Orange',
+      businessCategory: 'Saas',
+      dateAdded: null,
+      isActive: true,
+      isVerified: false,
+      configName: 'Orange',
+      configId: null
+    } satisfies PocWebsite;
+    wrap(<PocWebsiteFormSheet website={website} open onOpenChange={vi.fn()} />);
+    const dialog = await screen.findByRole('dialog');
+    await waitFor(() =>
+      expect(within(dialog).getByRole('combobox', { name: /Customer/ })).toHaveTextContent(
+        'ref1@example.com'
+      )
+    );
+
+    fireEvent.submit(dialog.querySelector('form')!);
+
+    await waitFor(() => expect(updatePocWebsite).toHaveBeenCalledTimes(1));
+    expect(updatePocWebsite).toHaveBeenCalledWith(
+      'w3',
+      expect.objectContaining({ customerId: '7953', customerName: 'ref1@example.com' })
+    );
   });
 });

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
@@ -110,7 +110,7 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Website' : 'New Website'}</SheetTitle>
           <SheetDescription>
@@ -129,36 +129,34 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
-              <div className='grid grid-cols-[8rem_1fr] gap-4'>
-                <form.AppField
-                  name='protocol'
-                  children={(field) => (
-                    <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
-                  )}
-                />
-                <form.AppField
-                  name='domain'
-                  children={(field) => (
-                    <field.TextField label='Domain' required placeholder='example.com' />
-                  )}
-                />
-              </div>
-
+            <FormGrid>
               <form.AppField
-                name='customerId'
+                name='protocol'
                 children={(field) => (
-                  <field.SelectField
-                    label='Customer'
-                    required
-                    options={customerOptions}
-                    placeholder={
-                      customerOptions.length === 0 ? 'Loading customers...' : 'Select customer'
-                    }
-                  />
+                  <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
                 )}
               />
-
+              <form.AppField
+                name='domain'
+                children={(field) => (
+                  <field.TextField label='Domain' required placeholder='example.com' />
+                )}
+              />
+              <FormRow>
+                <form.AppField
+                  name='customerId'
+                  children={(field) => (
+                    <field.SelectField
+                      label='Customer'
+                      required
+                      options={customerOptions}
+                      placeholder={
+                        customerOptions.length === 0 ? 'Loading customers...' : 'Select customer'
+                      }
+                    />
+                  )}
+                />
+              </FormRow>
               <form.AppField
                 name='businessCategory'
                 children={(field) => (
@@ -170,7 +168,6 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                   />
                 )}
               />
-
               <form.AppField
                 name='flavour'
                 children={(field) => (
@@ -182,7 +179,6 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                   />
                 )}
               />
-
               <form.AppField
                 name='isActive'
                 children={(field) => (
@@ -192,7 +188,6 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                   />
                 )}
               />
-
               <form.AppField
                 name='isVerified'
                 children={(field) => (
@@ -202,7 +197,7 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                   />
                 )}
               />
-            </FieldGroup>
+            </FormGrid>
           </form>
         </div>
 

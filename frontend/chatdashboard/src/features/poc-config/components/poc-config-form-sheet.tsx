@@ -6,7 +6,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import { useStore } from '@tanstack/react-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
   Sheet,
@@ -166,7 +166,7 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Config' : 'New Config'}</SheetTitle>
           <SheetDescription>
@@ -185,13 +185,15 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
-              <form.AppField
-                name='configName'
-                children={(field) => (
-                  <field.TextField label='Config Name' required placeholder='Deploy Test' />
-                )}
-              />
+            <FormGrid>
+              <FormRow>
+                <form.AppField
+                  name='configName'
+                  children={(field) => (
+                    <field.TextField label='Config Name' required placeholder='Deploy Test' />
+                  )}
+                />
+              </FormRow>
               {/* Picking a customer sets the client id and name, then its website. */}
               <form.AppField
                 name='clientId'
@@ -274,18 +276,20 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
                   />
                 )}
               />
-              <form.AppField
-                name='cdnConfig'
-                children={(field) => (
-                  <field.TextareaField
-                    label='CDN Config (JSON)'
-                    rows={10}
-                    className='font-mono text-xs'
-                    description='Widget settings served from the CDN.'
-                  />
-                )}
-              />
-            </FieldGroup>
+              <FormRow>
+                <form.AppField
+                  name='cdnConfig'
+                  children={(field) => (
+                    <field.TextareaField
+                      label='CDN Config (JSON)'
+                      rows={10}
+                      className='font-mono text-xs'
+                      description='Widget settings served from the CDN.'
+                    />
+                  )}
+                />
+              </FormRow>
+            </FormGrid>
           </form>
         </div>
 

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
@@ -117,7 +117,7 @@ export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormShe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Company' : 'New Company'}</SheetTitle>
           <SheetDescription>
@@ -136,12 +136,16 @@ export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormShe
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
+            <FormGrid>
               <form.AppField
                 name='name'
                 children={(field) => (
                   <field.TextField label='Name' required placeholder='Acme Corp' />
                 )}
+              />
+              <form.AppField
+                name='industry'
+                children={(field) => <field.TextField label='Industry' placeholder='Fintech' />}
               />
               <form.AppField
                 name='contactEmail'
@@ -166,21 +170,19 @@ export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormShe
                 )}
               />
               <form.AppField
-                name='industry'
-                children={(field) => <field.TextField label='Industry' placeholder='Fintech' />}
-              />
-              <form.AppField
                 name='employeeCount'
                 children={(field) => (
                   <field.TextField label='Employees' type='number' min={0} placeholder='220' />
                 )}
               />
-              <form.AppField
-                name='streetAddress'
-                children={(field) => (
-                  <field.TextField label='Street Address' placeholder='45 Mount Road' />
-                )}
-              />
+              <FormRow>
+                <form.AppField
+                  name='streetAddress'
+                  children={(field) => (
+                    <field.TextField label='Street Address' placeholder='45 Mount Road' />
+                  )}
+                />
+              </FormRow>
               <form.AppField
                 name='city'
                 children={(field) => <field.TextField label='City' placeholder='Bengaluru' />}
@@ -197,7 +199,7 @@ export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormShe
                 name='country'
                 children={(field) => <field.TextField label='Country' placeholder='India' />}
               />
-            </FieldGroup>
+            </FormGrid>
           </form>
         </div>
 

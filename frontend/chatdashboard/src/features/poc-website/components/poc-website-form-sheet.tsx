@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
   Sheet,
@@ -85,11 +85,14 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
       onSubmit: pocWebsiteSchema
     },
     onSubmit: async ({ value }) => {
+      // The name has no field of its own: take it from the chosen customer, else keep what is stored.
+      const customerName =
+        customerOptions.find((o) => o.value === value.customerId)?.label || value.customerName;
       const payload: PocWebsiteMutationPayload = {
         protocol: value.protocol,
         domain: value.domain,
         customerId: value.customerId,
-        customerName: value.customerName,
+        customerName,
         // The Websites tab treats the customer as the company; keep an existing link on edit.
         companyId: website?.companyId ?? value.customerId,
         businessCategory: value.businessCategory,
@@ -127,7 +130,7 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Website' : 'New Website'}</SheetTitle>
           <SheetDescription>
@@ -146,45 +149,43 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
-              <div className='grid grid-cols-[8rem_1fr] gap-4'>
-                <form.AppField
-                  name='protocol'
-                  children={(field) => (
-                    <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
-                  )}
-                />
-                <form.AppField
-                  name='domain'
-                  children={(field) => (
-                    <field.TextField label='Domain' required placeholder='example.com' />
-                  )}
-                />
-              </div>
-
-              {/* Picking a customer sets both customerId and customerName. */}
+            <FormGrid>
               <form.AppField
-                name='customerId'
-                listeners={{
-                  onChange: ({ value }) => {
-                    const match = customerOptions.find((o) => o.value === value);
-                    if (match) form.setFieldValue('customerName', match.label);
-                  }
-                }}
+                name='protocol'
                 children={(field) => (
-                  <field.ComboboxField
-                    label='Customer'
-                    required
-                    options={customerOptions}
-                    placeholder={customersLoading ? 'Loading customers...' : 'Select customer'}
-                    searchPlaceholder='Search customers...'
-                    emptyMessage={
-                      customersError ? "Couldn't load customers." : 'No customers found.'
-                    }
-                  />
+                  <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
                 )}
               />
-
+              <form.AppField
+                name='domain'
+                children={(field) => (
+                  <field.TextField label='Domain' required placeholder='example.com' />
+                )}
+              />
+              <FormRow>
+                {/* Picking a customer sets both customerId and customerName. */}
+                <form.AppField
+                  name='customerId'
+                  listeners={{
+                    onChange: ({ value }) => {
+                      const match = customerOptions.find((o) => o.value === value);
+                      if (match) form.setFieldValue('customerName', match.label);
+                    }
+                  }}
+                  children={(field) => (
+                    <field.ComboboxField
+                      label='Customer'
+                      required
+                      options={customerOptions}
+                      placeholder={customersLoading ? 'Loading customers...' : 'Select customer'}
+                      searchPlaceholder='Search customers...'
+                      emptyMessage={
+                        customersError ? "Couldn't load customers." : 'No customers found.'
+                      }
+                    />
+                  )}
+                />
+              </FormRow>
               <form.AppField
                 name='businessCategory'
                 children={(field) => (
@@ -196,7 +197,6 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
                   />
                 )}
               />
-
               <form.AppField
                 name='flavour'
                 children={(field) => (
@@ -208,7 +208,6 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
                   />
                 )}
               />
-
               <form.AppField
                 name='isActive'
                 children={(field) => (
@@ -218,7 +217,6 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
                   />
                 )}
               />
-
               <form.AppField
                 name='isVerified'
                 children={(field) => (
@@ -228,7 +226,7 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
                   />
                 )}
               />
-            </FieldGroup>
+            </FormGrid>
           </form>
         </div>
 

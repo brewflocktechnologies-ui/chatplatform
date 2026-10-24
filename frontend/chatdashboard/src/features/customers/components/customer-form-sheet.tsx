@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
@@ -106,7 +106,7 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Customer' : 'New Customer'}</SheetTitle>
           <SheetDescription>
@@ -125,7 +125,7 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
+            <FormGrid>
               <form.AppField
                 name='email'
                 children={(field) => (
@@ -175,7 +175,7 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
                 name='country'
                 children={(field) => <field.TextField label='Country' placeholder='India' />}
               />
-            </FieldGroup>
+            </FormGrid>
           </form>
         </div>
 

@@ -9,7 +9,8 @@ export const pocWebsiteSchema = z.object({
       message: 'Enter a bare domain like example.com (no protocol or path)'
     }),
   customerId: z.string().trim().min(1, 'Customer ID is required'),
-  customerName: z.string().trim().min(1, 'Customer name is required'),
+  // Not user-editable: set from the picked customer, and absent on older rows.
+  customerName: z.string(),
   businessCategory: z.string().min(1, 'Please select a category'),
   flavour: z.string().trim().min(1, 'Flavour / config name is required'),
   isActive: z.boolean(),

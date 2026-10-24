@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
   Sheet,
@@ -135,7 +135,7 @@ export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetForm
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Widget' : 'New Widget'}</SheetTitle>
           <SheetDescription>
@@ -154,58 +154,50 @@ export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetForm
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
+            <FormGrid>
+              <FormRow>
+                <form.AppField
+                  name='widgetName'
+                  children={(field) => (
+                    <field.TextField label='Widget Name' required placeholder='Support widget' />
+                  )}
+                />
+              </FormRow>
               <form.AppField
-                name='widgetName'
+                name='companyId'
                 children={(field) => (
-                  <field.TextField label='Widget Name' required placeholder='Support widget' />
+                  <field.TextField label='Company ID' type='number' min={1} required />
                 )}
               />
-              <div className='grid grid-cols-2 gap-4'>
-                <form.AppField
-                  name='companyId'
-                  children={(field) => (
-                    <field.TextField label='Company ID' type='number' min={1} required />
-                  )}
-                />
-                <form.AppField
-                  name='assistantId'
-                  children={(field) => (
-                    <field.TextField label='Assistant ID' type='number' min={1} required />
-                  )}
-                />
-              </div>
               <form.AppField
-                name='websiteUrl'
+                name='assistantId'
                 children={(field) => (
-                  <field.TextField label='Website URL' placeholder='https://example.com' />
+                  <field.TextField label='Assistant ID' type='number' min={1} required />
                 )}
               />
-              <div className='grid grid-cols-2 gap-4'>
+              <FormRow>
                 <form.AppField
-                  name='position'
+                  name='websiteUrl'
                   children={(field) => (
-                    <field.SelectField label='Position' required options={POSITION_OPTIONS} />
+                    <field.TextField label='Website URL' placeholder='https://example.com' />
                   )}
                 />
-                <form.AppField
-                  name='theme'
-                  children={(field) => (
-                    <field.SelectField label='Theme' required options={THEME_OPTIONS} />
-                  )}
-                />
-              </div>
+              </FormRow>
+              <form.AppField
+                name='position'
+                children={(field) => (
+                  <field.SelectField label='Position' required options={POSITION_OPTIONS} />
+                )}
+              />
+              <form.AppField
+                name='theme'
+                children={(field) => (
+                  <field.SelectField label='Theme' required options={THEME_OPTIONS} />
+                )}
+              />
               <form.AppField
                 name='primaryColor'
                 children={(field) => <field.ColorField label='Primary Color' />}
-              />
-              <form.AppField
-                name='greetingMessage'
-                children={(field) => <field.TextareaField label='Greeting Message' />}
-              />
-              <form.AppField
-                name='offlineMessage'
-                children={(field) => <field.TextareaField label='Offline Message' />}
               />
               <form.AppField
                 name='maxFileSizeMb'
@@ -218,7 +210,14 @@ export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetForm
                   />
                 )}
               />
-
+              <form.AppField
+                name='greetingMessage'
+                children={(field) => <field.TextareaField label='Greeting Message' />}
+              />
+              <form.AppField
+                name='offlineMessage'
+                children={(field) => <field.TextareaField label='Offline Message' />}
+              />
               <form.AppField
                 name='showAgentName'
                 children={(field) => (
@@ -278,13 +277,15 @@ export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetForm
                   )
                 }
               </form.Subscribe>
-              <form.AppField
-                name='isActive'
-                children={(field) => (
-                  <field.SwitchField label='Active' description='Serve this widget on the site.' />
-                )}
-              />
-            </FieldGroup>
+              <FormRow>
+                <form.AppField
+                  name='isActive'
+                  children={(field) => (
+                    <field.SwitchField label='Active' description='Serve this widget on the site.' />
+                  )}
+                />
+              </FormRow>
+            </FormGrid>
           </form>
         </div>
 
