@@ -1,3 +1,5 @@
+import { Centrifuge, Subscription, SubscriptionState } from 'centrifuge';
+
 /**
  * WebSocket Client Service for Chat Widget
  * Handles connection, random visitor identity, rooms, and real-time bidirectional messaging
@@ -62,16 +64,12 @@ export function getOrCreateVisitorIdentity(): { visitorName: string; conversatio
 }
 
 export class ChatWidgetSocketClient {
-  private ws: WebSocket | null = null;
-  private url: string = '';
+  private client: Centrifuge | null = null;
+  private sub: Subscription | null = null;
   private options: JoinRoomOptions | null = null;
   private callbacks: SocketClientCallbacks = {};
   private status: SocketStatus = 'disconnected';
-  private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number = 10;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private pingInterval: ReturnType<typeof setInterval> | null = null;
-  private manualClose: boolean = false;
+  private url: string = '';
 
   public visitorName: string = '';
   public conversationId: string = '';
@@ -85,7 +83,7 @@ export class ChatWidgetSocketClient {
   }
 
   get isConnected(): boolean {
-    return this.status === 'connected' && this.ws?.readyState === WebSocket.OPEN;
+    return this.status === 'connected' && this.sub?.state === SubscriptionState.Subscribed;
   }
 
   public setCallbacks(callbacks: SocketClientCallbacks) {
@@ -95,7 +93,6 @@ export class ChatWidgetSocketClient {
   public connect(url: string, options?: Partial<JoinRoomOptions>) {
     if (typeof window === 'undefined' || !url) return;
     this.url = url;
-    this.manualClose = false;
 
     if (options?.tenantId) this.tenantId = options.tenantId;
     if (options?.conversationId) this.conversationId = options.conversationId;
@@ -109,48 +106,48 @@ export class ChatWidgetSocketClient {
       ...options
     };
 
+    this.teardown();
     this.setStatus('connecting');
 
-    try {
-      if (this.ws) {
-        this.ws.onclose = null;
-        this.ws.onerror = null;
-        this.ws.onmessage = null;
-        this.ws.close();
-      }
+    const client = new Centrifuge(url, { minReconnectDelay: 1000, maxReconnectDelay: 15000 });
+    const sub = client.newSubscription(this.channel());
 
-      this.ws = new WebSocket(url);
-      this.ws.onopen = this.handleOpen;
-      this.ws.onmessage = this.handleMessage;
-      this.ws.onclose = this.handleClose;
-      this.ws.onerror = this.handleError;
-    } catch (err) {
-      console.warn('[ChatWidgetSocket] Connection error:', err);
+    client.on('connecting', () => this.setStatus('connecting'));
+    client.on('disconnected', () => this.setStatus('disconnected'));
+    client.on('error', (ctx) => {
+      console.warn('[ChatWidgetSocket] Connection error:', ctx.error);
       this.setStatus('error');
-      this.scheduleReconnect();
-    }
+    });
+
+    sub.on('subscribed', () => {
+      console.info('[ChatWidgetSocket] Connected to', this.url);
+      this.setStatus('connected');
+      this.publishPresence('online');
+    });
+    sub.on('publication', (ctx) => this.handlePublication(ctx.data));
+
+    this.client = client;
+    this.sub = sub;
+    sub.subscribe();
+    client.connect();
   }
 
   public disconnect() {
-    this.manualClose = true;
-    this.clearTimers();
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
-    this.setStatus('disconnected');
+    // Let the offline notice flush before the socket closes.
+    const flushed = this.publishPresence('offline') ?? Promise.resolve();
+    flushed.finally(() => {
+      this.teardown();
+      this.setStatus('disconnected');
+    });
   }
 
   public joinRoom(options: JoinRoomOptions) {
     this.options = options;
+    this.tenantId = options.tenantId;
+    this.conversationId = options.conversationId;
+    this.visitorName = options.senderName;
     if (this.isConnected) {
-      this.send({
-        type: 'join',
-        tenantId: options.tenantId,
-        conversationId: options.conversationId,
-        role: options.role,
-        senderName: options.senderName
-      });
+      this.publishPresence('online');
     }
   }
 
@@ -169,40 +166,51 @@ export class ChatWidgetSocketClient {
       timestamp
     };
 
-    this.send({
-      type: 'chat_message',
-      tenantId: this.tenantId,
-      conversationId: this.conversationId,
-      senderName: author,
-      message: payload
-    });
+    this.publish({ type: 'chat_message', senderName: author, message: payload });
 
     return payload;
   }
 
   public sendTyping(isTyping: boolean) {
-    this.send({
-      type: 'typing_status',
-      tenantId: this.tenantId,
-      conversationId: this.conversationId,
-      isTyping,
-      senderName: this.visitorName
-    });
+    this.publish({ type: 'typing_status', isTyping, senderName: this.visitorName });
   }
 
   public sendUpdateName(newName: string) {
     this.visitorName = newName;
-    this.send({
-      type: 'update_name',
-      tenantId: this.tenantId,
-      conversationId: this.conversationId,
-      senderName: newName
-    });
+    this.publish({ type: 'update_name', senderName: newName });
   }
 
-  private send(data: unknown) {
-    if (this.isConnected && this.ws) {
-      this.ws.send(JSON.stringify(data));
+  private channel(): string {
+    return `chat:${this.tenantId}`;
+  }
+
+  private publishPresence(status: 'online' | 'offline') {
+    return this.publish({ type: 'presence', status, senderName: this.visitorName });
+  }
+
+  /** Every visitor and agent of a tenant shares one channel; conversationId + role route it. */
+  private publish(data: Record<string, unknown>): Promise<unknown> | undefined {
+    if (!this.sub || this.sub.state !== SubscriptionState.Subscribed) return undefined;
+    return this.sub
+      .publish({
+        ...data,
+        tenantId: this.tenantId,
+        conversationId: this.conversationId,
+        role: 'visitor'
+      })
+      .catch((err) => console.warn('[ChatWidgetSocket] Publish failed:', err));
+  }
+
+  private teardown() {
+    if (this.sub) {
+      this.sub.removeAllListeners();
+      this.sub.unsubscribe();
+      this.sub = null;
+    }
+    if (this.client) {
+      this.client.removeAllListeners();
+      this.client.disconnect();
+      this.client = null;
     }
   }
 
@@ -213,100 +221,38 @@ export class ChatWidgetSocketClient {
     }
   }
 
-  private handleOpen = () => {
-    console.info('[ChatWidgetSocket] Connected to', this.url);
-    this.setStatus('connected');
-    this.reconnectAttempts = 0;
+  private handlePublication(data: any) {
+    // Centrifugo echoes our own publications back, and other visitors share the
+    // tenant channel: only agent traffic for this conversation is relevant.
+    if (!data || data.role !== 'agent' || data.conversationId !== this.conversationId) return;
 
-    if (this.options) {
-      this.joinRoom(this.options);
-    }
-
-    this.startPing();
-  };
-
-  private handleMessage = (event: MessageEvent) => {
-    try {
-      const data = JSON.parse(event.data);
-
-      switch (data.type) {
-        case 'chat_message':
-          if (data.message) {
-            this.callbacks.onMessage?.({
-              message: data.message,
-              conversationId: data.conversationId,
-              senderName: data.senderName
-            });
-          }
-          break;
-
-        case 'typing_status':
-          this.callbacks.onTyping?.({
-            isTyping: !!data.isTyping,
-            senderName: data.senderName || 'Support Agent',
-            conversationId: data.conversationId
+    switch (data.type) {
+      case 'chat_message':
+        if (data.message) {
+          this.callbacks.onMessage?.({
+            message: data.message,
+            conversationId: data.conversationId,
+            senderName: data.senderName
           });
-          break;
+        }
+        break;
 
-        case 'presence':
-          this.callbacks.onPresence?.({
-            status: data.status,
-            role: data.role,
-            senderName: data.senderName,
-            conversationId: data.conversationId
-          });
-          break;
+      case 'typing_status':
+        this.callbacks.onTyping?.({
+          isTyping: !!data.isTyping,
+          senderName: data.senderName || 'Support Agent',
+          conversationId: data.conversationId
+        });
+        break;
 
-        case 'pong':
-          break;
-      }
-    } catch (err) {
-      console.warn('[ChatWidgetSocket] Message parsing error:', err);
-    }
-  };
-
-  private handleClose = () => {
-    this.clearTimers();
-    if (!this.manualClose) {
-      this.setStatus('disconnected');
-      this.scheduleReconnect();
-    }
-  };
-
-  private handleError = () => {
-    this.setStatus('error');
-  };
-
-  private scheduleReconnect() {
-    if (this.manualClose || this.reconnectAttempts >= this.maxReconnectAttempts) {
-      return;
-    }
-
-    const delay = Math.min(1000 * Math.pow(1.5, this.reconnectAttempts), 15000);
-    this.reconnectAttempts++;
-
-    this.reconnectTimer = setTimeout(() => {
-      if (this.url) {
-        this.connect(this.url, this.options || undefined);
-      }
-    }, delay);
-  }
-
-  private startPing() {
-    this.clearTimers();
-    this.pingInterval = setInterval(() => {
-      this.send({ type: 'ping' });
-    }, 25000);
-  }
-
-  private clearTimers() {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
+      case 'presence':
+        this.callbacks.onPresence?.({
+          status: data.status,
+          role: data.role,
+          senderName: data.senderName,
+          conversationId: data.conversationId
+        });
+        break;
     }
   }
 }

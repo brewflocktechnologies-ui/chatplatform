@@ -45,7 +45,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
   socketStatus: 'disconnected',
   isSocketInitialized: false,
 
-  initSocket: (url = 'ws://localhost:8088', tenantId = 'demo-tenant') => {
+  initSocket: (url = 'ws://localhost:8000/connection/websocket', tenantId = 'demo-tenant') => {
     if (get().isSocketInitialized) return;
     set({ isSocketInitialized: true });
 

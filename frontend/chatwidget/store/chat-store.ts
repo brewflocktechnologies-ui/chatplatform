@@ -466,7 +466,7 @@ export const chatStore = {
     const wsUrl =
       url ||
       (window as any).CHAT_WIDGET_WS_URL ||
-      'ws://localhost:8088';
+      'ws://localhost:8000/connection/websocket';
 
     chatWidgetSocket.setCallbacks({
       onMessage: ({ message, senderName }) => {

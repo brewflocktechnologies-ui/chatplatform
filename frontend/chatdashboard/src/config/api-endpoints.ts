@@ -64,4 +64,4 @@ export const endpoints = {
 } as const;
 
 /** Browser-side: the live chat socket. */
-export const chatSocketUrl = () => process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8088';
+export const chatSocketUrl = () => process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8000/connection/websocket';

@@ -1,0 +1,19 @@
+{
+  "client": {
+    "insecure": true,
+    "allowed_origins": ["*"]
+  },
+  "channel": {
+    "namespaces": [
+      {
+        "name": "chat",
+        "allow_subscribe_for_client": true,
+        "allow_publish_for_client": true,
+        "allow_publish_for_subscriber": true
+      }
+    ]
+  },
+  "health": {
+    "enabled": true
+  }
+}
