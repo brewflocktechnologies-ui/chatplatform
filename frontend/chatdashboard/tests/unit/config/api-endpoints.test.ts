@@ -42,7 +42,7 @@ describe('endpoints', () => {
 
 describe('chatSocketUrl', () => {
   it('prefers NEXT_PUBLIC_CHAT_WS_URL', () => {
-    expect(chatSocketUrl()).toBe('ws://localhost:8088');
+    expect(chatSocketUrl()).toBe('ws://localhost:8000/connection/websocket');
     vi.stubEnv('NEXT_PUBLIC_CHAT_WS_URL', 'wss://chat.test');
     expect(chatSocketUrl()).toBe('wss://chat.test');
   });

@@ -129,7 +129,7 @@ afterEach(() => {
 describe('Messenger', () => {
   it('initialises the socket with default or env url', () => {
     render(<Messenger />);
-    expect(h.actions.initSocket).toHaveBeenCalledWith('ws://localhost:8088', 'demo-tenant');
+    expect(h.actions.initSocket).toHaveBeenCalledWith('ws://localhost:8000/connection/websocket', 'demo-tenant');
     cleanup();
     process.env.NEXT_PUBLIC_CHAT_WS_URL = 'ws://example';
     render(<Messenger />);

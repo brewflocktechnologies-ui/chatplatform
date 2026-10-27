@@ -76,7 +76,7 @@ describe('initSocket', () => {
     useChatStore.getState().initSocket();
     expect(useChatStore.getState().isSocketInitialized).toBe(true);
     expect(socketMock.setCallbacks).toHaveBeenCalledTimes(1);
-    expect(socketMock.connect).toHaveBeenCalledWith('ws://localhost:8088', {
+    expect(socketMock.connect).toHaveBeenCalledWith('ws://localhost:8000/connection/websocket', {
       tenantId: 'demo-tenant',
       conversationId: 'general',
       role: 'agent',

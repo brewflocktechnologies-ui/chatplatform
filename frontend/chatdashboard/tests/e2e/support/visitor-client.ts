@@ -1,10 +1,12 @@
+import { Centrifuge, SubscriptionState, type Subscription } from 'centrifuge';
+
 /**
- * Simulates a chat-widget visitor against the standalone WebSocket hub
- * (frontend/server/server.mjs). Speaks the exact wire protocol the dashboard's
- * ChatDashboardSocketClient and the hub implement: JSON frames of type
- * join / chat_message / typing_status / presence / ping.
+ * Simulates a chat-widget visitor against Centrifugo. Mirrors the widget's
+ * ChatWidgetSocketClient: every visitor and agent of a tenant share the
+ * channel `chat:<tenantId>`, and each publication carries tenantId,
+ * conversationId and role so the dashboard can route it.
  *
- * Uses Node's built-in global WebSocket (Node >= 22), so no extra dependency.
+ * Uses Node's built-in global WebSocket (Node >= 22) as the transport.
  */
 
 type Frame = Record<string, unknown> & { type: string };
@@ -18,7 +20,8 @@ export interface VisitorMessage {
 }
 
 export class VisitorClient {
-  private ws: WebSocket | null = null;
+  private client: Centrifuge | null = null;
+  private sub: Subscription | null = null;
   private received: Frame[] = [];
   private waiters: { predicate: (f: Frame) => boolean; resolve: (f: Frame) => void }[] = [];
 
@@ -34,47 +37,46 @@ export class VisitorClient {
       `e2e-conv-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
   }
 
+  /** Connect and wait until the tenant channel subscription is active. */
   async connect(url: string): Promise<void> {
+    const client = new Centrifuge(url, { websocket: WebSocket });
+    const sub = client.newSubscription(`chat:${this.tenantId}`);
+
+    sub.on('publication', (ctx) => {
+      const frame = ctx.data as Frame | null;
+      if (!frame || typeof frame.type !== 'string') return;
+      this.received.push(frame);
+      const matched = this.waiters.filter((w) => w.predicate(frame));
+      this.waiters = this.waiters.filter((w) => !matched.includes(w));
+      for (const waiter of matched) {
+        waiter.resolve(frame);
+      }
+    });
+
+    this.client = client;
+    this.sub = sub;
+
     await new Promise<void>((resolve, reject) => {
-      const ws = new WebSocket(url);
       const timer = setTimeout(
-        () => reject(new Error(`Visitor WS connect timeout: ${url}`)),
+        () => reject(new Error(`Visitor connect timeout: ${url}`)),
         10_000
       );
-      ws.addEventListener('open', () => {
+      sub.on('subscribed', () => {
         clearTimeout(timer);
         resolve();
       });
-      ws.addEventListener('error', () => {
+      sub.on('error', (ctx) => {
         clearTimeout(timer);
-        reject(new Error(`Visitor WS connect failed: ${url}`));
+        reject(new Error(`Visitor subscribe failed: ${ctx.error?.message}`));
       });
-      ws.addEventListener('message', (event) => {
-        try {
-          const frame = JSON.parse(String(event.data)) as Frame;
-          this.received.push(frame);
-          const matched = this.waiters.filter((w) => w.predicate(frame));
-          this.waiters = this.waiters.filter((w) => !matched.includes(w));
-          for (const waiter of matched) {
-            waiter.resolve(frame);
-          }
-        } catch {
-          // ignore non-JSON frames
-        }
-      });
-      this.ws = ws;
+      sub.subscribe();
+      client.connect();
     });
   }
 
-  /** Join the visitor's room; the hub broadcasts an online presence to agents. */
+  /** Announce the visitor online; the dashboard creates the conversation from this. */
   join(): void {
-    this.send({
-      type: 'join',
-      tenantId: this.tenantId,
-      conversationId: this.conversationId,
-      role: 'visitor',
-      senderName: this.name
-    });
+    this.publish({ type: 'presence', status: 'online', senderName: this.name });
   }
 
   sendChatMessage(text: string): VisitorMessage {
@@ -85,24 +87,12 @@ export class VisitorClient {
       text,
       timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
     };
-    this.send({
-      type: 'chat_message',
-      tenantId: this.tenantId,
-      conversationId: this.conversationId,
-      senderName: this.name,
-      message
-    });
+    this.publish({ type: 'chat_message', senderName: this.name, message });
     return message;
   }
 
   sendTyping(isTyping: boolean): void {
-    this.send({
-      type: 'typing_status',
-      tenantId: this.tenantId,
-      conversationId: this.conversationId,
-      isTyping,
-      senderName: this.name
-    });
+    this.publish({ type: 'typing_status', isTyping, senderName: this.name });
   }
 
   /** Resolve with the first frame (past or future) matching the predicate. */
@@ -129,15 +119,33 @@ export class VisitorClient {
     });
   }
 
-  private send(frame: Frame): void {
-    if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
-      throw new Error('Visitor socket is not open');
+  private publish(data: Record<string, unknown>): void {
+    if (!this.sub || this.sub.state !== SubscriptionState.Subscribed) {
+      throw new Error('Visitor subscription is not active');
     }
-    this.ws.send(JSON.stringify(frame));
+    this.sub
+      .publish({
+        ...data,
+        tenantId: this.tenantId,
+        conversationId: this.conversationId,
+        role: 'visitor'
+      })
+      .catch(() => {});
   }
 
   close(): void {
-    this.ws?.close();
-    this.ws = null;
+    if (this.sub) {
+      // Let the dashboard drop the visitor like the widget does on unload.
+      try {
+        this.publish({ type: 'presence', status: 'offline', senderName: this.name });
+      } catch {
+        // already closed
+      }
+    }
+    this.sub?.removeAllListeners();
+    this.client?.removeAllListeners();
+    this.client?.disconnect();
+    this.sub = null;
+    this.client = null;
   }
 }

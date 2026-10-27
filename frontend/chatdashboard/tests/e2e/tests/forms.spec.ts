@@ -179,11 +179,7 @@ test.describe('Advanced form patterns', () => {
     await page.keyboard.press('Escape');
   });
 
-  // KNOWN PRODUCT BUG: components/forms/fields/select-field.tsx renders
-  // <Select> without `items`, so the trigger shows the raw option value ("ca")
-  // instead of its label ("California"). test.fail() flips to a failure once fixed.
   test('select trigger displays the chosen option label', async ({ page }) => {
-    test.fail(true, 'SelectField trigger shows the raw value instead of the label');
     await page.getByRole('combobox', { name: /Country/ }).click();
     await page.getByRole('option', { name: 'United States' }).click();
     await expect(page.getByRole('combobox', { name: /Country/ })).toContainText('United States');

@@ -5,10 +5,10 @@ import { uniqueName } from '../support/db';
 
 /**
  * Live chat workflows — the core product journey, exercised end to end over
- * the real WebSocket hub (frontend/server/server.mjs, started by the
+ * a real Centrifugo server (localrun/centrifugo, started by the
  * Playwright webServer config):
  *
- *   visitor socket  ⇄  ws hub (:8088)  ⇄  agent dashboard (this browser)
+ *   visitor client  ⇄  Centrifugo (:8000)  ⇄  agent dashboard (this browser)
  *
  * Serial mode: every agent page subscribes to ALL demo-tenant traffic, so
  * concurrent chat tests would leak visitors into each other's conversation
@@ -18,7 +18,7 @@ import { uniqueName } from '../support/db';
 test.describe.configure({ mode: 'serial' });
 
 test.describe('Live chat', () => {
-  test('shows the empty state and connects to the hub', async ({ page }) => {
+  test('shows the empty state and connects to Centrifugo', async ({ page }) => {
     const chat = new ChatPage(page);
     await chat.goto();
 
@@ -66,7 +66,7 @@ test.describe('Live chat', () => {
     }
   });
 
-  test('the agent reply reaches the visitor over the hub', async ({ page, wsUrl }) => {
+  test('the agent reply reaches the visitor over Centrifugo', async ({ page, wsUrl }) => {
     const chat = new ChatPage(page);
     await chat.goto();
     await chat.waitForConnected();

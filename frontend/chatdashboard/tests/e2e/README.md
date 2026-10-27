@@ -1,8 +1,8 @@
 # End-to-end tests (Playwright)
 
 Production-grade E2E coverage for the dashboard's user workflows. Tests drive the
-real app: the Next.js dev server, the standalone WebSocket hub
-(`frontend/server/server.mjs`), and the MongoDB database from `.env.local`.
+real app: the Next.js dev server, Centrifugo
+(`localrun/centrifugo/config.json`), and the MongoDB database from `.env.local`.
 
 ## Layout
 
@@ -14,7 +14,7 @@ e2e/
 │   ├── env.ts               # .env.local loader for the Playwright process
 │   ├── db.ts                # MongoDB seeding/cleanup (mirrors the app's data shapes)
 │   ├── fixtures.ts          # test.extend: `db` seeder fixture, `wsUrl`
-│   ├── visitor-client.ts    # chat-widget visitor simulator (raw WebSocket protocol)
+│   ├── visitor-client.ts    # chat-widget visitor simulator (Centrifugo channel `chat:<tenant>`)
 │   └── pages/               # page objects: sign-in, shell, data tables, chat, billing, products
 └── tests/
     ├── auth.spec.ts             # login, validation, guard redirects, sign-out
@@ -24,7 +24,7 @@ e2e/
     ├── websites.spec.ts         # search, embed-code wizard, edit, delete
     ├── widget-modifier.spec.ts  # customer→website cascade + deep links
     ├── engage.spec.ts           # engage tabs: traffic table/filters, profile, campaigns/goals
-    ├── chat.spec.ts             # visitor⇄hub⇄agent realtime flows (serial)
+    ├── chat.spec.ts             # visitor⇄Centrifugo⇄agent realtime flows (serial)
     ├── ai-chat.spec.ts          # scripted streaming demo
     ├── profile-notifications.spec.ts  # profile form + notification center
     ├── billing.spec.ts          # plans list/filter/sort, new-plan validation, failed-create path
@@ -39,14 +39,15 @@ e2e/
 ## Running
 
 ```bash
-npm run e2e          # headless, starts dev server + WS hub automatically
+npm run e2e          # headless, starts dev server + Centrifugo automatically
 npm run e2e:ui       # Playwright UI mode
 npm run e2e:headed   # headed browser
 npm run e2e:report   # open the last HTML report
 ```
 
 Playwright's `webServer` config boots `npm run dev` (port 3000) and
-`node ../server/server.mjs` (port 8088) if they aren't already running, and
+`centrifugo --config=../../localrun/centrifugo/config.json` (port 8000;
+set `CENTRIFUGO_BIN` if the binary is not on PATH) if they aren't already running, and
 reuses them if they are.
 
 ## Environment
@@ -55,7 +56,7 @@ reuses them if they are.
   (default `https://billing-service-iota.vercel.app`) and skips if unreachable.
 - `MONGODB_URI` (from `.env.local`) — required for the customers, websites and
   widget-modifier specs. Without it those specs **skip** instead of failing.
-- `NEXT_PUBLIC_CHAT_WS_URL` — optional; defaults to `ws://localhost:8088`.
+- `NEXT_PUBLIC_CHAT_WS_URL` — optional; defaults to `ws://localhost:8000/connection/websocket`.
 - `E2E_BASE_URL` — optional override of `http://localhost:3000`.
 
 ## Data policy

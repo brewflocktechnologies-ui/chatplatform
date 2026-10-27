@@ -51,12 +51,14 @@ test.describe('Customers', () => {
     await expect(page.getByRole('button', { name: 'Go to previous page' })).toBeDisabled();
   });
 
-  test('the table is read-only: no add or row actions', async ({ page }) => {
+  test('the table offers an add button and per-row actions', async ({ page }) => {
     await page.goto('/dashboard/customers');
     await expect(page.getByRole('columnheader', { name: 'Email' })).toBeVisible({
       timeout: 30_000
     });
-    await expect(page.getByRole('button', { name: 'Add Customer' })).toHaveCount(0);
-    await expect(page.getByRole('button', { name: 'Open menu' })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'Add Customer' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open menu' }).first()).toBeVisible({
+      timeout: 30_000
+    });
   });
 });

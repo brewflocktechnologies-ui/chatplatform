@@ -1,4 +1,69 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+type Handler = (ctx?: any) => void;
+
+class Emitter {
+  handlers: Record<string, Handler[]> = {};
+  on(event: string, fn: Handler) {
+    (this.handlers[event] ||= []).push(fn);
+    return this;
+  }
+  removeAllListeners = vi.fn(() => {
+    this.handlers = {};
+  });
+  emit(event: string, ctx?: any) {
+    (this.handlers[event] || []).forEach((fn) => fn(ctx));
+  }
+}
+
+class FakeSubscription extends Emitter {
+  state = 'unsubscribed';
+  subscribe = vi.fn();
+  unsubscribe = vi.fn();
+  publish = vi.fn((_data: unknown) => Promise.resolve({}));
+  constructor(public channel: string) {
+    super();
+  }
+  subscribed() {
+    this.state = 'subscribed';
+    this.emit('subscribed');
+  }
+  receive(data: unknown) {
+    this.emit('publication', { data });
+  }
+}
+
+class FakeCentrifuge extends Emitter {
+  static instances: FakeCentrifuge[] = [];
+  sub!: FakeSubscription;
+  connect = vi.fn();
+  disconnect = vi.fn();
+  constructor(
+    public url: string,
+    public opts: unknown
+  ) {
+    super();
+    FakeCentrifuge.instances.push(this);
+  }
+  newSubscription(channel: string) {
+    this.sub = new FakeSubscription(channel);
+    return this.sub;
+  }
+}
+
+vi.mock('centrifuge', () => ({
+  Centrifuge: class {
+    constructor(url: string, opts: unknown) {
+      return new FakeCentrifuge(url, opts);
+    }
+  },
+  SubscriptionState: {
+    Unsubscribed: 'unsubscribed',
+    Subscribing: 'subscribing',
+    Subscribed: 'subscribed'
+  }
+}));
+
 import {
   ChatDashboardSocketClient,
   chatDashboardSocket,
@@ -7,50 +72,6 @@ import {
 } from '@/features/chat/services/chat-socket-client';
 import type { Message } from '@/features/chat/utils/types';
 
-class FakeWebSocket {
-  static CONNECTING = 0;
-  static OPEN = 1;
-  static CLOSING = 2;
-  static CLOSED = 3;
-  static instances: FakeWebSocket[] = [];
-
-  readyState = FakeWebSocket.CONNECTING;
-  sent: string[] = [];
-  onopen: (() => void) | null = null;
-  onmessage: ((e: { data: string }) => void) | null = null;
-  onclose: (() => void) | null = null;
-  onerror: (() => void) | null = null;
-  close = vi.fn(() => {
-    this.readyState = FakeWebSocket.CLOSED;
-  });
-
-  constructor(public url: string) {
-    FakeWebSocket.instances.push(this);
-  }
-
-  send(data: string) {
-    this.sent.push(data);
-  }
-
-  open() {
-    this.readyState = FakeWebSocket.OPEN;
-    this.onopen?.();
-  }
-
-  receive(payload: unknown) {
-    this.onmessage?.({ data: typeof payload === 'string' ? payload : JSON.stringify(payload) });
-  }
-
-  drop() {
-    this.readyState = FakeWebSocket.CLOSED;
-    this.onclose?.();
-  }
-
-  get messages() {
-    return this.sent.map((s) => JSON.parse(s));
-  }
-}
-
 const options: JoinRoomOptions = {
   tenantId: 't1',
   conversationId: 'c1',
@@ -58,167 +79,165 @@ const options: JoinRoomOptions = {
   senderName: 'Sam'
 };
 const message = { id: 'm1', text: 'hi' } as unknown as Message;
-const URL = 'ws://chat.test';
+const URL = 'ws://chat.test/connection/websocket';
 
-const latest = () => FakeWebSocket.instances.at(-1)!;
+const latest = () => FakeCentrifuge.instances.at(-1)!;
+
+function connected(callbacks = {}) {
+  const client = new ChatDashboardSocketClient(callbacks);
+  client.connect(URL, options);
+  latest().sub.subscribed();
+  return client;
+}
 
 beforeEach(() => {
-  FakeWebSocket.instances = [];
-  vi.useFakeTimers();
-  vi.stubGlobal('WebSocket', FakeWebSocket);
+  FakeCentrifuge.instances = [];
   vi.spyOn(console, 'log').mockImplementation(() => {});
   vi.spyOn(console, 'warn').mockImplementation(() => {});
 });
 
 afterEach(() => {
-  vi.useRealTimers();
-  vi.unstubAllGlobals();
   vi.restoreAllMocks();
 });
 
 describe('connect', () => {
-  it('opens a socket, reports status, and joins the room on open', () => {
+  it('connects, subscribes to the tenant channel, and reports status', () => {
     const statuses: SocketStatus[] = [];
     const client = new ChatDashboardSocketClient({ onStatusChange: (s) => statuses.push(s) });
 
     client.connect(URL, options);
-    expect(latest().url).toBe(URL);
+    const c = latest();
+    expect(c.url).toBe(URL);
+    expect(c.sub.channel).toBe('chat:t1');
+    expect(c.sub.subscribe).toHaveBeenCalled();
+    expect(c.connect).toHaveBeenCalled();
     expect(statuses).toEqual(['connecting']);
     expect(client.isConnected).toBe(false);
 
-    latest().open();
-
+    c.sub.subscribed();
     expect(statuses).toEqual(['connecting', 'connected']);
     expect(client.isConnected).toBe(true);
-    expect(latest().messages).toEqual([{ type: 'join', ...options }]);
   });
 
   it('does nothing without a url', () => {
     const client = new ChatDashboardSocketClient();
     client.connect('', options);
-    expect(FakeWebSocket.instances).toHaveLength(0);
+    expect(FakeCentrifuge.instances).toHaveLength(0);
   });
 
-  it('reports an error and schedules a reconnect when the constructor throws', () => {
-    const statuses: SocketStatus[] = [];
-    const client = new ChatDashboardSocketClient({ onStatusChange: (s) => statuses.push(s) });
-    vi.stubGlobal(
-      'WebSocket',
-      class {
-        constructor() {
-          throw new Error('blocked');
-        }
-      }
-    );
-
-    client.connect(URL, options);
-    expect(statuses).toEqual(['connecting', 'error']);
-
-    vi.stubGlobal('WebSocket', FakeWebSocket);
-    vi.advanceTimersByTime(1000);
-    expect(FakeWebSocket.instances).toHaveLength(1);
-  });
-
-  it('marks the status as error when the socket errors', () => {
+  it('tracks connecting and disconnected transport events', () => {
     const statuses: SocketStatus[] = [];
     const client = new ChatDashboardSocketClient({ onStatusChange: (s) => statuses.push(s) });
     client.connect(URL, options);
-    latest().onerror?.();
+    latest().sub.subscribed();
+
+    latest().emit('disconnected');
+    expect(statuses.at(-1)).toBe('disconnected');
+    latest().emit('connecting');
+    expect(statuses.at(-1)).toBe('connecting');
+  });
+
+  it('marks the status as error when the client errors', () => {
+    const statuses: SocketStatus[] = [];
+    const client = new ChatDashboardSocketClient({ onStatusChange: (s) => statuses.push(s) });
+    client.connect(URL, options);
+    latest().emit('error', { error: new Error('boom') });
     expect(statuses.at(-1)).toBe('error');
+  });
+
+  it('tears down the previous connection when connecting again', () => {
+    const client = new ChatDashboardSocketClient();
+    client.connect(URL, options);
+    const first = latest();
+    client.connect(URL, options);
+    expect(first.disconnect).toHaveBeenCalled();
+    expect(first.sub.unsubscribe).toHaveBeenCalled();
+    expect(FakeCentrifuge.instances).toHaveLength(2);
   });
 });
 
 describe('sending', () => {
-  function connected() {
-    const client = new ChatDashboardSocketClient();
-    client.connect(URL, options);
-    latest().open();
-    latest().sent.length = 0;
-    return client;
-  }
-
-  it('sends chat messages with the joined tenant and sender', () => {
+  it('publishes chat messages with the joined tenant and sender', () => {
     const client = connected();
     client.sendMessage(message, 'c9');
-    expect(latest().messages).toEqual([
-      {
-        type: 'chat_message',
-        tenantId: 't1',
-        conversationId: 'c9',
-        senderName: 'Sam',
-        message
-      }
-    ]);
+    expect(latest().sub.publish).toHaveBeenCalledWith({
+      type: 'chat_message',
+      tenantId: 't1',
+      role: 'agent',
+      conversationId: 'c9',
+      senderName: 'Sam',
+      message
+    });
   });
 
   it('defaults to the joined conversation', () => {
     const client = connected();
     client.sendMessage(message);
-    expect(latest().messages[0].conversationId).toBe('c1');
+    expect(latest().sub.publish.mock.calls[0][0]).toMatchObject({ conversationId: 'c1' });
   });
 
-  it('sends typing status', () => {
+  it('publishes typing status', () => {
     const client = connected();
     client.sendTyping(true);
-    expect(latest().messages).toEqual([
-      {
-        type: 'typing_status',
-        tenantId: 't1',
-        conversationId: 'c1',
-        isTyping: true,
-        senderName: 'Sam'
-      }
-    ]);
+    expect(latest().sub.publish).toHaveBeenCalledWith({
+      type: 'typing_status',
+      tenantId: 't1',
+      role: 'agent',
+      conversationId: 'c1',
+      isTyping: true,
+      senderName: 'Sam'
+    });
   });
 
-  it('falls back to demo defaults before any room is joined', () => {
+  it('does nothing before connecting', () => {
     const client = new ChatDashboardSocketClient();
-    client.sendMessage(message);
-    client.sendTyping(false);
-    // Nothing is connected, so nothing is sent (and nothing throws).
-    expect(FakeWebSocket.instances).toHaveLength(0);
+    expect(() => {
+      client.sendMessage(message);
+      client.sendTyping(false);
+    }).not.toThrow();
+    expect(FakeCentrifuge.instances).toHaveLength(0);
   });
 
   it('uses demo defaults when connected without options', () => {
-    const client = new ChatDashboardSocketClient();
-    client.connect(URL, options);
-    latest().open();
+    const client = connected();
     (client as unknown as { options: null }).options = null;
-    latest().sent.length = 0;
 
     client.sendMessage(message);
     client.sendTyping(true);
 
-    expect(latest().messages[0]).toMatchObject({
-      tenantId: 'demo-tenant',
-      conversationId: 'general',
-      senderName: 'Support Agent'
-    });
-    expect(latest().messages[1]).toMatchObject({
-      tenantId: 'demo-tenant',
-      conversationId: 'general',
-      senderName: 'Support Agent'
-    });
+    const calls = latest().sub.publish.mock.calls;
+    expect(calls).toHaveLength(2);
+    for (const [payload] of calls) {
+      expect(payload).toMatchObject({
+        tenantId: 'demo-tenant',
+        conversationId: 'general',
+        senderName: 'Support Agent'
+      });
+    }
   });
 
-  it('drops messages while disconnected', () => {
+  it('drops messages until the subscription is active', () => {
     const client = new ChatDashboardSocketClient();
     client.connect(URL, options);
-    // still CONNECTING
     client.sendMessage(message);
-    expect(latest().sent).toEqual([]);
+    expect(latest().sub.publish).not.toHaveBeenCalled();
   });
 
-  it('joinRoom re-joins when connected and only records options otherwise', () => {
-    const client = new ChatDashboardSocketClient();
-    client.joinRoom(options);
-    expect(FakeWebSocket.instances).toHaveLength(0);
+  it('logs a warning when publishing fails', async () => {
+    const client = connected();
+    latest().sub.publish.mockReturnValueOnce(Promise.reject(new Error('nope')));
+    client.sendMessage(message);
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(console.warn).toHaveBeenCalled();
+  });
 
-    client.connect(URL, options);
-    latest().open();
-    latest().sent.length = 0;
+  it('joinRoom only records the options used for later publishes', () => {
+    const client = connected();
     client.joinRoom({ ...options, conversationId: 'c2' });
-    expect(latest().messages).toEqual([{ type: 'join', ...options, conversationId: 'c2' }]);
+    expect(latest().sub.publish).not.toHaveBeenCalled();
+    client.sendMessage(message);
+    expect(latest().sub.publish.mock.calls[0][0]).toMatchObject({ conversationId: 'c2' });
   });
 });
 
@@ -230,15 +249,18 @@ describe('receiving', () => {
       onTyping: vi.fn(),
       onPresence: vi.fn()
     };
-    const client = new ChatDashboardSocketClient(cb);
-    client.connect(URL, options);
-    latest().open();
+    const client = connected(cb);
     return { cb, client };
   }
 
   it('dispatches chat messages', () => {
     const { cb } = setup();
-    latest().receive({ type: 'chat_message', message, conversationId: 'c1', senderName: 'Vic' });
+    latest().sub.receive({
+      type: 'chat_message',
+      message,
+      conversationId: 'c1',
+      senderName: 'Vic'
+    });
     expect(cb.onMessage).toHaveBeenCalledWith({
       message,
       conversationId: 'c1',
@@ -246,23 +268,31 @@ describe('receiving', () => {
     });
   });
 
+  it('ignores agent traffic including its own echo', () => {
+    const { cb } = setup();
+    latest().sub.receive({ type: 'chat_message', role: 'agent', message, conversationId: 'c1' });
+    latest().sub.receive({ type: 'typing_status', role: 'agent', isTyping: true });
+    expect(cb.onMessage).not.toHaveBeenCalled();
+    expect(cb.onTyping).not.toHaveBeenCalled();
+  });
+
   it('ignores chat messages without a body', () => {
     const { cb } = setup();
-    latest().receive({ type: 'chat_message', conversationId: 'c1' });
+    latest().sub.receive({ type: 'chat_message', conversationId: 'c1' });
     expect(cb.onMessage).not.toHaveBeenCalled();
   });
 
   it('dispatches name updates only when complete', () => {
     const { cb } = setup();
-    latest().receive({ type: 'update_name', conversationId: 'c1', senderName: 'Vic' });
-    latest().receive({ type: 'update_name', conversationId: 'c1' });
+    latest().sub.receive({ type: 'update_name', conversationId: 'c1', senderName: 'Vic' });
+    latest().sub.receive({ type: 'update_name', conversationId: 'c1' });
     expect(cb.onUpdateName).toHaveBeenCalledTimes(1);
     expect(cb.onUpdateName).toHaveBeenCalledWith({ conversationId: 'c1', senderName: 'Vic' });
   });
 
   it('dispatches typing status with a Visitor fallback', () => {
     const { cb } = setup();
-    latest().receive({ type: 'typing_status', isTyping: 1, conversationId: 'c1' });
+    latest().sub.receive({ type: 'typing_status', isTyping: 1, conversationId: 'c1' });
     expect(cb.onTyping).toHaveBeenCalledWith({
       isTyping: true,
       senderName: 'Visitor',
@@ -272,7 +302,7 @@ describe('receiving', () => {
 
   it('dispatches presence', () => {
     const { cb } = setup();
-    latest().receive({
+    latest().sub.receive({
       type: 'presence',
       status: 'online',
       role: 'visitor',
@@ -287,18 +317,12 @@ describe('receiving', () => {
     });
   });
 
-  it('ignores pong and unknown events', () => {
+  it('ignores empty payloads and unknown events', () => {
     const { cb } = setup();
-    latest().receive({ type: 'pong' });
-    latest().receive({ type: 'mystery' });
+    latest().sub.receive(null);
+    latest().sub.receive({ type: 'mystery' });
     expect(cb.onMessage).not.toHaveBeenCalled();
     expect(cb.onTyping).not.toHaveBeenCalled();
-  });
-
-  it('survives malformed frames', () => {
-    const { cb } = setup();
-    expect(() => latest().receive('{not json')).not.toThrow();
-    expect(cb.onMessage).not.toHaveBeenCalled();
   });
 
   it('setCallbacks merges with existing callbacks', () => {
@@ -306,8 +330,8 @@ describe('receiving', () => {
     const onTyping = vi.fn();
     client.setCallbacks({ onTyping });
 
-    latest().receive({ type: 'typing_status', isTyping: true });
-    latest().receive({ type: 'chat_message', message });
+    latest().sub.receive({ type: 'typing_status', isTyping: true });
+    latest().sub.receive({ type: 'chat_message', message });
 
     expect(onTyping).toHaveBeenCalled();
     expect(cb.onTyping).not.toHaveBeenCalled();
@@ -315,112 +339,20 @@ describe('receiving', () => {
   });
 });
 
-describe('keep-alive', () => {
-  it('pings every 25 seconds once connected', () => {
-    const client = new ChatDashboardSocketClient();
-    client.connect(URL, options);
-    latest().open();
-    latest().sent.length = 0;
-
-    vi.advanceTimersByTime(25_000);
-    expect(latest().messages).toEqual([{ type: 'ping' }]);
-    vi.advanceTimersByTime(25_000);
-    expect(latest().messages).toHaveLength(2);
-  });
-});
-
-describe('reconnecting', () => {
-  it('reconnects with backoff after an unexpected close', () => {
+describe('disconnect', () => {
+  it('tears down the client and reports disconnected', () => {
     const statuses: SocketStatus[] = [];
-    const client = new ChatDashboardSocketClient({ onStatusChange: (s) => statuses.push(s) });
-    client.connect(URL, options);
-    latest().open();
-
-    latest().drop();
-    expect(statuses.at(-1)).toBe('disconnected');
-    expect(FakeWebSocket.instances).toHaveLength(1);
-
-    vi.advanceTimersByTime(999);
-    expect(FakeWebSocket.instances).toHaveLength(1);
-    vi.advanceTimersByTime(1);
-    expect(FakeWebSocket.instances).toHaveLength(2);
-
-    // second failure waits 1.5x as long
-    latest().drop();
-    vi.advanceTimersByTime(1499);
-    expect(FakeWebSocket.instances).toHaveLength(2);
-    vi.advanceTimersByTime(1);
-    expect(FakeWebSocket.instances).toHaveLength(3);
-  });
-
-  it('caps the delay at 15 seconds', () => {
-    const client = new ChatDashboardSocketClient();
-    client.connect(URL, options);
-    (client as unknown as { reconnectAttempts: number }).reconnectAttempts = 9;
-
-    latest().drop();
-    vi.advanceTimersByTime(14_999);
-    expect(FakeWebSocket.instances).toHaveLength(1);
-    vi.advanceTimersByTime(1);
-    expect(FakeWebSocket.instances).toHaveLength(2);
-  });
-
-  it('resets the backoff after a successful open', () => {
-    const client = new ChatDashboardSocketClient();
-    client.connect(URL, options);
-    latest().drop();
-    vi.advanceTimersByTime(1000);
-    latest().open();
-    latest().drop();
-
-    vi.advanceTimersByTime(1000);
-    expect(FakeWebSocket.instances).toHaveLength(3);
-  });
-
-  it('gives up after the maximum number of attempts', () => {
-    const client = new ChatDashboardSocketClient();
-    client.connect(URL, options);
-
-    for (let i = 0; i < 10; i++) {
-      latest().drop();
-      vi.advanceTimersByTime(15_000);
-    }
-    const count = FakeWebSocket.instances.length;
-    expect(count).toBe(11);
-
-    latest().drop();
-    vi.advanceTimersByTime(60_000);
-    expect(FakeWebSocket.instances).toHaveLength(count);
-  });
-
-  it('does not reconnect after a manual disconnect', () => {
-    const statuses: SocketStatus[] = [];
-    const client = new ChatDashboardSocketClient({ onStatusChange: (s) => statuses.push(s) });
-    client.connect(URL, options);
-    const socket = latest();
-    socket.open();
+    const client = connected({ onStatusChange: (s: SocketStatus) => statuses.push(s) });
+    const c = latest();
 
     client.disconnect();
-    expect(socket.close).toHaveBeenCalled();
+    expect(c.sub.unsubscribe).toHaveBeenCalled();
+    expect(c.disconnect).toHaveBeenCalled();
     expect(statuses.at(-1)).toBe('disconnected');
     expect(client.isConnected).toBe(false);
-
-    socket.onclose?.();
-    vi.advanceTimersByTime(60_000);
-    expect(FakeWebSocket.instances).toHaveLength(1);
   });
 
-  it('cancels a pending reconnect on disconnect', () => {
-    const client = new ChatDashboardSocketClient();
-    client.connect(URL, options);
-    latest().drop();
-
-    client.disconnect();
-    vi.advanceTimersByTime(60_000);
-    expect(FakeWebSocket.instances).toHaveLength(1);
-  });
-
-  it('disconnect is safe before connecting', () => {
+  it('is safe before connecting', () => {
     expect(() => new ChatDashboardSocketClient().disconnect()).not.toThrow();
   });
 });

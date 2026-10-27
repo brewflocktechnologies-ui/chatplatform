@@ -7,7 +7,7 @@ import { TestDb, hasDb } from './db';
  * - `db`: per-test MongoDB seeder that mirrors the app's server-action data
  *   shapes and self-cleans in teardown. Tests that need it call
  *   `skipWithoutDb()` first so runs without MONGODB_URI degrade gracefully.
- * - `wsUrl`: the chat hub URL the dashboard itself connects to.
+ * - `wsUrl`: the Centrifugo URL the dashboard itself connects to.
  */
 
 interface Fixtures {
@@ -25,7 +25,7 @@ export const test = base.extend<Fixtures>({
     await db.close().catch(() => {});
   },
   wsUrl: async ({}, use) => {
-    await use(process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8088');
+    await use(process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8000/connection/websocket');
   }
 });
 
