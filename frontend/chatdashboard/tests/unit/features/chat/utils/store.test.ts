@@ -447,6 +447,13 @@ describe('addIncomingMessage', () => {
     expect(state.selectedConversationId).toBe(convo.id);
   });
 
+  it('falls back to "Visitor" when neither a sender name nor an author is given', () => {
+    useChatStore.getState().addIncomingMessage('', makeMsg({ author: '' }));
+    const convo = useChatStore.getState().conversations[0];
+    expect(convo.name).toBe('Visitor');
+    expect(convo.initials).toBe('V');
+  });
+
   it('reuses the given conversation id and starts read when that id is already selected', () => {
     useChatStore.getState().selectConversation('ghost');
     useChatStore.getState().addIncomingMessage('ghost', makeMsg(), 'New Person');

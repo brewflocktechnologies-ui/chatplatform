@@ -23,14 +23,17 @@ export class VisitorClient {
   private client: Centrifuge | null = null;
   private sub: Subscription | null = null;
   private received: Frame[] = [];
-  private waiters: { predicate: (f: Frame) => boolean; resolve: (f: Frame) => void }[] = [];
+  private waiters: {
+    predicate: (f: Frame) => boolean;
+    resolve: (f: Frame) => void;
+  }[] = [];
 
   readonly conversationId: string;
 
   constructor(
     readonly name: string,
     readonly tenantId = 'demo-tenant',
-    conversationId?: string
+    conversationId?: string,
   ) {
     this.conversationId =
       conversationId ??
@@ -59,7 +62,7 @@ export class VisitorClient {
     await new Promise<void>((resolve, reject) => {
       const timer = setTimeout(
         () => reject(new Error(`Visitor connect timeout: ${url}`)),
-        10_000
+        10_000,
       );
       sub.on('subscribed', () => {
         clearTimeout(timer);
@@ -79,13 +82,30 @@ export class VisitorClient {
     this.publish({ type: 'presence', status: 'online', senderName: this.name });
   }
 
+  /** Announce the visitor offline without dropping the socket. */
+  leave(): void {
+    this.publish({
+      type: 'presence',
+      status: 'offline',
+      senderName: this.name,
+    });
+  }
+
+  /** Tell the dashboard the visitor now goes by another name (widget "update_name"). */
+  rename(newName: string): void {
+    this.publish({ type: 'update_name', senderName: newName });
+  }
+
   sendChatMessage(text: string): VisitorMessage {
     const message: VisitorMessage = {
       id: `e2e-msg-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`,
       sender: 'user',
       author: this.name,
       text,
-      timestamp: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
     };
     this.publish({ type: 'chat_message', senderName: this.name, message });
     return message;
@@ -96,7 +116,10 @@ export class VisitorClient {
   }
 
   /** Resolve with the first frame (past or future) matching the predicate. */
-  waitForFrame(predicate: (f: Frame) => boolean, timeoutMs = 15_000): Promise<Frame> {
+  waitForFrame(
+    predicate: (f: Frame) => boolean,
+    timeoutMs = 15_000,
+  ): Promise<Frame> {
     const existing = this.received.find(predicate);
     if (existing) return Promise.resolve(existing);
     return new Promise<Frame>((resolve, reject) => {
@@ -105,14 +128,14 @@ export class VisitorClient {
         resolve: (f: Frame) => {
           clearTimeout(timer);
           resolve(f);
-        }
+        },
       };
       const timer = setTimeout(() => {
         this.waiters = this.waiters.filter((w) => w !== waiter);
         reject(
           new Error(
-            `Timed out waiting for frame. Received so far: ${JSON.stringify(this.received.map((f) => f.type))}`
-          )
+            `Timed out waiting for frame. Received so far: ${JSON.stringify(this.received.map((f) => f.type))}`,
+          ),
         );
       }, timeoutMs);
       this.waiters.push(waiter);
@@ -128,7 +151,7 @@ export class VisitorClient {
         ...data,
         tenantId: this.tenantId,
         conversationId: this.conversationId,
-        role: 'visitor'
+        role: 'visitor',
       })
       .catch(() => {});
   }
@@ -137,7 +160,11 @@ export class VisitorClient {
     if (this.sub) {
       // Let the dashboard drop the visitor like the widget does on unload.
       try {
-        this.publish({ type: 'presence', status: 'offline', senderName: this.name });
+        this.publish({
+          type: 'presence',
+          status: 'offline',
+          senderName: this.name,
+        });
       } catch {
         // already closed
       }
