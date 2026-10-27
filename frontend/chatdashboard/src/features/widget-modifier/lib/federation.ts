@@ -75,7 +75,7 @@ function sortKeysDeep(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(sortKeysDeep);
   if (value && typeof value === 'object') {
     return Object.keys(value as Record<string, unknown>)
-      .toSorted()
+      .toSorted((a, b) => a.localeCompare(b))
       .reduce<Record<string, unknown>>((acc, key) => {
         acc[key] = sortKeysDeep((value as Record<string, unknown>)[key]);
         return acc;
