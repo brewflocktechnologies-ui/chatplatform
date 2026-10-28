@@ -22,15 +22,17 @@ function formatDate(value: string | null) {
 const CheckIcon = Icons.check;
 const CloseIcon = Icons.close;
 
+interface BooleanBadgeProps {
+  readonly value: boolean;
+  readonly trueLabel: string;
+  readonly falseLabel: string;
+}
+
 function BooleanBadge({
   value,
   trueLabel,
   falseLabel
-}: {
-  value: boolean;
-  trueLabel: string;
-  falseLabel: string;
-}) {
+}: Readonly<BooleanBadgeProps>) {
   return (
     <Badge variant={value ? 'default' : 'secondary'}>
       {value ? <CheckIcon className='mr-1 h-3 w-3' /> : <CloseIcon className='mr-1 h-3 w-3' />}
@@ -126,14 +128,16 @@ const columns: ColumnDef<PocWebsite>[] = [
   }
 ];
 
+interface PocWebsiteTableProps {
+  readonly websites: PocWebsite[];
+  readonly pageCount: number;
+}
+
 /** Paging and sorting live in the URL; the server page re-fetches when they change. */
 export function PocWebsiteTable({
   websites,
   pageCount
-}: {
-  websites: PocWebsite[];
-  pageCount: number;
-}) {
+}: Readonly<PocWebsiteTableProps>) {
   const { table } = useDataTable({
     data: websites,
     columns,
