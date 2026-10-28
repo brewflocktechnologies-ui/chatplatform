@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import type { ArchivedChat } from '../types';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -17,13 +17,23 @@ import { Input } from '@/components/ui/input';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 
+const ShareIcon = Icons.share;
+const MoreHorizontalIcon = Icons.moreHorizontal;
+const CodeIcon = Icons.code;
+const PageIcon = Icons.page;
+const ChevronUpIcon = Icons.chevronUp;
+const FormsIcon = Icons.forms;
+const ChevronDownIcon = Icons.chevronDown;
+const AddIcon = Icons.add;
+const CloseIcon = Icons.close;
+
 interface ArchivesTranscriptProps {
-  chat: ArchivedChat;
-  onNavigateChat?: (chatId: string) => void;
-  onAddTag: (chatId: string, tag: string) => void;
-  onRemoveTag: (chatId: string, tag: string) => void;
-  isDetailsOpen?: boolean;
-  onToggleDetails?: () => void;
+  readonly chat: ArchivedChat;
+  readonly onNavigateChat?: (chatId: string) => void;
+  readonly onAddTag: (chatId: string, tag: string) => void;
+  readonly onRemoveTag: (chatId: string, tag: string) => void;
+  readonly isDetailsOpen?: boolean;
+  readonly onToggleDetails?: () => void;
 }
 
 export function ArchivesTranscript({
@@ -33,11 +43,11 @@ export function ArchivesTranscript({
   onRemoveTag,
   isDetailsOpen,
   onToggleDetails
-}: ArchivesTranscriptProps) {
+}: Readonly<ArchivesTranscriptProps>) {
   const [newTag, setNewTag] = useState('');
   const [tagPopoverOpen, setTagPopoverOpen] = useState(false);
 
-  const handleAddTagSubmit = (e: FormEvent) => {
+  const handleAddTagSubmit = (e: SyntheticEvent) => {
     e.preventDefault();
     if (newTag.trim() && !chat.tags.includes(newTag.trim())) {
       onAddTag(chat.id, newTag.trim());
@@ -67,7 +77,7 @@ export function ArchivesTranscript({
                 />
               }
             >
-              <Icons.share className='h-4 w-4' />
+              <ShareIcon className='h-4 w-4' />
             </TooltipTrigger>
             <TooltipContent>Link or Merge Conversation</TooltipContent>
           </Tooltip>
@@ -82,16 +92,16 @@ export function ArchivesTranscript({
                 />
               }
             >
-              <Icons.moreHorizontal className='h-4 w-4' />
+              <MoreHorizontalIcon className='h-4 w-4' />
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
               <DropdownMenuItem
                 onClick={() => navigator.clipboard?.writeText(chat.chatInfo.chatId)}
               >
-                <Icons.code className='mr-2 h-4 w-4' /> Copy Chat ID
+                <CodeIcon className='mr-2 h-4 w-4' /> Copy Chat ID
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => window.print()}>
-                <Icons.page className='mr-2 h-4 w-4' /> Print Transcript
+                <PageIcon className='mr-2 h-4 w-4' /> Print Transcript
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -112,7 +122,7 @@ export function ArchivesTranscript({
               !chat.previousChatId && 'opacity-60 cursor-not-allowed text-muted-foreground'
             )}
           >
-            <Icons.chevronUp className='mr-1.5 h-3.5 w-3.5' />
+            <ChevronUpIcon className='mr-1.5 h-3.5 w-3.5' />
             Previous chat with this customer
           </Button>
         </div>
@@ -140,7 +150,7 @@ export function ArchivesTranscript({
                   <div className='w-full max-w-sm rounded-xl border border-border/80 bg-card p-4 shadow-2xs'>
                     <div className='flex items-center justify-between pb-2 mb-2 border-b border-border/40'>
                       <div className='flex items-center gap-1.5 text-xs font-semibold text-foreground/90'>
-                        <Icons.forms className='h-3.5 w-3.5 text-muted-foreground' />
+                        <FormsIcon className='h-3.5 w-3.5 text-muted-foreground' />
                         <span>Pre-chat form</span>
                       </div>
                       <span className='text-[10px] text-muted-foreground'>{message.timestamp}</span>
@@ -229,7 +239,7 @@ export function ArchivesTranscript({
               !chat.nextChatId && 'opacity-60 cursor-not-allowed text-muted-foreground'
             )}
           >
-            <Icons.chevronDown className='mr-1.5 h-3.5 w-3.5' />
+            <ChevronDownIcon className='mr-1.5 h-3.5 w-3.5' />
             Next chat with this customer
           </Button>
         </div>
@@ -247,7 +257,7 @@ export function ArchivesTranscript({
               />
             }
           >
-            <Icons.add className='mr-1 h-3.5 w-3.5' />
+            <AddIcon className='mr-1 h-3.5 w-3.5' />
             Add tag
           </PopoverTrigger>
           <PopoverContent align='start' className='w-56 p-2'>
@@ -288,11 +298,12 @@ export function ArchivesTranscript({
               >
                 <span>{tag}</span>
                 <button
+                  type='button'
                   onClick={() => onRemoveTag(chat.id, tag)}
                   className='text-muted-foreground hover:text-destructive'
                   title='Remove tag'
                 >
-                  <Icons.close className='h-3 w-3' />
+                  <CloseIcon className='h-3 w-3' />
                 </button>
               </Badge>
             ))}

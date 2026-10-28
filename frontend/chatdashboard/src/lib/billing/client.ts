@@ -29,6 +29,14 @@ export type SortParam<F extends string = string> = { field: F; dir: SortDirectio
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_PAGE_SIZE = 100;
 
+function trimTrailingSlashes(url: string) {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === '/') {
+    end--;
+  }
+  return url.slice(0, end);
+}
+
 /** Clamps client-supplied paging, since server actions take arbitrary input. */
 export function pageParams(page: number, size: number, defaultSize = 10) {
   return new URLSearchParams({
@@ -68,10 +76,11 @@ export async function billingRequest<T>(
   { origin, query, body, notFoundMessage }: RequestOptions = {}
 ): Promise<ApiResult<T>> {
   const qs = query?.size ? `?${query}` : '';
+  const baseOrigin = origin ? trimTrailingSlashes(origin) : origins.billing();
 
   let res: Response;
   try {
-    res = await fetch(`${origin?.replace(/\/+$/, '') ?? origins.billing()}${path}${qs}`, {
+    res = await fetch(`${baseOrigin}${path}${qs}`, {
       method,
       cache: 'no-store',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

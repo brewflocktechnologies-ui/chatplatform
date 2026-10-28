@@ -37,6 +37,14 @@ import { nextSort } from '../lib/plan-sort';
 import { PlanFormSheet } from './plan-form-sheet';
 import { PlanActiveSwitch, PlanDeleteModal, PlanRowActions } from './plan-row-actions';
 
+const ChevronsUpDownIcon = Icons.chevronsUpDown;
+const ChevronUpIcon = Icons.chevronUp;
+const ChevronDownIcon = Icons.chevronDown;
+const RefreshIcon = Icons.refresh;
+const InfoIcon = Icons.info;
+const ChevronLeftIcon = Icons.chevronLeft;
+const ChevronRightIcon = Icons.chevronRight;
+
 const FILTERS: { value: PlanStatusFilter; label: string }[] = [
   { value: 'all', label: 'All plans' },
   { value: 'active', label: 'Active only' }
@@ -52,6 +60,29 @@ function annualSavings(plan: Plan) {
   return pct > 0 ? pct : null;
 }
 
+function getSortIcon(active: boolean, dir?: 'asc' | 'desc') {
+  if (!active) {
+    return ChevronsUpDownIcon;
+  }
+  return dir === 'asc' ? ChevronUpIcon : ChevronDownIcon;
+}
+
+function getAriaSort(active: boolean, dir?: 'asc' | 'desc'): 'ascending' | 'descending' | undefined {
+  if (!active) {
+    return undefined;
+  }
+  return dir === 'asc' ? 'ascending' : 'descending';
+}
+
+interface SortableHeadProps {
+  readonly field: PlanSortField;
+  readonly label: string;
+  readonly sort: PlanSort;
+  readonly onSort: (field: PlanSortField) => void;
+  readonly align?: 'right';
+  readonly className?: string;
+}
+
 function SortableHead({
   field,
   label,
@@ -59,24 +90,14 @@ function SortableHead({
   onSort,
   align,
   className
-}: {
-  field: PlanSortField;
-  label: string;
-  sort: PlanSort;
-  onSort: (field: PlanSortField) => void;
-  align?: 'right';
-  className?: string;
-}) {
+}: Readonly<SortableHeadProps>) {
   const active = sort.field === field;
-  const Icon = !active
-    ? Icons.chevronsUpDown
-    : sort.dir === 'asc'
-      ? Icons.chevronUp
-      : Icons.chevronDown;
+  const Icon = getSortIcon(active, sort.dir);
+  const ariaSort = getAriaSort(active, sort.dir);
   return (
     <TableHead
       className={cn(align === 'right' && 'text-right', className)}
-      aria-sort={active ? (sort.dir === 'asc' ? 'ascending' : 'descending') : undefined}
+      aria-sort={ariaSort}
     >
       <button
         type='button'
@@ -93,15 +114,17 @@ function SortableHead({
   );
 }
 
+interface StatTileProps {
+  readonly label: string;
+  readonly value: string;
+  readonly icon: React.ComponentType<{ className?: string }>;
+}
+
 function StatTile({
   label,
   value,
   icon: Icon
-}: {
-  label: string;
-  value: string;
-  icon: React.ComponentType<{ className?: string }>;
-}) {
+}: Readonly<StatTileProps>) {
   return (
     <Card className='gap-2 py-4'>
       <CardHeader className='flex flex-row items-center justify-between gap-2 px-4'>
@@ -143,6 +166,76 @@ export function PlanAdmin() {
     setPage(0);
   };
 
+  const renderTableBody = () => {
+    if (isPending) {
+      return Array.from({ length: 5 }, (_, i) => (
+        <TableRow key={i}>
+          <TableCell colSpan={6}>
+            <Skeleton className='h-8 w-full' />
+          </TableCell>
+        </TableRow>
+      ));
+    }
+
+    if (plans.length === 0) {
+      return (
+        <TableRow>
+          <TableCell colSpan={6} className='text-muted-foreground h-24 text-center'>
+            No plans found.
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    return plans.map((plan) => {
+      const saving = annualSavings(plan);
+      return (
+        <TableRow key={plan.id}>
+          <TableCell className='overflow-hidden'>
+            <div className='flex flex-wrap items-center gap-2'>
+              <span className='truncate font-medium'>{plan.name}</span>
+              {plan.freePlan && <Badge variant='secondary'>Free</Badge>}
+              {plan.defaultPlan && <Badge variant='outline'>Default</Badge>}
+              {plan.custom && <Badge variant='outline'>Custom</Badge>}
+            </div>
+            <p className='text-muted-foreground truncate text-xs'>
+              {plan.description ?? `ID ${plan.id}`}
+            </p>
+          </TableCell>
+          <TableCell className='text-right tabular-nums'>
+            {plan.freePlan ? '—' : money(plan.amountMonthly)}
+          </TableCell>
+          <TableCell className='text-right tabular-nums'>
+            {plan.freePlan ? '—' : money(plan.amountAnnually)}
+          </TableCell>
+          <TableCell>
+            {saving ? (
+              <Badge variant='secondary'>Save {saving}%</Badge>
+            ) : (
+              <span className='text-muted-foreground'>—</span>
+            )}
+          </TableCell>
+          <TableCell>
+            <PlanActiveSwitch plan={plan} />
+          </TableCell>
+          <TableCell>
+            <PlanRowActions
+              plan={plan}
+              onEdit={(p) => {
+                setEdit(p);
+                setEditOpen(true);
+              }}
+              onDelete={(p) => {
+                setDeleteTarget(p);
+                setDeleteOpen(true);
+              }}
+            />
+          </TableCell>
+        </TableRow>
+      );
+    });
+  };
+
   return (
     <div className='space-y-4'>
       <div className='grid grid-cols-2 gap-4 lg:grid-cols-4'>
@@ -170,14 +263,14 @@ export function PlanAdmin() {
 
       <Card className='gap-0 py-0'>
         <div className='flex flex-wrap items-center justify-between gap-2 border-b p-3'>
-          <div
-            className='bg-muted inline-flex rounded-md p-1'
-            role='group'
+          <fieldset
+            className='bg-muted inline-flex rounded-md border-0 m-0 p-1'
             aria-label='Plan status filter'
           >
             {FILTERS.map((f) => (
               <Button
                 key={f.value}
+                type='button'
                 size='sm'
                 variant={status === f.value ? 'default' : 'ghost'}
                 aria-pressed={status === f.value}
@@ -189,19 +282,19 @@ export function PlanAdmin() {
                 {f.label}
               </Button>
             ))}
-          </div>
-          <Button size='sm' variant='ghost' onClick={() => refetch()} disabled={isFetching}>
-            <Icons.refresh className={cn('mr-2 h-4 w-4', isFetching && 'animate-spin')} />
+          </fieldset>
+          <Button type='button' size='sm' variant='ghost' onClick={() => refetch()} disabled={isFetching}>
+            <RefreshIcon className={cn('mr-2 h-4 w-4', isFetching && 'animate-spin')} />
             Refresh
           </Button>
         </div>
 
         {isError ? (
           <Alert variant='destructive' className='m-3 w-auto'>
-            <Icons.info className='h-4 w-4' />
+            <InfoIcon className='h-4 w-4' />
             <AlertDescription className='flex items-center justify-between gap-4'>
               Couldn&apos;t load plans.
-              <Button size='sm' variant='outline' onClick={() => refetch()}>
+              <Button type='button' size='sm' variant='outline' onClick={() => refetch()}>
                 Retry
               </Button>
             </AlertDescription>
@@ -239,69 +332,7 @@ export function PlanAdmin() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {isPending ? (
-                Array.from({ length: 5 }, (_, i) => (
-                  <TableRow key={i}>
-                    <TableCell colSpan={6}>
-                      <Skeleton className='h-8 w-full' />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : plans.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} className='text-muted-foreground h-24 text-center'>
-                    No plans found.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                plans.map((plan) => {
-                  const saving = annualSavings(plan);
-                  return (
-                    <TableRow key={plan.id}>
-                      <TableCell className='overflow-hidden'>
-                        <div className='flex flex-wrap items-center gap-2'>
-                          <span className='truncate font-medium'>{plan.name}</span>
-                          {plan.freePlan && <Badge variant='secondary'>Free</Badge>}
-                          {plan.defaultPlan && <Badge variant='outline'>Default</Badge>}
-                          {plan.custom && <Badge variant='outline'>Custom</Badge>}
-                        </div>
-                        <p className='text-muted-foreground truncate text-xs'>
-                          {plan.description ?? `ID ${plan.id}`}
-                        </p>
-                      </TableCell>
-                      <TableCell className='text-right tabular-nums'>
-                        {plan.freePlan ? '—' : money(plan.amountMonthly)}
-                      </TableCell>
-                      <TableCell className='text-right tabular-nums'>
-                        {plan.freePlan ? '—' : money(plan.amountAnnually)}
-                      </TableCell>
-                      <TableCell>
-                        {saving ? (
-                          <Badge variant='secondary'>Save {saving}%</Badge>
-                        ) : (
-                          <span className='text-muted-foreground'>—</span>
-                        )}
-                      </TableCell>
-                      <TableCell>
-                        <PlanActiveSwitch plan={plan} />
-                      </TableCell>
-                      <TableCell>
-                        <PlanRowActions
-                          plan={plan}
-                          onEdit={(p) => {
-                            setEdit(p);
-                            setEditOpen(true);
-                          }}
-                          onDelete={(p) => {
-                            setDeleteTarget(p);
-                            setDeleteOpen(true);
-                          }}
-                        />
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
+              {renderTableBody()}
             </TableBody>
           </Table>
         )}
@@ -339,22 +370,24 @@ export function PlanAdmin() {
             </div>
             <div className='flex gap-2'>
               <Button
+                type='button'
                 size='sm'
                 variant='outline'
                 disabled={page === 0}
                 onClick={() => setPage((p) => p - 1)}
                 aria-label='Previous page'
               >
-                <Icons.chevronLeft className='h-4 w-4' />
+                <ChevronLeftIcon className='h-4 w-4' />
               </Button>
               <Button
+                type='button'
                 size='sm'
                 variant='outline'
                 disabled={page + 1 >= totalPages}
                 onClick={() => setPage((p) => p + 1)}
                 aria-label='Next page'
               >
-                <Icons.chevronRight className='h-4 w-4' />
+                <ChevronRightIcon className='h-4 w-4' />
               </Button>
             </div>
           </div>

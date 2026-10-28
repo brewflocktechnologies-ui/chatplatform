@@ -95,9 +95,9 @@ export default function TrafficView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((user, idx) => (
+                  {filteredData.map((user) => (
                     <tr
-                      key={idx}
+                      key={`${user.name}-${user.group}`}
                       onClick={() => {
                         setSelectedCustomer(user);
                         setProfileExpanded(true);

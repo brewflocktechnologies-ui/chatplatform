@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { type SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 import { useChatStore } from '../utils/store';
 import type { Attachment, Message, DetailsTab } from '../utils/types';
@@ -13,6 +13,12 @@ import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn, randomId } from '@/lib/utils';
+
+const ChatIcon = Icons.chat;
+const ChevronLeftIcon = Icons.chevronLeft;
+const UserIcon = Icons.user;
+const PostIcon = Icons.post;
+const GalleryVerticalEndIcon = Icons.galleryVerticalEnd;
 
 export function Messenger() {
   const {
@@ -98,7 +104,7 @@ export function Messenger() {
   }, []);
 
   const handleSubmit = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
+    (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault();
       const active = getActiveConversation();
       if ((!draft.trim() && attachments.length === 0) || !active) return;
@@ -180,7 +186,7 @@ export function Messenger() {
           </div>
           <div className='flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center'>
             <div className='bg-primary/10 text-primary flex h-16 w-16 items-center justify-center rounded-2xl shadow-xs'>
-              <Icons.chat className='h-8 w-8' />
+              <ChatIcon className='h-8 w-8' />
             </div>
             <div className='max-w-md space-y-1.5'>
               <h3 className='text-foreground text-base font-bold sm:text-lg'>Live Chat Platform</h3>
@@ -224,6 +230,7 @@ export function Messenger() {
               <TooltipTrigger
                 render={
                   <Button
+                    type='button'
                     variant='ghost'
                     size='icon-sm'
                     onClick={() => setIsDetailsOpen(true)}
@@ -232,7 +239,7 @@ export function Messenger() {
                   />
                 }
               >
-                <Icons.chevronLeft className='h-4 w-4' />
+                <ChevronLeftIcon className='h-4 w-4' />
               </TooltipTrigger>
               <TooltipContent side='left'>Open Details Panel</TooltipContent>
             </Tooltip>
@@ -253,7 +260,7 @@ export function Messenger() {
                   />
                 }
               >
-                <Icons.user className='h-3.5 w-3.5' />
+                <UserIcon className='h-3.5 w-3.5' />
               </TooltipTrigger>
               <TooltipContent side='left'>Visitor Details</TooltipContent>
             </Tooltip>
@@ -272,7 +279,7 @@ export function Messenger() {
                   />
                 }
               >
-                <Icons.post className='h-3.5 w-3.5' />
+                <PostIcon className='h-3.5 w-3.5' />
               </TooltipTrigger>
               <TooltipContent side='left'>Notes & Canned Responses</TooltipContent>
             </Tooltip>
@@ -291,7 +298,7 @@ export function Messenger() {
                   />
                 }
               >
-                <Icons.galleryVerticalEnd className='h-3.5 w-3.5' />
+                <GalleryVerticalEndIcon className='h-3.5 w-3.5' />
               </TooltipTrigger>
               <TooltipContent side='left'>Apps & Integrations</TooltipContent>
             </Tooltip>

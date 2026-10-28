@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import type { Conversation, DetailsTab, ChatNote } from '../utils/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -12,6 +12,19 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
+const UserIcon = Icons.user;
+const PostIcon = Icons.post;
+const GalleryVerticalEndIcon = Icons.galleryVerticalEnd;
+const ChevronRightIcon = Icons.chevronRight;
+const ClockIcon = Icons.clock;
+const MapPinIcon = Icons.mapPin;
+const ExternalLinkIcon = Icons.externalLink;
+const InfoIcon = Icons.info;
+const AddIcon = Icons.add;
+const SendIcon = Icons.send;
+const PageIcon = Icons.page;
+const ShareIcon = Icons.share;
+
 function copyToClipboard(text: string, label: string) {
   if (typeof navigator !== 'undefined' && navigator.clipboard) {
     navigator.clipboard.writeText(text);
@@ -20,12 +33,12 @@ function copyToClipboard(text: string, label: string) {
 }
 
 interface ChatDetailsProps {
-  conversation: Conversation;
-  isOpen: boolean;
-  onToggle: () => void;
-  activeTab: DetailsTab;
-  onTabChange: (tab: DetailsTab) => void;
-  onInsertCanned?: (text: string) => void;
+  readonly conversation: Conversation;
+  readonly isOpen: boolean;
+  readonly onToggle: () => void;
+  readonly activeTab: DetailsTab;
+  readonly onTabChange: (tab: DetailsTab) => void;
+  readonly onInsertCanned?: (text: string) => void;
 }
 
 const DEFAULT_NOTES: Record<string, ChatNote[]> = {
@@ -69,7 +82,7 @@ export function ChatDetails({
   activeTab,
   onTabChange,
   onInsertCanned
-}: ChatDetailsProps) {
+}: Readonly<ChatDetailsProps>) {
   const [notes, setNotes] = useState<Record<string, ChatNote[]>>(DEFAULT_NOTES);
   const [newNoteText, setNewNoteText] = useState('');
   const [cannedSearch, setCannedSearch] = useState('');
@@ -95,7 +108,7 @@ export function ChatDetails({
   const startedUrl = conversation.visitorInfo?.startedUrl || 'https://chatplatform.dev/pricing';
   const chattingTime = conversation.visitorInfo?.chattingTime || '4m 12s';
 
-  const handleAddNote = (e: FormEvent) => {
+  const handleAddNote = (e: SyntheticEvent) => {
     e.preventDefault();
     if (!newNoteText.trim()) return;
 
@@ -150,7 +163,7 @@ export function ChatDetails({
                 />
               }
             >
-              <Icons.user className='h-4 w-4' />
+              <UserIcon className='h-4 w-4' />
             </TooltipTrigger>
             <TooltipContent>Visitor Details</TooltipContent>
           </Tooltip>
@@ -171,7 +184,7 @@ export function ChatDetails({
                 />
               }
             >
-              <Icons.post className='h-4 w-4' />
+              <PostIcon className='h-4 w-4' />
             </TooltipTrigger>
             <TooltipContent>Notes & Canned Responses</TooltipContent>
           </Tooltip>
@@ -192,7 +205,7 @@ export function ChatDetails({
                 />
               }
             >
-              <Icons.galleryVerticalEnd className='h-4 w-4' />
+              <GalleryVerticalEndIcon className='h-4 w-4' />
             </TooltipTrigger>
             <TooltipContent>Apps & Integrations</TooltipContent>
           </Tooltip>
@@ -211,7 +224,7 @@ export function ChatDetails({
               />
             }
           >
-            <Icons.chevronRight className='h-4 w-4' />
+            <ChevronRightIcon className='h-4 w-4' />
           </TooltipTrigger>
           <TooltipContent side='left'>Hide Details Panel</TooltipContent>
         </Tooltip>
@@ -258,23 +271,24 @@ export function ChatDetails({
 
             <div className='space-y-1.5 pt-1 text-muted-foreground'>
               <div className='flex items-center gap-2'>
-                <Icons.clock className='h-3.5 w-3.5 shrink-0' />
+                <ClockIcon className='h-3.5 w-3.5 shrink-0' />
                 <span>{localTime}</span>
               </div>
               <div className='flex items-center gap-2'>
-                <Icons.mapPin className='h-3.5 w-3.5 shrink-0' />
+                <MapPinIcon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{location}</span>
               </div>
             </div>
 
             <Button
+              type='button'
               variant='outline'
               size='sm'
               className='w-full h-8 text-xs font-normal justify-center border-border/70 text-foreground/80 hover:text-foreground'
               onClick={() => toast.info('Loading past history for this visitor')}
             >
               <span>View all past sessions</span>
-              <Icons.externalLink className='ml-1.5 h-3 w-3' />
+              <ExternalLinkIcon className='ml-1.5 h-3 w-3' />
             </Button>
           </div>
 
@@ -298,7 +312,7 @@ export function ChatDetails({
                 <span className='text-muted-foreground'>Active duration:</span>
                 <div className='flex items-center gap-1 font-medium text-foreground'>
                   <span>{chattingTime}</span>
-                  <Icons.info className='h-3 w-3 text-muted-foreground' />
+                  <InfoIcon className='h-3 w-3 text-muted-foreground' />
                 </div>
               </div>
 
@@ -375,7 +389,7 @@ export function ChatDetails({
               />
               <div className='flex justify-end'>
                 <Button type='submit' size='sm' className='h-7 text-xs'>
-                  <Icons.add className='mr-1 h-3 w-3' />
+                  <AddIcon className='mr-1 h-3 w-3' />
                   Add Note
                 </Button>
               </div>
@@ -419,9 +433,9 @@ export function ChatDetails({
             />
 
             <div className='space-y-2 pt-1'>
-              {filteredCanned.map((canned, idx) => (
+              {filteredCanned.map((canned) => (
                 <div
-                  key={idx}
+                  key={canned.title}
                   className='rounded-lg border border-border/50 bg-background/50 p-2.5 space-y-1.5 hover:bg-muted/40 transition-colors'
                 >
                   <div className='flex items-center justify-between'>
@@ -435,7 +449,7 @@ export function ChatDetails({
                         className='text-blue-600 dark:text-blue-400 hover:underline text-[10px] flex items-center gap-0.5 font-medium cursor-pointer'
                         title='Insert into composer'
                       >
-                        <Icons.send className='h-2.5 w-2.5' />
+                        <SendIcon className='h-2.5 w-2.5' />
                         Insert
                       </button>
                       <span className='text-border'>•</span>
@@ -444,7 +458,7 @@ export function ChatDetails({
                         onClick={() => copyToClipboard(canned.text, canned.title)}
                         className='text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 font-medium cursor-pointer'
                       >
-                        <Icons.page className='h-3 w-3' />
+                        <PageIcon className='h-3 w-3' />
                         Copy
                       </button>
                     </div>
@@ -566,21 +580,23 @@ export function ChatDetails({
             <h4 className='text-xs font-semibold text-foreground tracking-tight'>Quick Actions</h4>
             <div className='grid grid-cols-2 gap-2'>
               <Button
+                type='button'
                 variant='outline'
                 size='sm'
                 className='h-7 text-[11px] border-border/60 text-muted-foreground hover:text-foreground'
                 onClick={() => toast.success('Transcript exported to email')}
               >
-                <Icons.page className='mr-1 h-3 w-3' />
+                <PageIcon className='mr-1 h-3 w-3' />
                 Export
               </Button>
               <Button
+                type='button'
                 variant='outline'
                 size='sm'
                 className='h-7 text-[11px] border-border/60 text-muted-foreground hover:text-foreground'
                 onClick={() => toast.info('Transfer modal opened')}
               >
-                <Icons.share className='mr-1 h-3 w-3' />
+                <ShareIcon className='mr-1 h-3 w-3' />
                 Transfer
               </Button>
             </div>
