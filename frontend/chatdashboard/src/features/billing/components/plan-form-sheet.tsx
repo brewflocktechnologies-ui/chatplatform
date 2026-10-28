@@ -15,6 +15,8 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
+
+const AddIcon = Icons.add;
 import { useAppForm } from '@/lib/form';
 import { PlanApiError } from '../api/errors';
 import { createPlanMutation, updatePlanMutation } from '../api/mutations';
@@ -49,12 +51,12 @@ function toDefaults(plan?: Plan): PlanFormValues {
 const selectAll = (e: React.FocusEvent<HTMLInputElement>) => e.currentTarget.select();
 
 interface PlanFormSheetProps {
-  plan?: Plan;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly plan?: Plan;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
-export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) {
+export function PlanFormSheet({ plan, open, onOpenChange }: Readonly<PlanFormSheetProps>) {
   const isEdit = !!plan;
 
   const createMutation = useMutation({
@@ -162,22 +164,19 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
           >
             <FormGrid>
               <FormRow>
-                <form.AppField
-                  name='name'
-                  children={(field) => <field.TextField label='Name' required placeholder='Growth' />}
-                />
+                <form.AppField name='name'>
+                  {(field) => <field.TextField label='Name' required placeholder='Growth' />}
+                </form.AppField>
               </FormRow>
               <FormRow>
-                <form.AppField
-                  name='description'
-                  children={(field) => (
+                <form.AppField name='description'>
+                  {(field) => (
                     <field.TextareaField label='Description' placeholder='Who is this plan for?' />
                   )}
-                />
+                </form.AppField>
               </FormRow>
-              <form.AppField
-                name='amountMonthly'
-                children={(field) => (
+              <form.AppField name='amountMonthly'>
+                {(field) => (
                   <field.TextField
                     label='Monthly ($)'
                     required
@@ -186,10 +185,9 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
                     onFocus={selectAll}
                   />
                 )}
-              />
-              <form.AppField
-                name='amountAnnually'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='amountAnnually'>
+                {(field) => (
                   <field.TextField
                     label='Annual ($)'
                     required
@@ -198,43 +196,39 @@ export function PlanFormSheet({ plan, open, onOpenChange }: PlanFormSheetProps) 
                     onFocus={selectAll}
                   />
                 )}
-              />
-              <form.AppField
-                name='active'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='active'>
+                {(field) => (
                   <field.SwitchField
                     label='Active'
                     description='Inactive plans are hidden from new subscribers.'
                   />
                 )}
-              />
-              <form.AppField
-                name='freePlan'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='freePlan'>
+                {(field) => (
                   <field.SwitchField
                     label='Free plan'
                     description='Shown as Free regardless of price.'
                   />
                 )}
-              />
-              <form.AppField
-                name='defaultPlan'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='defaultPlan'>
+                {(field) => (
                   <field.SwitchField
                     label='Default plan'
                     description='Assigned to new accounts automatically.'
                   />
                 )}
-              />
-              <form.AppField
-                name='custom'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='custom'>
+                {(field) => (
                   <field.SwitchField
                     label='Custom plan'
                     description='Negotiated for specific companies rather than listed publicly.'
                   />
                 )}
-              />
+              </form.AppField>
             </FormGrid>
           </form>
         </div>
@@ -258,7 +252,7 @@ export function PlanFormSheetTrigger() {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Icons.add className='mr-2 h-4 w-4' /> New plan
+        <AddIcon className='mr-2 h-4 w-4' /> New plan
       </Button>
       <PlanFormSheet open={open} onOpenChange={setOpen} />
     </>

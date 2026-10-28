@@ -14,6 +14,9 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
+
+const AddIcon = Icons.add;
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { invalidateEntity } from '@/lib/cache/invalidation';
@@ -23,15 +26,15 @@ import type { Customer, CustomerMutationPayload } from '../api/types';
 import { customerSchema, type CustomerFormValues } from '../schemas/customer';
 
 interface CustomerFormSheetProps {
-  customer?: Customer;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly customer?: Customer;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof CustomerApiError ? error.message : fallback;
 
-export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerFormSheetProps) {
+export function CustomerFormSheet({ customer, open, onOpenChange }: Readonly<CustomerFormSheetProps>) {
   const isEdit = !!customer;
   const queryClient = useQueryClient();
 
@@ -126,9 +129,8 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
             }}
           >
             <FormGrid>
-              <form.AppField
-                name='email'
-                children={(field) => (
+              <form.AppField name='email'>
+                {(field) => (
                   <field.TextField
                     label='Email'
                     type='email'
@@ -136,45 +138,38 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
                     placeholder='billing@acme.com'
                   />
                 )}
-              />
-              <form.AppField
-                name='externalId'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='externalId'>
+                {(field) => (
                   <field.TextField
                     label='External ID'
                     placeholder='cus_123'
                     description='The customer id in your payment system.'
                   />
                 )}
-              />
-              <form.AppField
-                name='line1'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='line1'>
+                {(field) => (
                   <field.TextField label='Address Line 1' placeholder='45 Mount Road' />
                 )}
-              />
-              <form.AppField
-                name='line2'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='line2'>
+                {(field) => (
                   <field.TextField label='Address Line 2' placeholder='Suite 12' />
                 )}
-              />
-              <form.AppField
-                name='city'
-                children={(field) => <field.TextField label='City' placeholder='Bengaluru' />}
-              />
-              <form.AppField
-                name='state'
-                children={(field) => <field.TextField label='State' placeholder='Karnataka' />}
-              />
-              <form.AppField
-                name='postalCode'
-                children={(field) => <field.TextField label='Postal Code' placeholder='560001' />}
-              />
-              <form.AppField
-                name='country'
-                children={(field) => <field.TextField label='Country' placeholder='India' />}
-              />
+              </form.AppField>
+              <form.AppField name='city'>
+                {(field) => <field.TextField label='City' placeholder='Bengaluru' />}
+              </form.AppField>
+              <form.AppField name='state'>
+                {(field) => <field.TextField label='State' placeholder='Karnataka' />}
+              </form.AppField>
+              <form.AppField name='postalCode'>
+                {(field) => <field.TextField label='Postal Code' placeholder='560001' />}
+              </form.AppField>
+              <form.AppField name='country'>
+                {(field) => <field.TextField label='Country' placeholder='India' />}
+              </form.AppField>
             </FormGrid>
           </form>
         </div>
@@ -198,7 +193,7 @@ export function CustomerFormSheetTrigger() {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Icons.add className='mr-2 h-4 w-4' /> Add Customer
+        <AddIcon className='mr-2 h-4 w-4' /> Add Customer
       </Button>
       <CustomerFormSheet open={open} onOpenChange={setOpen} />
     </>

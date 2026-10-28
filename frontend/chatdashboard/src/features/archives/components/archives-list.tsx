@@ -6,6 +6,13 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Icons } from '@/components/icons';
+
+const RefreshIcon = Icons.refresh;
+const SearchIcon = Icons.search;
+const CloseIcon = Icons.close;
+const AddIcon = Icons.add;
+const ChevronDownIcon = Icons.chevronDown;
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -16,13 +23,18 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { cn } from '@/lib/utils';
 
 interface ArchivesListProps {
-  chats: ArchivedChat[];
-  selectedId: string;
-  onSelect: (id: string) => void;
-  totalCount: number;
+  readonly chats: ArchivedChat[];
+  readonly selectedId: string;
+  readonly onSelect: (id: string) => void;
+  readonly totalCount: number;
 }
 
-export function ArchivesList({ chats, selectedId, onSelect, totalCount }: ArchivesListProps) {
+export function ArchivesList({
+  chats,
+  selectedId,
+  onSelect,
+  totalCount
+}: Readonly<ArchivesListProps>) {
   const [search, setSearch] = useState('');
   const [sortOrder, setSortOrder] = useState<'newest' | 'oldest'>('newest');
   const [activeFilterTag, setActiveFilterTag] = useState<string | null>(null);
@@ -67,7 +79,7 @@ export function ArchivesList({ chats, selectedId, onSelect, totalCount }: Archiv
             className='h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer'
             title='Export or Refresh'
           >
-            <Icons.refresh className='h-4 w-4' />
+            <RefreshIcon className='h-4 w-4' />
           </Button>
         </div>
       </div>
@@ -75,7 +87,7 @@ export function ArchivesList({ chats, selectedId, onSelect, totalCount }: Archiv
       {/* Search Bar */}
       <div className='space-y-2 border-b border-border/50 p-3'>
         <div className='relative'>
-          <Icons.search className='absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
+          <SearchIcon className='absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground' />
           <Input
             placeholder='Search in archives...'
             value={search}
@@ -84,10 +96,11 @@ export function ArchivesList({ chats, selectedId, onSelect, totalCount }: Archiv
           />
           {search && (
             <button
+              type='button'
               onClick={() => setSearch('')}
               className='absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground'
             >
-              <Icons.close className='h-3.5 w-3.5' />
+              <CloseIcon className='h-3.5 w-3.5' />
             </button>
           )}
         </div>
@@ -104,7 +117,7 @@ export function ArchivesList({ chats, selectedId, onSelect, totalCount }: Archiv
                 />
               }
             >
-              <Icons.add className='mr-1 h-3 w-3' />
+              <AddIcon className='mr-1 h-3 w-3' />
               {activeFilterTag ? `Filter: ${activeFilterTag}` : 'Add filter'}
             </PopoverTrigger>
             <PopoverContent align='start' className='w-48 p-2'>
@@ -127,7 +140,7 @@ export function ArchivesList({ chats, selectedId, onSelect, totalCount }: Archiv
                   onClick={() => setActiveFilterTag('lead')}
                 >
                   <span className='mr-1.5 h-2 w-2 rounded-full bg-amber-500' />
-                  lead
+                  <span>lead</span>
                 </Button>
                 <Button
                   variant={activeFilterTag === 'botengine-transfer' ? 'secondary' : 'ghost'}
@@ -136,7 +149,7 @@ export function ArchivesList({ chats, selectedId, onSelect, totalCount }: Archiv
                   onClick={() => setActiveFilterTag('botengine-transfer')}
                 >
                   <span className='mr-1.5 h-2 w-2 rounded-full bg-blue-500' />
-                  botengine-transfer
+                  <span>botengine-transfer</span>
                 </Button>
               </div>
             </PopoverContent>
@@ -162,13 +175,14 @@ export function ArchivesList({ chats, selectedId, onSelect, totalCount }: Archiv
           <DropdownMenuTrigger
             render={
               <button
+                type='button'
                 aria-label='Sort chats'
                 className='flex items-center gap-1 font-medium text-foreground/80 hover:text-foreground'
               />
             }
           >
             <span>{sortOrder === 'newest' ? 'Newest' : 'Oldest'}</span>
-            <Icons.chevronDown className='h-3 w-3' />
+            <ChevronDownIcon className='h-3 w-3' />
           </DropdownMenuTrigger>
           <DropdownMenuContent align='end'>
             <DropdownMenuItem onClick={() => setSortOrder('newest')}>Newest</DropdownMenuItem>
