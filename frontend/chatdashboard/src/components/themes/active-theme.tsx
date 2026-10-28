@@ -31,12 +31,12 @@ export function ActiveThemeProvider({
 
   useEffect(() => {
     // Only update if theme has changed
-    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const currentTheme = document.documentElement.dataset.theme;
     if (currentTheme !== activeTheme) {
       setThemeCookie(activeTheme);
 
       // Remove existing data-theme attribute
-      document.documentElement.removeAttribute('data-theme');
+      delete document.documentElement.dataset.theme;
 
       // Remove any theme classes from body (cleanup)
       Array.from(document.body.classList)
@@ -47,7 +47,7 @@ export function ActiveThemeProvider({
 
       // Set data-theme on html element
       if (activeTheme) {
-        document.documentElement.setAttribute('data-theme', activeTheme);
+        document.documentElement.dataset.theme = activeTheme;
       }
     } else {
       // Still update cookie in case it's missing

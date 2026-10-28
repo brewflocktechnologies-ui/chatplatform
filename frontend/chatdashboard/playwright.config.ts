@@ -6,10 +6,11 @@ import { loadLocalEnv } from './tests/e2e/support/env';
 loadLocalEnv();
 
 const APP_URL = process.env.E2E_BASE_URL || 'http://localhost:3000';
-const WS_HEALTH_URL =
-  (process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8088')
-    .replace(/^ws/, 'http')
-    .replace(/\/$/, '') + '/health';
+// Centrifugo serves /health on the same origin as its websocket endpoint.
+const WS_HEALTH_URL = new URL(
+  process.env.NEXT_PUBLIC_CHAT_WS_URL || 'ws://localhost:8000/connection/websocket'
+)
+  .origin.replace(/^ws/, 'http') + '/health';
 
 export default defineConfig({
   testDir: './tests/e2e/tests',
@@ -70,8 +71,8 @@ export default defineConfig({
       cwd: __dirname
     },
     {
-      // Standalone WebSocket hub the chat workflow talks to (frontend/server).
-      command: 'node ../server/server.mjs',
+      // Centrifugo, the realtime hub the chat workflow talks to.
+      command: `${process.env.CENTRIFUGO_BIN || 'centrifugo'} --config=../../localrun/centrifugo/config.json`,
       url: WS_HEALTH_URL,
       reuseExistingServer: true,
       timeout: 30_000,

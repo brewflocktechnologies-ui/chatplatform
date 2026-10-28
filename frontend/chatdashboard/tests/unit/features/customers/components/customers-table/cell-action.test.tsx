@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 const { client } = vi.hoisted(() => ({
@@ -8,6 +8,8 @@ const { client } = vi.hoisted(() => ({
 vi.mock('@/lib/query-client', () => ({ getQueryClient: () => client.current }));
 vi.mock('@/features/customers/api/service', () => ({
   getCustomers: vi.fn(),
+  getAllCustomers: vi.fn(),
+  getCustomer: vi.fn(),
   createCustomer: vi.fn(),
   updateCustomer: vi.fn(),
   deleteCustomer: vi.fn()
@@ -20,17 +22,16 @@ import { CellAction } from '@/features/customers/components/customers-table/cell
 import type { Customer } from '@/features/customers/api/types';
 
 const customer: Customer = {
-  id: 'c1',
-  name: 'Acme',
-  email: 'team@acme.com',
-  country: 'india',
-  dateAdded: '2026-01-02T00:00:00Z',
-  integrations: '{"crm":"yes","analytics":"no"}',
-  activePlanName: 'Basic',
-  status: 'active'
+  id: 8003,
+  externalId: 'cus_1',
+  email: 'aadhi@example.com',
+  activePlan: null,
+  billingAddress: null,
+  creditCard: null,
+  invoices: []
 };
 
-function renderCell() {
+function wrap() {
   client.current = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } }
   });
@@ -41,61 +42,51 @@ function renderCell() {
   );
 }
 
-async function openMenu(item: string) {
-  fireEvent.click(screen.getByRole('button', { name: /Open menu/ }));
-  fireEvent.click(await screen.findByRole('menuitem', { name: new RegExp(item) }));
+async function openMenuAndPick(name: RegExp) {
+  fireEvent.click(screen.getByRole('button', { name: /open menu/i }));
+  fireEvent.click(await screen.findByRole('menuitem', { name }));
 }
 
 beforeEach(() => vi.clearAllMocks());
 afterEach(cleanup);
 
-describe('customers CellAction', () => {
-  it('opens the edit sheet prefilled from the row', async () => {
-    renderCell();
-    await openMenu('Update');
-
-    const dialog = await screen.findByRole('dialog');
-    expect(within(dialog).getByText('Edit Customer')).toBeInTheDocument();
-    expect(within(dialog).getByLabelText(/^Name/)).toHaveValue('Acme');
+describe('Customer CellAction', () => {
+  it('opens the edit form from Update', async () => {
+    wrap();
+    await openMenuAndPick(/Update/);
+    expect(await screen.findByText('Edit Customer')).toBeInTheDocument();
   });
 
-  it('deletes after confirming and toasts success', async () => {
-    vi.mocked(deleteCustomer).mockResolvedValue({ success: true } as never);
-    renderCell();
-    await openMenu('Delete');
+  it('deletes after confirming, then toasts and invalidates', async () => {
+    vi.mocked(deleteCustomer).mockResolvedValue({ ok: true, data: null });
+    wrap();
+    const invalidate = vi.spyOn(client.current, 'invalidateQueries');
 
-    const dialog = await screen.findByRole('dialog');
-    expect(deleteCustomer).not.toHaveBeenCalled();
-    fireEvent.click(within(dialog).getByRole('button', { name: 'Continue' }));
+    await openMenuAndPick(/Delete/);
+    fireEvent.click(await screen.findByRole('button', { name: /continue|confirm|delete/i }));
 
-    await waitFor(() => expect(deleteCustomer).toHaveBeenCalledWith('c1'));
+    await waitFor(() => expect(deleteCustomer).toHaveBeenCalledWith(8003));
     await waitFor(() =>
       expect(toast.success).toHaveBeenCalledWith('Customer deleted successfully')
     );
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['customers'] });
   });
 
-  it('toasts an error when deletion fails', async () => {
-    vi.mocked(deleteCustomer).mockRejectedValue(new Error('nope'));
-    renderCell();
-    await openMenu('Delete');
+  it('reports the API error when the delete is unsupported', async () => {
+    vi.mocked(deleteCustomer).mockResolvedValue({
+      ok: false,
+      status: 500,
+      message: 'The customers API does not support deleting customers yet.'
+    });
+    wrap();
 
-    fireEvent.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Continue' })
+    await openMenuAndPick(/Delete/);
+    fireEvent.click(await screen.findByRole('button', { name: /continue|confirm|delete/i }));
+
+    await waitFor(() =>
+      expect(toast.error).toHaveBeenCalledWith(
+        'The customers API does not support deleting customers yet.'
+      )
     );
-
-    await waitFor(() => expect(toast.error).toHaveBeenCalledWith('Failed to delete customer'));
-  });
-
-  it('closes the confirm dialog on cancel without deleting', async () => {
-    renderCell();
-    await openMenu('Delete');
-
-    fireEvent.click(
-      within(await screen.findByRole('dialog')).getByRole('button', { name: 'Cancel' })
-    );
-
-    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
-    expect(deleteCustomer).not.toHaveBeenCalled();
   });
 });

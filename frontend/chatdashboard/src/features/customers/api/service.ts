@@ -1,116 +1,111 @@
 'use server';
 
-// ============================================================
-// Customer Service — Data Access Layer (Server Actions + MongoDB)
-// ============================================================
-// Pattern 1 from the template: this file is a server-action module, so
-// every export runs on the server with direct MongoDB access. The server
-// prefetch calls these directly; client components reach them as RPC.
-// Queries (queries.ts) and components import from here — they never change.
-// ============================================================
+import { endpoints, origins } from '@/config/api-endpoints';
+import { billingRequest, pageParams, sortParam } from '@/lib/billing/client';
+import type {
+  Customer,
+  CustomerFilters,
+  CustomerMutationPayload,
+  CustomerSort,
+  CustomersPage
+} from './types';
+import { CUSTOMER_SORT_FIELDS } from './types';
 
-import { ObjectId, type Document, type Filter, type Sort, type WithId } from 'mongodb';
-import { getDb } from '@/lib/mongodb';
-import type { CustomerFilters, CustomersResponse, CustomerMutationPayload } from './types';
+// The API serves pages slowly (a few seconds each) and queues parallel requests, so firing every
+// page at once pushes the later ones past the request timeout and fails the whole list.
+const PAGE_FETCH_CONCURRENCY = 6;
 
-const COLLECTION = 'customers';
-
-async function customersCollection() {
-  const db = await getDb();
-  return db.collection(COLLECTION);
-}
-
-function serialize(doc: WithId<Document>) {
-  const { _id, ...rest } = doc;
-  return { id: _id.toString(), ...rest } as CustomersResponse['customers'][number];
-}
-
-function buildSort(sortParam?: string): Sort {
-  if (sortParam) {
-    try {
-      const parsed = JSON.parse(sortParam) as { id: string; desc: boolean }[];
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return Object.fromEntries(parsed.map((s) => [s.id, s.desc ? -1 : 1])) as Sort;
-      }
-    } catch {
-      // fall through to default sort
+/** Like `Promise.all(items.map(fn))`, but with at most `limit` calls in flight. Order is kept. */
+async function mapWithLimit<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>) {
+  const results = Array.from<R>({ length: items.length });
+  let next = 0;
+  const worker = async () => {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index]);
     }
-  }
-  return { dateAdded: -1 };
+  };
+  await Promise.all(Array.from({ length: Math.min(limit, items.length) }, worker));
+  return results;
 }
 
-export async function getCustomers(filters: CustomerFilters): Promise<CustomersResponse> {
-  const { page = 1, limit = 10, search, status, plan, sort } = filters;
+/** Runs on the server, so the browser never calls the billing origin. */
+export async function getCustomers({ page, size, sort }: CustomerFilters): Promise<CustomersPage> {
+  const params = pageParams(page, size);
+  // Server actions take client input, and an unknown sort field makes the API return 500.
+  const sortValue = sortParam(sort, CUSTOMER_SORT_FIELDS);
+  if (sortValue) params.set('sort', sortValue);
 
-  const query: Filter<Document> = {};
-  if (search) {
-    const rx = { $regex: search, $options: 'i' };
-    query.$or = [{ name: rx }, { email: rx }, { country: rx }];
-  }
-  if (status) query.status = { $in: status.split(',') };
-  if (plan) query.activePlanName = { $in: plan.split(',') };
-
-  const collection = await customersCollection();
-  const offset = (page - 1) * limit;
-
-  const [total, docs] = await Promise.all([
-    collection.countDocuments(query),
-    collection.find(query).sort(buildSort(sort)).skip(offset).limit(limit).toArray()
-  ]);
-
-  return {
-    success: true,
-    time: new Date().toISOString(),
-    message: 'Customers fetched successfully',
-    total_customers: total,
-    offset,
-    limit,
-    customers: docs.map(serialize)
-  };
+  const result = await billingRequest<CustomersPage>('GET', endpoints.customers.list, {
+    origin: origins.customers(),
+    query: params
+  });
+  if (!result.ok) throw new Error(`Customers API responded with ${result.status}`);
+  return result.data;
 }
 
-export async function createCustomer(data: CustomerMutationPayload) {
-  const collection = await customersCollection();
-  const now = new Date().toISOString();
-
-  const doc = {
-    ...data,
-    dateAdded: now,
-    createdAt: now,
-    updatedAt: now
-  };
-
-  // insertOne mutates `doc` by attaching the ObjectId `_id`, which is not
-  // serializable across the server-action boundary — build the response from
-  // the plain fields instead.
-  const result = await collection.insertOne({ ...doc });
-  return {
-    success: true,
-    message: 'Customer created successfully',
-    customer: { id: result.insertedId.toString(), ...doc }
-  };
-}
-
-export async function updateCustomer(id: string, data: CustomerMutationPayload) {
-  const collection = await customersCollection();
-
-  const result = await collection.updateOne(
-    { _id: new ObjectId(id) },
-    { $set: { ...data, updatedAt: new Date().toISOString() } }
+/**
+ * The API has no search parameter, so searching (and the customer dropdowns)
+ * walk every page once. The client caches the result and filters it locally.
+ */
+export async function getAllCustomers(sort?: CustomerSort): Promise<Customer[]> {
+  const first = await getCustomers({ page: 0, size: 100, sort });
+  const pages = Array.from({ length: Math.max(0, first.totalPages - 1) }, (_, i) => i + 1);
+  const rest = await mapWithLimit(pages, PAGE_FETCH_CONCURRENCY, (page) =>
+    getCustomers({ page, size: 100, sort })
   );
-
-  if (result.matchedCount === 0) {
-    throw new Error(`Customer ${id} not found`);
-  }
-  return { success: true, message: 'Customer updated successfully' };
+  return [first, ...rest].flatMap((p) => p.content);
 }
 
-export async function deleteCustomer(id: string) {
-  const collection = await customersCollection();
+/**
+ * One customer by id, or null when it doesn't exist. The dropdowns use it to label a saved
+ * customer without waiting for the full list, which takes many seconds to walk.
+ */
+export async function getCustomer(id: string): Promise<Customer | null> {
+  // Customer ids are numeric; older websites store a Mongo id here, which the API answers with a 500.
+  if (!/^\d+$/.test(id)) return null;
+  const result = await billingRequest<Customer>('GET', endpoints.customers.item(id), {
+    origin: origins.customers(),
+    notFoundMessage: 'Customer not found'
+  });
+  if (result.ok) return result.data;
+  if (result.status === 404) return null;
+  throw new Error(`Customers API responded with ${result.status}`);
+}
 
-  const result = await collection.deleteOne({ _id: new ObjectId(id) });
-  if (result.deletedCount === 0) {
-    throw new Error(`Customer ${id} not found`);
-  }
-  return { success: true, message: 'Customer deleted successfully' };
+const writeCustomer = (
+  method: 'POST' | 'PUT' | 'DELETE',
+  path: string,
+  body?: CustomerMutationPayload
+) =>
+  billingRequest<Customer | null>(method, path, {
+    origin: origins.customers(),
+    body,
+    notFoundMessage: 'Customer not found'
+  });
+
+/** Ids are numeric, and server actions take client input, so never splice anything else in. */
+const itemPath = (id: number) => endpoints.customers.item(String(Math.trunc(id)));
+
+/** POST /api/customers → the created customer. */
+export async function createCustomer(data: CustomerMutationPayload) {
+  return writeCustomer('POST', endpoints.customers.list, data);
+}
+
+/** PUT /api/customers/{id} → the updated customer. Fields left out keep their stored value. */
+export async function updateCustomer(id: number, data: CustomerMutationPayload) {
+  return writeCustomer('PUT', itemPath(id), data);
+}
+
+/**
+ * The customers API has no DELETE route yet and answers it with a 500, so a failure here is
+ * reported as unsupported instead of as a server fault.
+ */
+export async function deleteCustomer(id: number) {
+  const result = await writeCustomer('DELETE', itemPath(id));
+  if (result.ok || result.status === 404) return result;
+  return {
+    ...result,
+    message: 'The customers API does not support deleting customers yet.'
+  };
 }

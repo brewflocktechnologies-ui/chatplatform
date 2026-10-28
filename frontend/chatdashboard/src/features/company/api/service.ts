@@ -1,5 +1,6 @@
 'use server';
 
+import { endpoints } from '@/config/api-endpoints';
 import { billingGet, billingRequest, pageParams, sortParam } from '@/lib/billing/client';
 import type {
   CompaniesPage,
@@ -10,15 +11,13 @@ import type {
 } from './types';
 import { COMPANY_SORT_FIELDS } from './types';
 
-const COMPANIES_PATH = '/api/v1/companies';
-
 /** Runs on the server, so the browser never calls the billing origin. */
 export async function getCompanies({ page, size, sort }: CompanyFilters): Promise<CompaniesPage> {
   const params = pageParams(page, size);
   // Server actions take client input, and an unknown sort field makes the API return 500.
   const sortValue = sortParam(sort, COMPANY_SORT_FIELDS);
   if (sortValue) params.set('sort', sortValue);
-  return billingGet(COMPANIES_PATH, params);
+  return billingGet(endpoints.companies.list, params);
 }
 
 /**
@@ -43,14 +42,14 @@ const writeCompany = (
 
 /** POST /api/v1/companies → the created company. */
 export async function createCompany(data: CompanyMutationPayload) {
-  return writeCompany('POST', COMPANIES_PATH, data);
+  return writeCompany('POST', endpoints.companies.list, data);
 }
 
 /** PUT /api/v1/companies/{id} → the updated company. Full replace. */
 export async function updateCompany(id: number, data: CompanyMutationPayload) {
-  return writeCompany('PUT', `${COMPANIES_PATH}/${Math.trunc(id)}`, data);
+  return writeCompany('PUT', endpoints.companies.item(id), data);
 }
 
 export async function deleteCompany(id: number) {
-  return writeCompany('DELETE', `${COMPANIES_PATH}/${Math.trunc(id)}`);
+  return writeCompany('DELETE', endpoints.companies.item(id));
 }

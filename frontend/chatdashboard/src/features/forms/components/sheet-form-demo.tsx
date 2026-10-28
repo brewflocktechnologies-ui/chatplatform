@@ -92,7 +92,7 @@ function SheetFormSection() {
             <Icons.add className='mr-2 h-4 w-4' />
             Add Product
           </SheetTrigger>
-          <SheetContent className='flex flex-col'>
+          <SheetContent side='center' className='flex flex-col'>
             <SheetHeader>
               <SheetTitle>New Product</SheetTitle>
               <SheetDescription>

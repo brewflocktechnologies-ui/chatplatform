@@ -147,6 +147,20 @@ describe('MessageBubble', () => {
     expect(screen.getByText('doc.pdf')).toBeInTheDocument();
   });
 
+  it('renders contact message attachments with the default preview variant', () => {
+    reduced.value = true;
+    render(
+      <MessageBubble
+        message={{
+          ...base,
+          attachments: [{ id: 'f2', name: 'receipt.pdf', size: 1, type: 'application/pdf' }]
+        }}
+      />
+    );
+    expect(screen.getByText('Alice')).toBeInTheDocument();
+    expect(screen.getByText('receipt.pdf')).toBeInTheDocument();
+  });
+
   it('skips empty text and empty attachments', () => {
     render(<MessageBubble message={{ ...base, text: '', attachments: [] }} />);
     expect(screen.queryByText('Hello')).toBeNull();

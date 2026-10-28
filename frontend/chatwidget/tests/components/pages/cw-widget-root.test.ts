@@ -227,7 +227,7 @@ describe('CwWidgetRoot Page Component', () => {
     (element as any).userHasSentMessage = true;
     (element as any).checkCardToBarCollapse();
 
-    vi.runAllTimers(); // runs setTimeout for send()
+    vi.runOnlyPendingTimers(); // runs setTimeout for send()
 
     element.dispatchEvent(new CustomEvent('cw:draft-change', { detail: 'draft text' }));
     expect(chatStore.get().draft).toBe('draft text');

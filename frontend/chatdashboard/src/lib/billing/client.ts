@@ -7,6 +7,8 @@
  * server-only env var and must never ship to the browser.
  */
 
+import { origins } from '@/config/api-endpoints';
+
 export type ApiResult<T> =
   | { ok: true; data: T }
   | { ok: false; status: number; message: string; fieldErrors?: Record<string, string> };
@@ -23,20 +25,9 @@ export type PageResponse<T> = {
 export type SortDirection = 'asc' | 'desc';
 export type SortParam<F extends string = string> = { field: F; dir: SortDirection };
 
-const DEV_FALLBACK_URL = 'https://billing-service-eta.vercel.app';
 // The service runs on serverless hosting; a cold start can take well over 10s.
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_PAGE_SIZE = 100;
-
-/** Read per call so a missing variable fails the request, not the module import. */
-function baseUrl() {
-  const url = process.env.BILLING_API_URL;
-  if (url) return url.replace(/\/+$/, '');
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error('BILLING_API_URL is not set');
-  }
-  return DEV_FALLBACK_URL;
-}
 
 /** Clamps client-supplied paging, since server actions take arbitrary input. */
 export function pageParams(page: number, size: number, defaultSize = 10) {
@@ -62,6 +53,8 @@ export function sortParam<F extends string>(
 }
 
 type RequestOptions = {
+  /** Overrides `origins.billing()` for resources hosted on a different deployment. */
+  origin?: string;
   query?: URLSearchParams;
   body?: unknown;
   /** The service maps many failures to 404, so each resource words it for itself. */
@@ -72,13 +65,13 @@ type RequestOptions = {
 export async function billingRequest<T>(
   method: 'GET' | 'POST' | 'PUT' | 'DELETE',
   path: string,
-  { query, body, notFoundMessage }: RequestOptions = {}
+  { origin, query, body, notFoundMessage }: RequestOptions = {}
 ): Promise<ApiResult<T>> {
   const qs = query?.size ? `?${query}` : '';
 
   let res: Response;
   try {
-    res = await fetch(`${baseUrl()}${path}${qs}`, {
+    res = await fetch(`${origin?.replace(/\/+$/, '') ?? origins.billing()}${path}${qs}`, {
       method,
       cache: 'no-store',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),

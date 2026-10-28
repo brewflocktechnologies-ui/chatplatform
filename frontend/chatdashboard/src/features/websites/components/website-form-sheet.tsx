@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
@@ -14,14 +14,18 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { createWebsiteMutation, updateWebsiteMutation } from '../api/mutations';
-import { websiteKeys } from '../api/queries';
+import { invalidateEntity } from '@/lib/cache/invalidation';
 import type { Website, WebsiteMutationPayload } from '../api/types';
-import { customersQueryOptions } from '@/features/customers/api/queries';
+import { useCustomerOptions } from '@/features/customers/hooks/use-customer-options';
+import type { CustomerSort } from '@/features/customers/api/types';
 import { toast } from 'sonner';
 import { websiteSchema, type WebsiteFormValues } from '../schemas/website';
 import { PROTOCOL_OPTIONS, CATEGORY_OPTIONS } from './websites-table/options';
+
+// The API has no name, so the picker is sorted by email for scanning.
+const CUSTOMER_SORT: CustomerSort = { field: 'email', dir: 'asc' };
 
 interface WebsiteFormSheetProps {
   website?: Website;
@@ -33,22 +37,19 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
   const isEdit = !!website;
   const queryClient = useQueryClient();
 
-  // Customers from MongoDB feed the owner dropdown.
-  const { data: customersData } = useQuery({
-    ...customersQueryOptions({ page: 1, limit: 100 }),
+  // Customers from the billing API feed the owner dropdown.
+  const { options: customerOptions } = useCustomerOptions({
+    sort: CUSTOMER_SORT,
+    savedId: website?.customerId ?? website?.companyId,
+    savedName: website?.customerName,
     enabled: open
   });
-  const customers = customersData?.customers ?? [];
-  const customerOptions = customers.map((c) => ({
-    value: c.id,
-    label: c.email ? `${c.name} (${c.email})` : c.name
-  }));
 
   const createMutation = useMutation({
     ...createWebsiteMutation,
     // Overriding onSuccess replaces the base invalidation — re-do it here.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: websiteKeys.all });
+      invalidateEntity('websites', queryClient);
       toast.success('Website created');
       onOpenChange(false);
       form.reset();
@@ -59,7 +60,7 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
   const updateMutation = useMutation({
     ...updateWebsiteMutation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: websiteKeys.all });
+      invalidateEntity('websites', queryClient);
       toast.success('Website updated');
       onOpenChange(false);
     },
@@ -80,12 +81,12 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
       onSubmit: websiteSchema
     },
     onSubmit: async ({ value }) => {
-      const customer = customers.find((c) => c.id === value.customerId);
+      const customer = customerOptions.find((o) => o.value === value.customerId);
       const payload: WebsiteMutationPayload = {
         protocol: value.protocol,
         domain: value.domain,
         customerId: value.customerId,
-        customerName: customer?.name ?? website?.customerName ?? '',
+        customerName: customer?.label ?? website?.customerName ?? '',
         companyId: value.customerId,
         businessCategory: value.businessCategory,
         flavour: value.flavour,
@@ -109,7 +110,7 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Website' : 'New Website'}</SheetTitle>
           <SheetDescription>
@@ -128,36 +129,34 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
-              <div className='grid grid-cols-[8rem_1fr] gap-4'>
-                <form.AppField
-                  name='protocol'
-                  children={(field) => (
-                    <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
-                  )}
-                />
-                <form.AppField
-                  name='domain'
-                  children={(field) => (
-                    <field.TextField label='Domain' required placeholder='example.com' />
-                  )}
-                />
-              </div>
-
+            <FormGrid>
               <form.AppField
-                name='customerId'
+                name='protocol'
                 children={(field) => (
-                  <field.SelectField
-                    label='Customer'
-                    required
-                    options={customerOptions}
-                    placeholder={
-                      customerOptions.length === 0 ? 'Loading customers...' : 'Select customer'
-                    }
-                  />
+                  <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
                 )}
               />
-
+              <form.AppField
+                name='domain'
+                children={(field) => (
+                  <field.TextField label='Domain' required placeholder='example.com' />
+                )}
+              />
+              <FormRow>
+                <form.AppField
+                  name='customerId'
+                  children={(field) => (
+                    <field.SelectField
+                      label='Customer'
+                      required
+                      options={customerOptions}
+                      placeholder={
+                        customerOptions.length === 0 ? 'Loading customers...' : 'Select customer'
+                      }
+                    />
+                  )}
+                />
+              </FormRow>
               <form.AppField
                 name='businessCategory'
                 children={(field) => (
@@ -169,7 +168,6 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                   />
                 )}
               />
-
               <form.AppField
                 name='flavour'
                 children={(field) => (
@@ -181,7 +179,6 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                   />
                 )}
               />
-
               <form.AppField
                 name='isActive'
                 children={(field) => (
@@ -191,7 +188,6 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                   />
                 )}
               />
-
               <form.AppField
                 name='isVerified'
                 children={(field) => (
@@ -201,7 +197,7 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                   />
                 )}
               />
-            </FieldGroup>
+            </FormGrid>
           </form>
         </div>
 

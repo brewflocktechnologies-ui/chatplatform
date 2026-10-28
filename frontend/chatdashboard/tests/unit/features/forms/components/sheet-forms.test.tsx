@@ -36,7 +36,7 @@ async function pickCategory() {
   fireEvent.pointerMove(option);
   fireEvent.mouseMove(option);
   fireEvent.click(option);
-  await waitFor(() => expect(trigger).toHaveTextContent('electronics'));
+  await waitFor(() => expect(trigger).toHaveTextContent('Electronics'));
 }
 
 describe('SheetProductForm', () => {

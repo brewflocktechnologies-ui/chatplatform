@@ -1,3 +1,4 @@
+import { Centrifuge, Subscription, SubscriptionState } from 'centrifuge';
 import type { Message } from '../utils/types';
 
 export type SocketStatus = 'disconnected' | 'connecting' | 'connected' | 'error';
@@ -22,24 +23,25 @@ export interface SocketClientCallbacks {
   onStatusChange?: (status: SocketStatus) => void;
 }
 
+/**
+ * Agent side of the Centrifugo link. Visitors and agents of a tenant share one
+ * channel (`chat:<tenantId>`); every publication carries conversationId + role,
+ * so the agent sees all visitors and ignores agent traffic (its own echo included).
+ */
 export class ChatDashboardSocketClient {
-  private ws: WebSocket | null = null;
+  private client: Centrifuge | null = null;
+  private sub: Subscription | null = null;
   private url: string = '';
   private options: JoinRoomOptions | null = null;
   private callbacks: SocketClientCallbacks = {};
   private status: SocketStatus = 'disconnected';
-  private reconnectAttempts: number = 0;
-  private maxReconnectAttempts: number = 10;
-  private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private pingInterval: ReturnType<typeof setInterval> | null = null;
-  private manualClose: boolean = false;
 
   constructor(callbacks: SocketClientCallbacks = {}) {
     this.callbacks = callbacks;
   }
 
   get isConnected(): boolean {
-    return this.status === 'connected' && this.ws?.readyState === WebSocket.OPEN;
+    return this.status === 'connected' && this.sub?.state === SubscriptionState.Subscribed;
   }
 
   public setCallbacks(callbacks: SocketClientCallbacks) {
@@ -50,72 +52,81 @@ export class ChatDashboardSocketClient {
     if (typeof window === 'undefined' || !url) return;
     this.url = url;
     this.options = options;
-    this.manualClose = false;
 
+    this.teardown();
     this.setStatus('connecting');
 
-    try {
-      this.ws = new WebSocket(url);
+    const client = new Centrifuge(url, { minReconnectDelay: 1000, maxReconnectDelay: 15000 });
+    const sub = client.newSubscription(`chat:${options.tenantId}`);
 
-      this.ws.onopen = this.handleOpen;
-      this.ws.onmessage = this.handleMessage;
-      this.ws.onclose = this.handleClose;
-      this.ws.onerror = this.handleError;
-    } catch (err) {
-      console.warn('[DashboardSocketClient] Connection error:', err);
+    client.on('connecting', () => this.setStatus('connecting'));
+    client.on('disconnected', () => this.setStatus('disconnected'));
+    client.on('error', (ctx) => {
+      console.warn('[DashboardSocketClient] Connection error:', ctx.error);
       this.setStatus('error');
-      this.scheduleReconnect();
-    }
+    });
+
+    sub.on('subscribed', () => {
+      console.log('[DashboardSocketClient] Connected to', this.url);
+      this.setStatus('connected');
+    });
+    sub.on('publication', (ctx) => this.handlePublication(ctx.data));
+
+    this.client = client;
+    this.sub = sub;
+    sub.subscribe();
+    client.connect();
   }
 
   public disconnect() {
-    this.manualClose = true;
-    this.clearTimers();
-    if (this.ws) {
-      this.ws.close();
-      this.ws = null;
-    }
+    this.teardown();
     this.setStatus('disconnected');
   }
 
+  /** The tenant channel already delivers every conversation; only remember the active one. */
   public joinRoom(options: JoinRoomOptions) {
     this.options = options;
-    if (this.isConnected) {
-      this.send({
-        type: 'join',
-        tenantId: options.tenantId,
-        conversationId: options.conversationId,
-        role: options.role,
-        senderName: options.senderName
-      });
-    }
   }
 
   public sendMessage(message: Message, conversationId?: string) {
-    const convoId = conversationId || this.options?.conversationId || 'general';
-    this.send({
+    this.publish({
       type: 'chat_message',
-      tenantId: this.options?.tenantId || 'demo-tenant',
-      conversationId: convoId,
+      conversationId: conversationId || this.options?.conversationId || 'general',
       senderName: this.options?.senderName || 'Support Agent',
       message
     });
   }
 
   public sendTyping(isTyping: boolean, conversationId?: string) {
-    const convoId = conversationId || this.options?.conversationId || 'general';
-    this.send({
+    this.publish({
       type: 'typing_status',
-      tenantId: this.options?.tenantId || 'demo-tenant',
-      conversationId: convoId,
+      conversationId: conversationId || this.options?.conversationId || 'general',
       isTyping,
       senderName: this.options?.senderName || 'Support Agent'
     });
   }
 
-  private send(data: unknown) {
-    if (this.isConnected && this.ws) {
-      this.ws.send(JSON.stringify(data));
+  private publish(data: Record<string, unknown>) {
+    if (!this.sub || this.sub.state !== SubscriptionState.Subscribed) return;
+    this.sub
+      .publish({
+        ...data,
+        tenantId: this.options?.tenantId || 'demo-tenant',
+        role: 'agent'
+      })
+      .catch((err) => console.warn('[DashboardSocketClient] Publish failed:', err));
+  }
+
+  private teardown() {
+    if (this.sub) {
+      this.sub.removeAllListeners();
+      this.sub.unsubscribe();
+      this.sub = null;
+    }
+    if (this.client) {
+      this.client.removeAllListeners();
+      this.client.disconnect();
+      this.client = null;
     }
   }
 
@@ -126,109 +137,46 @@ export class ChatDashboardSocketClient {
     }
   }
 
-  private handleOpen = () => {
-    console.log('[DashboardSocketClient] Connected to', this.url);
-    this.setStatus('connected');
-    this.reconnectAttempts = 0;
+  private handlePublication(data: any) {
+    // Skip agent traffic: it is our own echo (or another agent's), not a visitor.
+    if (!data || data.role === 'agent') return;
 
-    if (this.options) {
-      this.joinRoom(this.options);
-    }
-
-    this.startPing();
-  };
-
-  private handleMessage = (event: MessageEvent) => {
-    try {
-      const data = JSON.parse(event.data);
-
-      switch (data.type) {
-        case 'chat_message':
-          if (data.message) {
-            this.callbacks.onMessage?.({
-              message: data.message,
-              conversationId: data.conversationId,
-              senderName: data.senderName
-            });
-          }
-          break;
-
-        case 'update_name':
-          if (data.conversationId && data.senderName) {
-            this.callbacks.onUpdateName?.({
-              conversationId: data.conversationId,
-              senderName: data.senderName
-            });
-          }
-          break;
-
-        case 'typing_status':
-          this.callbacks.onTyping?.({
-            isTyping: !!data.isTyping,
-            senderName: data.senderName || 'Visitor',
-            conversationId: data.conversationId
+    switch (data.type) {
+      case 'chat_message':
+        if (data.message) {
+          this.callbacks.onMessage?.({
+            message: data.message,
+            conversationId: data.conversationId,
+            senderName: data.senderName
           });
-          break;
+        }
+        break;
 
-        case 'presence':
-          this.callbacks.onPresence?.({
-            status: data.status,
-            role: data.role,
-            senderName: data.senderName,
-            conversationId: data.conversationId
+      case 'update_name':
+        if (data.conversationId && data.senderName) {
+          this.callbacks.onUpdateName?.({
+            conversationId: data.conversationId,
+            senderName: data.senderName
           });
-          break;
+        }
+        break;
 
-        case 'pong':
-          break;
-      }
-    } catch (err) {
-      console.warn('[DashboardSocketClient] Message parsing error:', err);
-    }
-  };
+      case 'typing_status':
+        this.callbacks.onTyping?.({
+          isTyping: !!data.isTyping,
+          senderName: data.senderName || 'Visitor',
+          conversationId: data.conversationId
+        });
+        break;
 
-  private handleClose = () => {
-    this.clearTimers();
-    if (!this.manualClose) {
-      this.setStatus('disconnected');
-      this.scheduleReconnect();
-    }
-  };
-
-  private handleError = () => {
-    this.setStatus('error');
-  };
-
-  private scheduleReconnect() {
-    if (this.manualClose || this.reconnectAttempts >= this.maxReconnectAttempts) {
-      return;
-    }
-
-    const delay = Math.min(1000 * Math.pow(1.5, this.reconnectAttempts), 15000);
-    this.reconnectAttempts++;
-
-    this.reconnectTimer = setTimeout(() => {
-      if (this.url && this.options) {
-        this.connect(this.url, this.options);
-      }
-    }, delay);
-  }
-
-  private startPing() {
-    this.clearTimers();
-    this.pingInterval = setInterval(() => {
-      this.send({ type: 'ping' });
-    }, 25000);
-  }
-
-  private clearTimers() {
-    if (this.reconnectTimer) {
-      clearTimeout(this.reconnectTimer);
-      this.reconnectTimer = null;
-    }
-    if (this.pingInterval) {
-      clearInterval(this.pingInterval);
-      this.pingInterval = null;
+      case 'presence':
+        this.callbacks.onPresence?.({
+          status: data.status,
+          role: data.role,
+          senderName: data.senderName,
+          conversationId: data.conversationId
+        });
+        break;
     }
   }
 }

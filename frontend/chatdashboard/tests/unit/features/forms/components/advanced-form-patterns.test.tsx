@@ -18,13 +18,14 @@ const submitForm = async () => {
 const type = (label: string | RegExp, value: string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });
 
-async function pick(trigger: HTMLElement, optionName: string, rawValue: string) {
+/** The closed trigger shows the option's label, not its value. */
+async function pick(trigger: HTMLElement, optionName: string) {
   fireEvent.click(trigger);
   const option = await screen.findByRole('option', { name: optionName });
   fireEvent.pointerMove(option);
   fireEvent.mouseMove(option);
   fireEvent.click(option);
-  await waitFor(() => expect(trigger).toHaveTextContent(rawValue));
+  await waitFor(() => expect(trigger).toHaveTextContent(optionName));
 }
 
 describe('AdvancedFormPatterns', () => {
@@ -97,11 +98,11 @@ describe('AdvancedFormPatterns', () => {
     render(<AdvancedFormPatterns />);
     expect(screen.getByText('Select a country first')).toBeInTheDocument();
     const [country, state] = screen.getAllByRole('combobox');
-    await pick(country, 'United States', 'us');
+    await pick(country, 'United States');
     expect(screen.getByText('Select state')).toBeInTheDocument();
-    await pick(state, 'Texas', 'tx');
+    await pick(state, 'Texas');
 
-    await pick(country, 'Australia', 'au');
+    await pick(country, 'Australia');
     await waitFor(() =>
       expect(screen.getAllByRole('combobox')[1]).toHaveTextContent('Select state')
     );
@@ -118,8 +119,8 @@ describe('AdvancedFormPatterns', () => {
     type('Member 1 name', 'Ann');
     type('Member 1 role', 'Lead');
     const [country, state] = screen.getAllByRole('combobox');
-    await pick(country, 'United Kingdom', 'uk');
-    await pick(state, 'London', 'ldn');
+    await pick(country, 'United Kingdom');
+    await pick(state, 'London');
 
     // let the username's async check (500ms debounce + 500ms lookup) settle first;
     // a submit fired while it is pending does not go through.

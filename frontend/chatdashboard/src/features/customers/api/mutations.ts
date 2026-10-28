@@ -1,27 +1,23 @@
 import { mutationOptions } from '@tanstack/react-query';
-import { getQueryClient } from '@/lib/query-client';
-import { createCustomer, updateCustomer, deleteCustomer } from './service';
-import { customerKeys } from './queries';
+import { invalidateEntity } from '@/lib/cache/invalidation';
+import { unwrap } from './errors';
+import { createCustomer, deleteCustomer, updateCustomer } from './service';
 import type { CustomerMutationPayload } from './types';
 
+const invalidate = () => invalidateEntity('customers');
+
 export const createCustomerMutation = mutationOptions({
-  mutationFn: (data: CustomerMutationPayload) => createCustomer(data),
-  onSuccess: () => {
-    getQueryClient().invalidateQueries({ queryKey: customerKeys.all });
-  }
+  mutationFn: async (data: CustomerMutationPayload) => unwrap(await createCustomer(data)),
+  onSuccess: invalidate
 });
 
 export const updateCustomerMutation = mutationOptions({
-  mutationFn: ({ id, values }: { id: string; values: CustomerMutationPayload }) =>
-    updateCustomer(id, values),
-  onSuccess: () => {
-    getQueryClient().invalidateQueries({ queryKey: customerKeys.all });
-  }
+  mutationFn: async ({ id, values }: { id: number; values: CustomerMutationPayload }) =>
+    unwrap(await updateCustomer(id, values)),
+  onSuccess: invalidate
 });
 
 export const deleteCustomerMutation = mutationOptions({
-  mutationFn: (id: string) => deleteCustomer(id),
-  onSuccess: () => {
-    getQueryClient().invalidateQueries({ queryKey: customerKeys.all });
-  }
+  mutationFn: async (id: number) => unwrap(await deleteCustomer(id)),
+  onSuccess: invalidate
 });

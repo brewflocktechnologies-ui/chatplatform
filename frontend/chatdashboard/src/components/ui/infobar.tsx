@@ -254,6 +254,7 @@ function Infobar({
           setOpenMobile(value);
           setOpen(value);
         }}
+        disablePointerDismissal={false}
         {...props}
       >
         <SheetContent

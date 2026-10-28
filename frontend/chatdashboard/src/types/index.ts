@@ -17,6 +17,8 @@ export interface NavItem {
   icon?: keyof typeof Icons;
   label?: string;
   description?: string;
+  /** Marks a tab whose data comes from the billing API; the sidebar shows an `API` tag. */
+  api?: boolean;
   isActive?: boolean;
   items?: NavItem[];
   access?: PermissionCheck;

@@ -10,7 +10,7 @@ export class ChatPage {
 
   /**
    * The empty state shows the socket status pill; wait until the dashboard's
-   * agent socket has connected to the hub before driving visitors.
+   * agent socket has connected to Centrifugo before driving visitors.
    */
   async waitForConnected(): Promise<void> {
     await expect(this.page.getByText('WebSocket: Connected & Listening')).toBeVisible({

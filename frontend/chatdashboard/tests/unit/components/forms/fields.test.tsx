@@ -340,6 +340,26 @@ describe('SelectField', () => {
     await submit();
     await waitFor(() => expect(onSubmit).toHaveBeenCalledWith({ color: 'green' }));
   });
+
+  it('shows the label, not the raw value, for a preselected option while closed', () => {
+    render(
+      <Harness
+        defaultValues={{ customer: '7953' }}
+        fields={(form) => (
+          <form.AppField name='customer'>
+            {(field: any) => (
+              <field.SelectField
+                label='Customer'
+                options={[{ value: '7953', label: 'ref@example.com' }]}
+              />
+            )}
+          </form.AppField>
+        )}
+      />
+    );
+    expect(screen.getByText('ref@example.com')).toBeInTheDocument();
+    expect(screen.queryByText('7953')).not.toBeInTheDocument();
+  });
 });
 
 describe('SliderField', () => {

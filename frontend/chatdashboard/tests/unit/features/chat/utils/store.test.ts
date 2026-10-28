@@ -76,7 +76,7 @@ describe('initSocket', () => {
     useChatStore.getState().initSocket();
     expect(useChatStore.getState().isSocketInitialized).toBe(true);
     expect(socketMock.setCallbacks).toHaveBeenCalledTimes(1);
-    expect(socketMock.connect).toHaveBeenCalledWith('ws://localhost:8088', {
+    expect(socketMock.connect).toHaveBeenCalledWith('ws://localhost:8000/connection/websocket', {
       tenantId: 'demo-tenant',
       conversationId: 'general',
       role: 'agent',
@@ -445,6 +445,13 @@ describe('addIncomingMessage', () => {
     expect(convo.unread).toBe(1);
     expect(convo.messages).toHaveLength(1);
     expect(state.selectedConversationId).toBe(convo.id);
+  });
+
+  it('falls back to "Visitor" when neither a sender name nor an author is given', () => {
+    useChatStore.getState().addIncomingMessage('', makeMsg({ author: '' }));
+    const convo = useChatStore.getState().conversations[0];
+    expect(convo.name).toBe('Visitor');
+    expect(convo.initials).toBe('V');
   });
 
   it('reuses the given conversation id and starts read when that id is already selected', () => {

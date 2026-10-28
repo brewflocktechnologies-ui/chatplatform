@@ -1,11 +1,16 @@
 import { QueryClient, defaultShouldDehydrateQuery, isServer } from '@tanstack/react-query';
+import { DEFAULT_CACHE_TIER, QUERY_FETCH_DEFAULTS, cachePolicy } from '@/lib/cache/policy';
 
 function makeQueryClient() {
   return new QueryClient({
     defaultOptions: {
       queries: {
-        staleTime: 60 * 1000
+        ...cachePolicy(DEFAULT_CACHE_TIER),
+        ...QUERY_FETCH_DEFAULTS,
+        // A server prefetch that fails is better left to the client than retried (it would double a timeout).
+        ...(isServer && { retry: 0 })
       },
+      mutations: { networkMode: 'always' },
       dehydrate: {
         shouldDehydrateQuery: (query) =>
           defaultShouldDehydrateQuery(query) || query.state.status === 'pending'

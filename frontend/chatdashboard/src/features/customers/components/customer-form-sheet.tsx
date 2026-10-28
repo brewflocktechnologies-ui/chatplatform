@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { FieldGroup } from '@/components/ui/field';
+import { FormGrid, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
 import { LoadingButton } from '@/components/ui/loading-button';
 import {
@@ -15,13 +15,12 @@ import {
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { createCustomerMutation, updateCustomerMutation } from '../api/mutations';
-import { customerKeys } from '../api/queries';
-import type { Customer, CustomerMutationPayload } from '../api/types';
 import { toast } from 'sonner';
+import { invalidateEntity } from '@/lib/cache/invalidation';
+import { createCustomerMutation, updateCustomerMutation } from '../api/mutations';
+import { CustomerApiError } from '../api/errors';
+import type { Customer, CustomerMutationPayload } from '../api/types';
 import { customerSchema, type CustomerFormValues } from '../schemas/customer';
-import { parseIntegrations, stringifyIntegrations } from '../lib/integrations';
-import { PLAN_OPTIONS, STATUS_OPTIONS } from './customers-table/options';
 
 interface CustomerFormSheetProps {
   customer?: Customer;
@@ -29,54 +28,67 @@ interface CustomerFormSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
+const errorMessage = (error: unknown, fallback: string) =>
+  error instanceof CustomerApiError ? error.message : fallback;
+
 export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerFormSheetProps) {
   const isEdit = !!customer;
-  const integrations = parseIntegrations(customer?.integrations);
   const queryClient = useQueryClient();
 
   const createMutation = useMutation({
     ...createCustomerMutation,
     // Overriding onSuccess replaces the base invalidation — re-do it here.
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: customerKeys.all });
+      invalidateEntity('customers', queryClient);
       toast.success('Customer created');
       onOpenChange(false);
       form.reset();
     },
-    onError: () => toast.error("Couldn't create customer. Try again.")
+    onError: (error) => toast.error(errorMessage(error, "Couldn't create customer. Try again."))
   });
 
   const updateMutation = useMutation({
     ...updateCustomerMutation,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: customerKeys.all });
+      invalidateEntity('customers', queryClient);
       toast.success('Customer updated');
       onOpenChange(false);
     },
-    onError: () => toast.error("Couldn't update customer. Try again.")
+    onError: (error) => toast.error(errorMessage(error, "Couldn't update customer. Try again."))
   });
+
+  const a = customer?.billingAddress;
 
   const form = useAppForm({
     defaultValues: {
-      name: customer?.name ?? '',
       email: customer?.email ?? '',
-      country: customer?.country ?? '',
-      activePlanName: customer?.activePlanName ?? '',
-      status: customer?.status ?? 'active',
-      crm: integrations.crm,
-      analytics: integrations.analytics
+      externalId: customer?.externalId ?? '',
+      line1: a?.line1 ?? '',
+      line2: a?.line2 ?? '',
+      city: a?.city ?? '',
+      state: a?.state ?? '',
+      postalCode: a?.postalCode ?? '',
+      country: a?.country ?? ''
     } as CustomerFormValues,
     validators: {
       onSubmit: customerSchema
     },
     onSubmit: async ({ value }) => {
+      // The API merges on update: null keeps the stored value and "" clears it. So a cleared
+      // field is sent as "" when editing, and as null (nothing to store) when creating.
+      const blank = isEdit ? '' : null;
+      const text = (v: string) => v.trim() || blank;
       const payload: CustomerMutationPayload = {
-        name: value.name,
-        email: value.email,
-        country: value.country,
-        activePlanName: value.activePlanName,
-        status: value.status,
-        integrations: stringifyIntegrations({ crm: value.crm, analytics: value.analytics })
+        email: value.email.trim(),
+        externalId: text(value.externalId),
+        billingAddress: {
+          line1: text(value.line1),
+          line2: text(value.line2),
+          city: text(value.city),
+          state: text(value.state),
+          postalCode: text(value.postalCode),
+          country: text(value.country)
+        }
       };
       try {
         if (isEdit) {
@@ -94,7 +106,7 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent className='flex flex-col'>
+      <SheetContent side='center' className={WIDE_FORM_MODAL}>
         <SheetHeader>
           <SheetTitle>{isEdit ? 'Edit Customer' : 'New Customer'}</SheetTitle>
           <SheetDescription>
@@ -113,77 +125,57 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
               form.handleSubmit();
             }}
           >
-            <FieldGroup>
-              <form.AppField
-                name='name'
-                children={(field) => (
-                  <field.TextField label='Name' required placeholder='Acme Inc.' />
-                )}
-              />
-
+            <FormGrid>
               <form.AppField
                 name='email'
                 children={(field) => (
                   <field.TextField
                     label='Email'
-                    required
                     type='email'
-                    placeholder='team@acme.com'
+                    required
+                    placeholder='billing@acme.com'
                   />
                 )}
               />
-
+              <form.AppField
+                name='externalId'
+                children={(field) => (
+                  <field.TextField
+                    label='External ID'
+                    placeholder='cus_123'
+                    description='The customer id in your payment system.'
+                  />
+                )}
+              />
+              <form.AppField
+                name='line1'
+                children={(field) => (
+                  <field.TextField label='Address Line 1' placeholder='45 Mount Road' />
+                )}
+              />
+              <form.AppField
+                name='line2'
+                children={(field) => (
+                  <field.TextField label='Address Line 2' placeholder='Suite 12' />
+                )}
+              />
+              <form.AppField
+                name='city'
+                children={(field) => <field.TextField label='City' placeholder='Bengaluru' />}
+              />
+              <form.AppField
+                name='state'
+                children={(field) => <field.TextField label='State' placeholder='Karnataka' />}
+              />
+              <form.AppField
+                name='postalCode'
+                children={(field) => <field.TextField label='Postal Code' placeholder='560001' />}
+              />
               <form.AppField
                 name='country'
-                children={(field) => (
-                  <field.TextField label='Country' required placeholder='india' />
-                )}
+                children={(field) => <field.TextField label='Country' placeholder='India' />}
               />
-
-              <form.AppField
-                name='activePlanName'
-                children={(field) => (
-                  <field.SelectField
-                    label='Active Plan'
-                    required
-                    options={PLAN_OPTIONS}
-                    placeholder='Select plan'
-                  />
-                )}
-              />
-
-              <form.AppField
-                name='status'
-                children={(field) => (
-                  <field.SelectField
-                    label='Status'
-                    required
-                    options={STATUS_OPTIONS}
-                    placeholder='Select status'
-                  />
-                )}
-              />
-
-              <form.AppField
-                name='crm'
-                children={(field) => (
-                  <field.SwitchField
-                    label='CRM Integration'
-                    description='Sync this customer with the CRM.'
-                  />
-                )}
-              />
-
-              <form.AppField
-                name='analytics'
-                children={(field) => (
-                  <field.SwitchField
-                    label='Analytics Integration'
-                    description='Enable analytics tracking for this customer.'
-                  />
-                )}
-              />
-            </FieldGroup>
+            </FormGrid>
           </form>
         </div>
 

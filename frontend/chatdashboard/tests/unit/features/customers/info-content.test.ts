@@ -3,11 +3,11 @@ import { customersInfoContent } from '@/features/customers/info-content';
 
 describe('customersInfoContent', () => {
   it('has a title and three sections', () => {
-    expect(customersInfoContent.title).toBe('Customers — MongoDB + React Query');
+    expect(customersInfoContent.title).toBe('Customers — Billing API + React Query');
     expect(customersInfoContent.sections).toHaveLength(3);
     expect(customersInfoContent.sections.map((s) => s.title)).toEqual([
       'Overview',
-      'CRUD',
+      'Search',
       'URL State with nuqs'
     ]);
   });

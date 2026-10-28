@@ -1,41 +1,47 @@
-import { expect, skipWithoutDb, test } from '../support/fixtures';
+import { expect, test } from '../support/fixtures';
+import { firstLiveCustomer } from '../support/customers-api';
 import { DataTablePage } from '../support/pages/data-table-page';
 
 /**
- * Customers workflows: list/search (nuqs URL state + server actions against
- * MongoDB), edit and delete via the row actions menu.
- *
- * Each test seeds its own uniquely-named customer straight into the same
- * MongoDB the app reads, and the fixture removes it afterwards — no test
- * touches pre-existing data.
+ * Customers workflows: a read-only list backed by the billing service
+ * (GET /api/customers through server actions), with nuqs URL state. The API
+ * is shared and live, so tests read a real customer instead of seeding one.
  */
 
-test.beforeEach(() => skipWithoutDb());
-
-// Independent tests, but run in order in one worker: concurrent suspenseful
-// table refetches against Atlas through the dev server are the main source
-// of timeout flake when these scatter across workers.
+// Independent tests, but run in order in one worker: the first call to the
+// serverless API can be slow, and scattering them across workers multiplies it.
 test.describe.configure({ mode: 'default' });
 
 test.describe('Customers', () => {
-  test('searching finds a seeded customer and syncs the URL', async ({ page, db }) => {
-    const customer = await db.seedCustomer();
+  test('lists customers with the API-backed columns', async ({ page }) => {
+    await page.goto('/dashboard/customers');
+
+    for (const header of ['Email', 'External ID', 'Country', 'Card', 'Active Plan', 'Invoices']) {
+      await expect(page.getByRole('columnheader', { name: header })).toBeVisible({
+        timeout: 30_000
+      });
+    }
+    // Header row plus at least one customer.
+    await expect(page.getByRole('row')).not.toHaveCount(1);
+  });
+
+  test('searching finds a live customer and syncs the URL', async ({ page, request }) => {
+    const customer = await firstLiveCustomer(request);
     const table = new DataTablePage(page, 'Search customers...');
 
     await page.goto('/dashboard/customers');
-    await table.search(customer.name);
-    await table.expectRowVisible(customer.name);
-    await expect(table.row(customer.name)).toContainText(customer.email);
+    await table.search(customer.email);
+    await table.expectRowVisible(customer.email);
 
     // nuqs mirrors the toolbar filter into the query string (debounced).
-    await expect(page).toHaveURL(/name=/);
+    await expect(page).toHaveURL(/email=/);
   });
 
   test('searching for a non-existent customer shows the empty state', async ({ page }) => {
     const table = new DataTablePage(page, 'Search customers...');
     await page.goto('/dashboard/customers');
     await table.search('zzz-no-such-customer-zzz');
-    await expect(page.getByText('No results.')).toBeVisible();
+    await expect(page.getByText('No results.')).toBeVisible({ timeout: 60_000 });
   });
 
   test('pagination controls are wired to the result set', async ({ page }) => {
@@ -45,38 +51,14 @@ test.describe('Customers', () => {
     await expect(page.getByRole('button', { name: 'Go to previous page' })).toBeDisabled();
   });
 
-  test('editing a customer persists and refreshes the table', async ({ page, db }) => {
-    const customer = await db.seedCustomer();
-    const table = new DataTablePage(page, 'Search customers...');
-
+  test('the table offers an add button and per-row actions', async ({ page }) => {
     await page.goto('/dashboard/customers');
-    await table.search(customer.name);
-    await table.expectRowVisible(customer.name);
-
-    await table.rowAction(customer.name, 'Update');
-    const sheet = page.getByRole('dialog');
-    await expect(sheet.getByText('Edit Customer')).toBeVisible();
-
-    await sheet.getByLabel('Country').fill('wonderland');
-    await sheet.getByRole('button', { name: 'Update Customer' }).click();
-
-    await table.expectToast('Customer updated');
-    // Cache invalidation refetches the list; the row reflects the new value.
-    await expect(table.row(customer.name)).toContainText('wonderland');
-  });
-
-  test('deleting a customer requires confirmation and removes the row', async ({ page, db }) => {
-    const customer = await db.seedCustomer();
-    const table = new DataTablePage(page, 'Search customers...');
-
-    await page.goto('/dashboard/customers');
-    await table.search(customer.name);
-    await table.expectRowVisible(customer.name);
-
-    await table.rowAction(customer.name, 'Delete');
-    await table.confirmDelete();
-
-    await table.expectToast('Customer deleted successfully');
-    await table.expectRowGone(customer.name);
+    await expect(page.getByRole('columnheader', { name: 'Email' })).toBeVisible({
+      timeout: 30_000
+    });
+    await expect(page.getByRole('button', { name: 'Add Customer' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Open menu' }).first()).toBeVisible({
+      timeout: 30_000
+    });
   });
 });

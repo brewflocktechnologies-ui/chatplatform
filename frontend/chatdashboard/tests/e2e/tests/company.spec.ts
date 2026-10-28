@@ -153,7 +153,9 @@ test.describe('Company', () => {
 
     const sortBy = async (item: 'Asc' | 'Desc' | 'Reset') => {
       await page.getByRole('button', { name: 'Name', exact: true }).click();
-      await page.getByRole('menuitem' + (item === 'Reset' ? '' : 'checkbox'), { name: item }).click();
+      await page
+        .getByRole(item === 'Reset' ? 'menuitem' : 'menuitemcheckbox', { name: item })
+        .click();
     };
 
     await sortBy('Asc');
