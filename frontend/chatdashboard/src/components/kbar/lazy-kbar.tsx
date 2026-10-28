@@ -14,7 +14,11 @@ import { useEffect, useRef, useState, type ReactNode } from 'react';
 //                   afterwards (this is what SearchInput dispatches)
 const KBar = dynamic(() => import('./index'), { ssr: false });
 
-export function LazyKBar({ children }: { children: ReactNode }) {
+interface LazyKBarProps {
+  readonly children: ReactNode;
+}
+
+export function LazyKBar({ children }: Readonly<LazyKBarProps>) {
   const [mounted, setMounted] = useState(false);
   const [openNonce, setOpenNonce] = useState(0);
   const mountedRef = useRef(false);

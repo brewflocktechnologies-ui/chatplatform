@@ -16,11 +16,16 @@ import RenderResults from './render-result';
 import useThemeSwitching from './use-theme-switching';
 import { useFilteredNavGroups } from '@/hooks/use-nav';
 
+interface KBarOpenSignalProps {
+  readonly openOnMount: boolean;
+  readonly openNonce: number;
+}
+
 // KBarProvider has no imperative "open" API from outside the provider; this
 // inner component lives inside it and flips the palette open whenever the
 // gatekeeper asks (first mount or a subsequent toggle signal, e.g. a click on
 // the header SearchInput button).
-function KBarOpenSignal({ openOnMount, openNonce }: { openOnMount: boolean; openNonce: number }) {
+function KBarOpenSignal({ openOnMount, openNonce }: Readonly<KBarOpenSignalProps>) {
   const { query } = useKBar();
   const openOnMountRef = useRef(openOnMount);
 
@@ -49,15 +54,17 @@ function KBarOpenSignal({ openOnMount, openNonce }: { openOnMount: boolean; open
   return null;
 }
 
+interface KBarProps {
+  readonly children: React.ReactNode;
+  readonly openOnMount?: boolean;
+  readonly openNonce?: number;
+}
+
 export default function KBar({
   children,
   openOnMount = false,
   openNonce = 0
-}: {
-  children: React.ReactNode;
-  openOnMount?: boolean;
-  openNonce?: number;
-}) {
+}: Readonly<KBarProps>) {
   const router = useRouter();
   const filteredGroups = useFilteredNavGroups(navGroups);
 

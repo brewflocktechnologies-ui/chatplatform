@@ -4,6 +4,11 @@ import { Icons } from '@/components/icons';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 
+const ChevronsUpDownIcon = Icons.chevronsUpDown;
+const GalleryVerticalEndIcon = Icons.galleryVerticalEnd;
+const CheckIcon = Icons.check;
+const AddIcon = Icons.add;
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,7 +51,7 @@ export function OrgSwitcher() {
               <span className='truncate font-medium'>{activeOrganization.name}</span>
               <span className='text-muted-foreground truncate text-xs'>Organization</span>
             </div>
-            <Icons.chevronsUpDown className='ml-auto size-4 shrink-0 transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none' />
+            <ChevronsUpDownIcon className='ml-auto size-4 shrink-0 transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none' />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className='w-(--anchor-width) min-w-56 rounded-lg'
@@ -69,10 +74,10 @@ export function OrgSwitcher() {
                     onClick={() => router.push('/dashboard/workspaces')}
                   >
                     <div className='flex size-6 items-center justify-center overflow-hidden rounded-md border'>
-                      <Icons.galleryVerticalEnd className='size-3.5 shrink-0' />
+                      <GalleryVerticalEndIcon className='size-3.5 shrink-0' />
                     </div>
                     {workspace.name}
-                    {isActive && <Icons.check className='ml-auto size-4' />}
+                    {isActive && <CheckIcon className='ml-auto size-4' />}
                     {!isActive && (
                       <span className='ml-auto text-muted-foreground text-xs'>⌘{index + 1}</span>
                     )}
@@ -89,7 +94,7 @@ export function OrgSwitcher() {
                 }}
               >
                 <div className='flex size-6 items-center justify-center rounded-md border bg-transparent'>
-                  <Icons.add className='size-4' />
+                  <AddIcon className='size-4' />
                 </div>
                 <div className='text-muted-foreground font-medium'>Add organization</div>
               </DropdownMenuItem>

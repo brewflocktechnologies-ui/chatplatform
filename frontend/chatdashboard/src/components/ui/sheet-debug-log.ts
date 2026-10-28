@@ -62,13 +62,17 @@ function describeLastInput() {
 }
 
 function describeTarget(target: EventTarget | null | undefined) {
-  if (!(target instanceof Element)) return undefined;
+  if (!(target instanceof HTMLElement)) {
+    if (target instanceof Element) return target.tagName.toLowerCase();
+    return undefined;
+  }
   const label =
     target.getAttribute('aria-label') ||
     target.getAttribute('placeholder') ||
     (target.textContent ?? '').trim().slice(0, 30) ||
-    target.getAttribute('data-slot');
-  return `${target.tagName.toLowerCase()}${label ? ` "${label}"` : ''}`;
+    target.dataset.slot;
+  const tag = target.tagName.toLowerCase();
+  return label ? `${tag} "${label}"` : tag;
 }
 
 /** The title of the open form, read from the DOM since Sheet itself doesn't know it. */
@@ -146,7 +150,7 @@ function useSheetDebugLogDev(open: boolean | undefined, onOpenChange: OnOpenChan
           if (title === '(untitled)' && retriesLeft > 0) return fillTitle(retriesLeft - 1);
           titleRef.current = title;
           const entry = window.formDebugLog?.[entryIndex];
-          if (entry && entry.sheet === sheetId) entry.title = title;
+          if (entry?.sheet === sheetId) entry.title = title;
         }, 50);
       fillTitle(5);
     } else if (!open && wasOpenRef.current) {
