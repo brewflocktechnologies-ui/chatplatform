@@ -76,10 +76,14 @@ export async function billingRequest<T>(
   { origin, query, body, notFoundMessage }: RequestOptions = {}
 ): Promise<ApiResult<T>> {
   const qs = query?.size ? `?${query}` : '';
-  const baseOrigin = origin ? trimTrailingSlashes(origin) : origins.billing();
 
   let res: Response;
+
   try {
+    const baseOrigin = origin
+      ? trimTrailingSlashes(origin)
+      : origins.billing();
+
     res = await fetch(`${baseOrigin}${path}${qs}`, {
       method,
       cache: 'no-store',
@@ -90,11 +94,18 @@ export async function billingRequest<T>(
       })
     });
   } catch {
-    return { ok: false, status: 0, message: 'Billing service is unreachable' };
+    return {
+      ok: false,
+      status: 0,
+      message: 'Billing service is unreachable'
+    };
   }
 
   const data = await res.json().catch(() => null);
-  if (res.ok) return { ok: true, data: data as T };
+
+  if (res.ok) {
+    return { ok: true, data: data as T };
+  }
 
   return {
     ok: false,

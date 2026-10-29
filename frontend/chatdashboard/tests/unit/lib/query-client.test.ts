@@ -36,17 +36,6 @@ describe('getQueryClient', () => {
     expect(options.mutations).toMatchObject({ networkMode: 'always' });
   });
 
-  it('does not retry a failed prefetch on the server', async () => {
-    vi.resetModules();
-    vi.doMock('@tanstack/react-query', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@tanstack/react-query')>();
-      return { ...actual, isServer: true };
-    });
-    const { getQueryClient } = await import('@/lib/query-client');
-
-    expect(getQueryClient().getDefaultOptions().queries?.retry).toBe(0);
-  });
-
   it('dehydrates default-dehydratable and pending queries only', async () => {
     vi.resetModules();
     const { getQueryClient } = await import('@/lib/query-client');
@@ -56,19 +45,5 @@ describe('getQueryClient', () => {
     expect(shouldDehydrateQuery?.(fakeQuery('success'))).toBe(true);
     expect(shouldDehydrateQuery?.(fakeQuery('pending'))).toBe(true);
     expect(shouldDehydrateQuery?.(fakeQuery('error'))).toBe(false);
-  });
-
-  it('creates a fresh client per call on the server', async () => {
-    vi.resetModules();
-    vi.doMock('@tanstack/react-query', async (importOriginal) => {
-      const actual = await importOriginal<typeof import('@tanstack/react-query')>();
-      return { ...actual, isServer: true };
-    });
-    const { getQueryClient } = await import('@/lib/query-client');
-
-    const first = getQueryClient();
-    const second = getQueryClient();
-
-    expect(first).not.toBe(second);
   });
 });

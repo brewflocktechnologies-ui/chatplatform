@@ -13,9 +13,12 @@ export default function CompanyListing() {
 
   const queryClient = getQueryClient();
 
-  // A search loads everything on the client instead, so there is nothing to prefetch.
+  // Search results are loaded on the client instead.
   if (!name) {
-    void queryClient.query(companiesQueryOptions({ page: page - 1, size: perPage, sort })).catch(() => {});
+    void queryClient.query(companiesQueryOptions({ page: page - 1, size: perPage, sort,
+    }),
+      )
+      .catch(() => {});
   }
 
   return (
