@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const toastMock = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast: toastMock }));
@@ -19,10 +19,8 @@ import FormsShowcasePage from '@/features/forms/components/forms-showcase-page';
 beforeEach(() => toastMock.success.mockClear());
 afterEach(cleanup);
 
-const next = async () => {
-  await act(async () => {
-    fireEvent.click(screen.getByRole('button', { name: /next/i }));
-  });
+const next = () => {
+  fireEvent.click(screen.getByRole('button', { name: /next/i }));
 };
 
 async function fillStep1() {
@@ -86,9 +84,7 @@ describe('MultiStepProductForm', () => {
     await next();
     expect(await screen.findByText('Step 3 of 3')).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.submit(document.querySelector('form') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
     await waitFor(() =>
       expect(toastMock.success).toHaveBeenCalledWith('Product created successfully!')
     );
@@ -104,9 +100,7 @@ describe('MultiStepProductForm', () => {
   it('submitting with Enter on a middle step goes through the step gate', async () => {
     render(<MultiStepProductForm />);
     await fillStep1();
-    await act(async () => {
-      fireEvent.submit(document.querySelector('form') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
     expect(await screen.findByText('Step 2 of 3')).toBeInTheDocument();
     expect(toastMock.success).not.toHaveBeenCalled();
   });

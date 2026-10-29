@@ -60,29 +60,21 @@ describe('LazyKBar', () => {
 
   it('mounts on Cmd+K (uppercase key too)', () => {
     renderLazy();
-    act(() => {
-      fireEvent.keyDown(window, { key: 'K', metaKey: true });
-    });
+    fireEvent.keyDown(window, { key: 'K', metaKey: true });
     expect(screen.getByTestId('kbar')).toBeInTheDocument();
   });
 
   it('ignores other keys and a bare K', () => {
     renderLazy();
-    act(() => {
-      fireEvent.keyDown(window, { key: 'k' });
-      fireEvent.keyDown(window, { key: 'j', ctrlKey: true });
-    });
+    fireEvent.keyDown(window, { key: 'k' });
+    fireEvent.keyDown(window, { key: 'j', ctrlKey: true });
     expect(screen.queryByTestId('kbar')).not.toBeInTheDocument();
   });
 
   it('does not bump the nonce for Ctrl+K once mounted (kbar handles it)', () => {
     renderLazy();
-    act(() => {
-      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
-    });
-    act(() => {
-      fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
-    });
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
+    fireEvent.keyDown(window, { key: 'k', ctrlKey: true });
     expect(screen.getByTestId('kbar')).toHaveAttribute('data-nonce', '0');
   });
 

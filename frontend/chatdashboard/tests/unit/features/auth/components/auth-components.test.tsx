@@ -89,7 +89,7 @@ describe('MockLoginForm', () => {
     render(<MockLoginForm />);
     fireEvent.change(screen.getByPlaceholderText('Your name'), { target: { value: '' } });
     fireEvent.click(screen.getByRole('button', { name: /login \(demo\)/i }));
-    await waitFor(() => expect(screen.getByText('Name is required')).toBeInTheDocument());
+    expect(await screen.findByText('Name is required')).toBeInTheDocument();
     expect(login).not.toHaveBeenCalled();
   });
 });
@@ -116,9 +116,7 @@ describe('UserAuthForm', () => {
     const input = screen.getByPlaceholderText('Enter your email...');
     fireEvent.change(input, { target: { value: 'nope' } });
     fireEvent.submit(input.closest('form')!);
-    await waitFor(() =>
-      expect(screen.getByText('Enter a valid email address')).toBeInTheDocument()
-    );
+    expect(await screen.findByText('Enter a valid email address')).toBeInTheDocument();
     expect(toastSuccess).not.toHaveBeenCalled();
   });
 

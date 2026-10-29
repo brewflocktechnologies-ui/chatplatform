@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }));
 
@@ -54,9 +54,7 @@ describe('WebsiteCodeDialog', () => {
     const dialog = await screen.findByRole('dialog');
     vi.useFakeTimers({ shouldAdvanceTime: true });
 
-    await act(async () => {
-      fireEvent.click(within(dialog).getByRole('button', { name: 'Copy' }));
-    });
+    fireEvent.click(within(dialog).getByRole('button', { name: 'Copy' }));
 
     expect(writeText).toHaveBeenCalledWith(expect.stringContaining('data-website-id="w-123"'));
     expect(toast.success).toHaveBeenCalledWith('Code copied to clipboard!');
@@ -115,6 +113,6 @@ describe('WebsiteCodeDialog', () => {
     rerender(<WebsiteCodeDialog website={website} open={false} onOpenChange={vi.fn()} />);
     rerender(<WebsiteCodeDialog website={website} open onOpenChange={vi.fn()} />);
 
-    await waitFor(() => expect(screen.getByText(/Copy the snippet below/)).toBeInTheDocument());
+    expect(await screen.findByText(/Copy the snippet below/)).toBeInTheDocument();
   });
 });
