@@ -75,6 +75,18 @@ const CANNED_RESPONSES = [
   }
 ];
 
+const trimDots = (val: string) => {
+  let start = 0;
+  let end = val.length;
+  while (start < end && val[start] === '.') {
+    start++;
+  }
+  while (end > start && val[end - 1] === '.') {
+    end--;
+  }
+  return val.slice(start, end);
+};
+
 export function ChatDetails({
   conversation,
   isOpen,
@@ -96,7 +108,7 @@ export function ChatDetails({
   // Generate sensible defaults for visitor attributes if not explicitly provided
   const email =
     conversation.visitorInfo?.email ||
-    `${conversation.name.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '')}@visitor.com`;
+    `${trimDots(conversation.name.toLowerCase().replace(/[^a-z0-9]+/g, '.'))}@visitor.com`;
   const location = conversation.visitorInfo?.location || 'San Francisco, United States';
   const localTime =
     conversation.visitorInfo?.localTime ||

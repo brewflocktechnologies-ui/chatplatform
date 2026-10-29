@@ -12,7 +12,7 @@ export default function CustomerListingPage() {
 
   const queryClient = getQueryClient();
 
-  void queryClient.prefetchQuery(customersQueryOptions({ page: page - 1, size: pageLimit, sort }));
+  void queryClient.query(customersQueryOptions({ page: page - 1, size: pageLimit, sort })).catch(() => {});
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

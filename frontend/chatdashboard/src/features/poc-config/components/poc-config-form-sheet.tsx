@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useStore } from '@tanstack/react-form';
+import { useSelector } from '@tanstack/react-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
@@ -151,7 +151,7 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: Readonly<PocC
     isError: websitesError
   } = useQuery({ ...allPocWebsitesQueryOptions(), enabled: open });
 
-  const clientId = useStore(form.store, (state) => state.values.clientId);
+  const clientId = useSelector(form.store, (state) => state.values.clientId);
 
   const websiteOptions = useMemo(() => {
     const options = (websites ?? [])
@@ -166,6 +166,13 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: Readonly<PocC
     }
     return options;
   }, [websites, clientId, config]);
+
+  let websitePlaceholder = 'Select website';
+  if (!clientId) {
+    websitePlaceholder = 'Select a customer first';
+  } else if (websitesLoading) {
+    websitePlaceholder = 'Loading websites...';
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -243,13 +250,7 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: Readonly<PocC
                     label='Website'
                     required
                     options={websiteOptions}
-                    placeholder={
-                      !clientId
-                        ? 'Select a customer first'
-                        : websitesLoading
-                          ? 'Loading websites...'
-                          : 'Select website'
-                    }
+                    placeholder={websitePlaceholder}
                     searchPlaceholder='Search websites...'
                     emptyMessage={
                       websitesError

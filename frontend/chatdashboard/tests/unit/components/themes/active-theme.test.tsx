@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { act, cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 import { ActiveThemeProvider, useThemeConfig } from '@/components/themes/active-theme';
 import ThemeProvider from '@/components/themes/theme-provider';
 import { DEFAULT_THEME, THEMES } from '@/components/themes/theme.config';
@@ -86,9 +86,7 @@ describe('ActiveThemeProvider', () => {
         <Clearer />
       </ActiveThemeProvider>
     );
-    act(() => {
-      fireEvent.click(screen.getByText('clear'));
-    });
+    fireEvent.click(screen.getByText('clear'));
     expect(document.documentElement.hasAttribute('data-theme')).toBe(false);
   });
 

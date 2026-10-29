@@ -29,6 +29,7 @@ test.describe('Billing & Plans', () => {
     } catch {
       ok = false;
     }
+    // Reason: Skipped when the remote billing backend service is unreachable or timed out.
     test.skip(!ok, 'billing service is unreachable');
   });
 
