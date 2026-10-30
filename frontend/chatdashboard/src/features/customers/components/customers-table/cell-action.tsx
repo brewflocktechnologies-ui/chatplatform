@@ -23,7 +23,7 @@ interface CellActionProps {
   data: Customer;
 }
 
-export function CellAction({ data }: CellActionProps) {
+export function CellAction({ data }: Readonly<CellActionProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const queryClient = useQueryClient();

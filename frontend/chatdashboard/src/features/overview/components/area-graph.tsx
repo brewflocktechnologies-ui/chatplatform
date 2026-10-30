@@ -92,7 +92,7 @@ export function AreaGraph() {
   );
 }
 
-const DottedBackgroundPattern = ({ config }: { config: ChartConfig }) => {
+const DottedBackgroundPattern = ({ config }: Readonly<{ config: ChartConfig }>) => {
   const items = Object.fromEntries(
     Object.entries(config).map(([key, value]) => [key, value.color])
   );

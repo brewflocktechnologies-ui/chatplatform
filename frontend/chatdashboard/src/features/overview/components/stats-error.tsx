@@ -11,7 +11,7 @@ interface StatsErrorAlertProps {
 // Presentational shell for overview stat error boundaries. Each error.tsx owns
 // its retry wiring (useTransition + router.refresh + reset) and passes the
 // button in via `action` so the recovery path stays visible in the route file.
-export function StatsErrorAlert({ message, action }: StatsErrorAlertProps) {
+export function StatsErrorAlert({ message, action }: Readonly<StatsErrorAlertProps>) {
   return (
     <Alert variant='destructive'>
       <Icons.alertCircle className='h-4 w-4' />

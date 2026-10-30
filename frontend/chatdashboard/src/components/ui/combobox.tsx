@@ -56,10 +56,12 @@ function ComboboxInput({
   showTrigger = true,
   showClear = false,
   ...props
-}: ComboboxPrimitive.Input.Props & {
-  showTrigger?: boolean;
-  showClear?: boolean;
-}) {
+}: Readonly<
+  ComboboxPrimitive.Input.Props & {
+    showTrigger?: boolean;
+    showClear?: boolean;
+  }
+>) {
   return (
     <InputGroup className={cn('w-auto', className)}>
       <ComboboxPrimitive.Input render={<InputGroupInput disabled={disabled} />} {...props} />
@@ -89,11 +91,13 @@ function ComboboxContent({
   alignOffset = 0,
   anchor,
   ...props
-}: ComboboxPrimitive.Popup.Props &
-  Pick<
-    ComboboxPrimitive.Positioner.Props,
-    'side' | 'align' | 'sideOffset' | 'alignOffset' | 'anchor'
-  >) {
+}: Readonly<
+  ComboboxPrimitive.Popup.Props &
+    Pick<
+      ComboboxPrimitive.Positioner.Props,
+      'side' | 'align' | 'sideOffset' | 'alignOffset' | 'anchor'
+    >
+>) {
   return (
     <ComboboxPrimitive.Portal>
       <ComboboxPrimitive.Positioner
@@ -199,7 +203,9 @@ function ComboboxSeparator({ className, ...props }: Readonly<ComboboxPrimitive.S
 function ComboboxChips({
   className,
   ...props
-}: React.ComponentPropsWithRef<typeof ComboboxPrimitive.Chips> & ComboboxPrimitive.Chips.Props) {
+}: Readonly<
+  React.ComponentPropsWithRef<typeof ComboboxPrimitive.Chips> & ComboboxPrimitive.Chips.Props
+>) {
   return (
     <ComboboxPrimitive.Chips
       data-slot='combobox-chips'
@@ -217,9 +223,11 @@ function ComboboxChip({
   children,
   showRemove = true,
   ...props
-}: ComboboxPrimitive.Chip.Props & {
-  showRemove?: boolean;
-}) {
+}: Readonly<
+  ComboboxPrimitive.Chip.Props & {
+    showRemove?: boolean;
+  }
+>) {
   return (
     <ComboboxPrimitive.Chip
       data-slot='combobox-chip'

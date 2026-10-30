@@ -33,7 +33,7 @@ interface WebsiteFormSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormSheetProps) {
+export function WebsiteFormSheet({ website, open, onOpenChange }: Readonly<WebsiteFormSheetProps>) {
   const isEdit = !!website;
   const queryClient = useQueryClient();
 

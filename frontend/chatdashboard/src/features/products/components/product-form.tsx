@@ -16,10 +16,10 @@ import type { Product } from '../api/types';
 export default function ProductForm({
   initialData,
   pageTitle
-}: {
+}: Readonly<{
   initialData: Product | null;
   pageTitle: string;
-}) {
+}>) {
   const router = useRouter();
   const isEdit = !!initialData;
 

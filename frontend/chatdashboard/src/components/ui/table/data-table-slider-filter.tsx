@@ -34,7 +34,10 @@ interface DataTableSliderFilterProps<TData> {
   title?: string;
 }
 
-export function DataTableSliderFilter<TData>({ column, title }: DataTableSliderFilterProps<TData>) {
+export function DataTableSliderFilter<TData>({
+  column,
+  title
+}: Readonly<DataTableSliderFilterProps<TData>>) {
   const id = React.useId();
 
   const columnFilterValue = getIsValidRange(column.getFilterValue())

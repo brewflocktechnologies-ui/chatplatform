@@ -24,7 +24,7 @@ export function DataTableToolbar<TData>({
   actions,
   className,
   ...props
-}: DataTableToolbarProps<TData>) {
+}: Readonly<DataTableToolbarProps<TData>>) {
   const isFiltered = table.getState().columnFilters.length > 0;
 
   const columns = React.useMemo(
@@ -72,7 +72,7 @@ interface DataTableToolbarFilterProps<TData> {
   column: Column<TData>;
 }
 
-function DataTableToolbarFilter<TData>({ column }: DataTableToolbarFilterProps<TData>) {
+function DataTableToolbarFilter<TData>({ column }: Readonly<DataTableToolbarFilterProps<TData>>) {
   {
     const columnMeta = column.columnDef.meta;
 

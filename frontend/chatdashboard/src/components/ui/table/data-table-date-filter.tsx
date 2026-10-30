@@ -56,7 +56,7 @@ export function DataTableDateFilter<TData>({
   column,
   title,
   multiple
-}: DataTableDateFilterProps<TData>) {
+}: Readonly<DataTableDateFilterProps<TData>>) {
   const columnFilterValue = column.getFilterValue();
 
   const selectedDates = React.useMemo<DateSelection>(() => {

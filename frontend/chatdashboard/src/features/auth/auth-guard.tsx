@@ -4,7 +4,7 @@ import { useMockAuth } from './mock-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 
-export function AuthGuard({ children }: { children: React.ReactNode }) {
+export function AuthGuard({ children }: Readonly<{ children: React.ReactNode }>) {
   const { isAuthenticated, isLoaded } = useMockAuth();
   const router = useRouter();
 

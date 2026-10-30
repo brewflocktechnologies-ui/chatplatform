@@ -24,7 +24,7 @@ interface CellActionProps {
   data: Website;
 }
 
-export function CellAction({ data }: CellActionProps) {
+export function CellAction({ data }: Readonly<CellActionProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [codeOpen, setCodeOpen] = useState(false);

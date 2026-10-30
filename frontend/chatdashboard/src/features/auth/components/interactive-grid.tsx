@@ -33,7 +33,7 @@ export function InteractiveGridPattern({
   className,
   squaresClassName,
   ...props
-}: InteractiveGridPatternProps) {
+}: Readonly<InteractiveGridPatternProps>) {
   const [horizontal, vertical] = squares;
   const [hoveredSquare, setHoveredSquare] = useState<number | null>(null);
 

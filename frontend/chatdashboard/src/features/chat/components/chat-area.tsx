@@ -31,7 +31,7 @@ export function ChatArea({
   isDetailsOpen,
   onToggleDetails,
   onBack
-}: ChatAreaProps) {
+}: Readonly<ChatAreaProps>) {
   const shouldReduceMotion = useReducedMotion();
   const messagesContainerRef = useRef<HTMLDivElement | null>(null);
   const liveRegionRef = useRef<HTMLDivElement | null>(null);

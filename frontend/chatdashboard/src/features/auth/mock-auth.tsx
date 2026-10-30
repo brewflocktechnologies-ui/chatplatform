@@ -29,7 +29,7 @@ interface MockAuthContextValue {
 
 const MockAuthContext = React.createContext<MockAuthContextValue | null>(null);
 
-export function MockAuthProvider({ children }: { children: React.ReactNode }) {
+export function MockAuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [user, setUser] = React.useState<MockUser | null>(null);
   const [isLoaded, setIsLoaded] = React.useState(false);
   const router = useRouter();

@@ -42,14 +42,14 @@ const categoryOptions = [
 
 function ReviewSummary({
   values
-}: {
+}: Readonly<{
   values: {
     name: string;
     category: string;
     price?: number;
     description: string;
   };
-}) {
+}>) {
   return (
     <div className='space-y-3'>
       <Separator />

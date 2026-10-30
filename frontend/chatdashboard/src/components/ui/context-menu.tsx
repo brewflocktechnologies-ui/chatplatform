@@ -31,8 +31,10 @@ function ContextMenuContent({
   side = 'right',
   sideOffset = 0,
   ...props
-}: ContextMenuPrimitive.Popup.Props &
-  Pick<ContextMenuPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>) {
+}: Readonly<
+  ContextMenuPrimitive.Popup.Props &
+    Pick<ContextMenuPrimitive.Positioner.Props, 'align' | 'alignOffset' | 'side' | 'sideOffset'>
+>) {
   return (
     <ContextMenuPrimitive.Portal>
       <ContextMenuPrimitive.Positioner
@@ -63,9 +65,11 @@ function ContextMenuLabel({
   className,
   inset,
   ...props
-}: ContextMenuPrimitive.GroupLabel.Props & {
-  inset?: boolean;
-}) {
+}: Readonly<
+  ContextMenuPrimitive.GroupLabel.Props & {
+    inset?: boolean;
+  }
+>) {
   return (
     <ContextMenuPrimitive.GroupLabel
       data-slot='context-menu-label'
@@ -84,10 +88,12 @@ function ContextMenuItem({
   inset,
   variant = 'default',
   ...props
-}: ContextMenuPrimitive.Item.Props & {
-  inset?: boolean;
-  variant?: 'default' | 'destructive';
-}) {
+}: Readonly<
+  ContextMenuPrimitive.Item.Props & {
+    inset?: boolean;
+    variant?: 'default' | 'destructive';
+  }
+>) {
   return (
     <ContextMenuPrimitive.Item
       data-slot='context-menu-item'
@@ -111,9 +117,11 @@ function ContextMenuSubTrigger({
   inset,
   children,
   ...props
-}: ContextMenuPrimitive.SubmenuTrigger.Props & {
-  inset?: boolean;
-}) {
+}: Readonly<
+  ContextMenuPrimitive.SubmenuTrigger.Props & {
+    inset?: boolean;
+  }
+>) {
   return (
     <ContextMenuPrimitive.SubmenuTrigger
       data-slot='context-menu-sub-trigger'
@@ -130,7 +138,9 @@ function ContextMenuSubTrigger({
   );
 }
 
-function ContextMenuSubContent({ ...props }: React.ComponentProps<typeof ContextMenuContent>) {
+function ContextMenuSubContent({
+  ...props
+}: Readonly<React.ComponentProps<typeof ContextMenuContent>>) {
   return (
     <ContextMenuContent
       data-slot='context-menu-sub-content'
@@ -147,9 +157,11 @@ function ContextMenuCheckboxItem({
   checked,
   inset,
   ...props
-}: ContextMenuPrimitive.CheckboxItem.Props & {
-  inset?: boolean;
-}) {
+}: Readonly<
+  ContextMenuPrimitive.CheckboxItem.Props & {
+    inset?: boolean;
+  }
+>) {
   return (
     <ContextMenuPrimitive.CheckboxItem
       data-slot='context-menu-checkbox-item'
@@ -180,9 +192,11 @@ function ContextMenuRadioItem({
   children,
   inset,
   ...props
-}: ContextMenuPrimitive.RadioItem.Props & {
-  inset?: boolean;
-}) {
+}: Readonly<
+  ContextMenuPrimitive.RadioItem.Props & {
+    inset?: boolean;
+  }
+>) {
   return (
     <ContextMenuPrimitive.RadioItem
       data-slot='context-menu-radio-item'
@@ -216,7 +230,7 @@ function ContextMenuSeparator({
   );
 }
 
-function ContextMenuShortcut({ className, ...props }: React.ComponentProps<'span'>) {
+function ContextMenuShortcut({ className, ...props }: Readonly<React.ComponentProps<'span'>>) {
   return (
     <span
       data-slot='context-menu-shortcut'

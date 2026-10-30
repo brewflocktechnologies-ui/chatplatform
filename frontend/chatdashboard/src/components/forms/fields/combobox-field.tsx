@@ -25,12 +25,14 @@ export function ComboboxField({
   placeholder = 'Select an option',
   searchPlaceholder = 'Search...',
   emptyMessage = 'No results found.'
-}: BaseFieldProps & {
-  options: { value: string; label: string; disabled?: boolean }[];
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyMessage?: string;
-}) {
+}: Readonly<
+  BaseFieldProps & {
+    options: { value: string; label: string; disabled?: boolean }[];
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyMessage?: string;
+  }
+>) {
   const field = useFieldContext<string>();
   const isInvalid = useFieldInvalid();
   const [open, setOpen] = React.useState(false);

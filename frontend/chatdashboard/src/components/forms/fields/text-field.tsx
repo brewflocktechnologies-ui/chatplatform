@@ -22,7 +22,9 @@ export function TextField({
   description,
   required,
   ...inputProps
-}: BaseFieldProps & Omit<React.ComponentProps<typeof Input>, 'value' | 'onChange' | 'onBlur'>) {
+}: Readonly<
+  BaseFieldProps & Omit<React.ComponentProps<typeof Input>, 'value' | 'onChange' | 'onBlur'>
+>) {
   const field = useFieldContext<string | number | undefined>();
   const isInvalid = useFieldInvalid();
   const isValidating = field.state.meta.isValidating;

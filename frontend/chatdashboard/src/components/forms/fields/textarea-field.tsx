@@ -11,10 +11,12 @@ export function TextareaField({
   required,
   showCount,
   ...textareaProps
-}: BaseFieldProps & {
-  /** Show a character counter (uses `maxLength` as the denominator). */
-  showCount?: boolean;
-} & Omit<React.ComponentProps<typeof Textarea>, 'value' | 'onChange' | 'onBlur'>) {
+}: Readonly<
+  BaseFieldProps & {
+    /** Show a character counter (uses `maxLength` as the denominator). */
+    showCount?: boolean;
+  } & Omit<React.ComponentProps<typeof Textarea>, 'value' | 'onChange' | 'onBlur'>
+>) {
   const field = useFieldContext<string>();
   const isInvalid = useFieldInvalid();
 

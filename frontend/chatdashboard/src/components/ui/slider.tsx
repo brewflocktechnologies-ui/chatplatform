@@ -2,6 +2,17 @@ import { Slider as SliderPrimitive } from '@base-ui/react/slider';
 
 import { cn } from '@/lib/utils';
 
+function resolveSliderValues(
+  value: SliderPrimitive.Root.Props['value'],
+  defaultValue: SliderPrimitive.Root.Props['defaultValue'],
+  min: number,
+  max: number
+) {
+  if (Array.isArray(value)) return value;
+  if (Array.isArray(defaultValue)) return defaultValue;
+  return [min, max];
+}
+
 function Slider({
   className,
   defaultValue,
@@ -9,12 +20,8 @@ function Slider({
   min = 0,
   max = 100,
   ...props
-}: SliderPrimitive.Root.Props) {
-  const resolvedValues = Array.isArray(value)
-    ? value
-    : Array.isArray(defaultValue)
-      ? defaultValue
-      : [min, max];
+}: Readonly<SliderPrimitive.Root.Props>) {
+  const resolvedValues = resolveSliderValues(value, defaultValue, min, max);
 
   return (
     <SliderPrimitive.Root

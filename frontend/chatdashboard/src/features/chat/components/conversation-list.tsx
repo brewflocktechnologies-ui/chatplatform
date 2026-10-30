@@ -22,7 +22,11 @@ interface ConversationListProps {
   onSelect: (id: string) => void;
 }
 
-export function ConversationList({ conversations, selectedId, onSelect }: ConversationListProps) {
+export function ConversationList({
+  conversations,
+  selectedId,
+  onSelect
+}: Readonly<ConversationListProps>) {
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const typingMap = useChatStore((state) => state.typingMap);

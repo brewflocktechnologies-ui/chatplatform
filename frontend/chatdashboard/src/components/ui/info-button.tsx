@@ -18,7 +18,7 @@ export function InfoButton({
   variant = 'ghost',
   size = 'icon',
   ...props
-}: InfoButtonProps) {
+}: Readonly<InfoButtonProps>) {
   const { setContent, setOpen } = useInfobar();
 
   // Set content on mount so the infobar has it ready, but don't force it open

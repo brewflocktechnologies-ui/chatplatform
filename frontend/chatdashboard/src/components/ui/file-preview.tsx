@@ -23,7 +23,7 @@ export interface FilePreviewProps {
 
 const getFileExtension = (fileName: string): string => {
   const parts = fileName.split('.');
-  return parts.length > 1 ? parts[parts.length - 1] : '';
+  return parts.length > 1 ? (parts.at(-1) ?? '') : '';
 };
 
 const getFileIcon = (fileType: string, fileName: string) => {

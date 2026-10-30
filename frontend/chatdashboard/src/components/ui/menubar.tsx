@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { IconCheck } from '@tabler/icons-react';
 
-function Menubar({ className, ...props }: MenubarPrimitive.Props) {
+function Menubar({ className, ...props }: Readonly<MenubarPrimitive.Props>) {
   return (
     <MenubarPrimitive
       data-slot='menubar'
@@ -32,19 +32,22 @@ function Menubar({ className, ...props }: MenubarPrimitive.Props) {
   );
 }
 
-function MenubarMenu({ ...props }: React.ComponentProps<typeof DropdownMenu>) {
+function MenubarMenu({ ...props }: Readonly<React.ComponentProps<typeof DropdownMenu>>) {
   return <DropdownMenu data-slot='menubar-menu' {...props} />;
 }
 
-function MenubarGroup({ ...props }: React.ComponentProps<typeof DropdownMenuGroup>) {
+function MenubarGroup({ ...props }: Readonly<React.ComponentProps<typeof DropdownMenuGroup>>) {
   return <DropdownMenuGroup data-slot='menubar-group' {...props} />;
 }
 
-function MenubarPortal({ ...props }: React.ComponentProps<typeof DropdownMenuPortal>) {
+function MenubarPortal({ ...props }: Readonly<React.ComponentProps<typeof DropdownMenuPortal>>) {
   return <DropdownMenuPortal data-slot='menubar-portal' {...props} />;
 }
 
-function MenubarTrigger({ className, ...props }: React.ComponentProps<typeof DropdownMenuTrigger>) {
+function MenubarTrigger({
+  className,
+  ...props
+}: Readonly<React.ComponentProps<typeof DropdownMenuTrigger>>) {
   return (
     <DropdownMenuTrigger
       data-slot='menubar-trigger'
@@ -63,7 +66,7 @@ function MenubarContent({
   alignOffset = -4,
   sideOffset = 8,
   ...props
-}: React.ComponentProps<typeof DropdownMenuContent>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuContent>>) {
   return (
     <DropdownMenuContent
       data-slot='menubar-content'
@@ -84,7 +87,7 @@ function MenubarItem({
   inset,
   variant = 'default',
   ...props
-}: React.ComponentProps<typeof DropdownMenuItem>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuItem>>) {
   return (
     <DropdownMenuItem
       data-slot='menubar-item'
@@ -105,9 +108,11 @@ function MenubarCheckboxItem({
   checked,
   inset,
   ...props
-}: MenuPrimitive.CheckboxItem.Props & {
-  inset?: boolean;
-}) {
+}: Readonly<
+  MenuPrimitive.CheckboxItem.Props & {
+    inset?: boolean;
+  }
+>) {
   return (
     <MenuPrimitive.CheckboxItem
       data-slot='menubar-checkbox-item'
@@ -129,7 +134,9 @@ function MenubarCheckboxItem({
   );
 }
 
-function MenubarRadioGroup({ ...props }: React.ComponentProps<typeof DropdownMenuRadioGroup>) {
+function MenubarRadioGroup({
+  ...props
+}: Readonly<React.ComponentProps<typeof DropdownMenuRadioGroup>>) {
   return <DropdownMenuRadioGroup data-slot='menubar-radio-group' {...props} />;
 }
 
@@ -138,9 +145,11 @@ function MenubarRadioItem({
   children,
   inset,
   ...props
-}: MenuPrimitive.RadioItem.Props & {
-  inset?: boolean;
-}) {
+}: Readonly<
+  MenuPrimitive.RadioItem.Props & {
+    inset?: boolean;
+  }
+>) {
   return (
     <MenuPrimitive.RadioItem
       data-slot='menubar-radio-item'
@@ -165,9 +174,11 @@ function MenubarLabel({
   className,
   inset,
   ...props
-}: React.ComponentProps<typeof DropdownMenuLabel> & {
-  inset?: boolean;
-}) {
+}: Readonly<
+  React.ComponentProps<typeof DropdownMenuLabel> & {
+    inset?: boolean;
+  }
+>) {
   return (
     <DropdownMenuLabel
       data-slot='menubar-label'
@@ -181,7 +192,7 @@ function MenubarLabel({
 function MenubarSeparator({
   className,
   ...props
-}: React.ComponentProps<typeof DropdownMenuSeparator>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuSeparator>>) {
   return (
     <DropdownMenuSeparator
       data-slot='menubar-separator'
@@ -194,7 +205,7 @@ function MenubarSeparator({
 function MenubarShortcut({
   className,
   ...props
-}: React.ComponentProps<typeof DropdownMenuShortcut>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuShortcut>>) {
   return (
     <DropdownMenuShortcut
       data-slot='menubar-shortcut'
@@ -207,7 +218,7 @@ function MenubarShortcut({
   );
 }
 
-function MenubarSub({ ...props }: React.ComponentProps<typeof DropdownMenuSub>) {
+function MenubarSub({ ...props }: Readonly<React.ComponentProps<typeof DropdownMenuSub>>) {
   return <DropdownMenuSub data-slot='menubar-sub' {...props} />;
 }
 
@@ -215,9 +226,11 @@ function MenubarSubTrigger({
   className,
   inset,
   ...props
-}: React.ComponentProps<typeof DropdownMenuSubTrigger> & {
-  inset?: boolean;
-}) {
+}: Readonly<
+  React.ComponentProps<typeof DropdownMenuSubTrigger> & {
+    inset?: boolean;
+  }
+>) {
   return (
     <DropdownMenuSubTrigger
       data-slot='menubar-sub-trigger'
@@ -234,7 +247,7 @@ function MenubarSubTrigger({
 function MenubarSubContent({
   className,
   ...props
-}: React.ComponentProps<typeof DropdownMenuSubContent>) {
+}: Readonly<React.ComponentProps<typeof DropdownMenuSubContent>>) {
   return (
     <DropdownMenuSubContent
       data-slot='menubar-sub-content'

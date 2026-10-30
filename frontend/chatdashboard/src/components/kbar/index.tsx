@@ -116,7 +116,7 @@ export default function KBar({
     </KBarProvider>
   );
 }
-const KBarComponent = ({ children }: { children: React.ReactNode }) => {
+const KBarComponent = ({ children }: Readonly<{ children: React.ReactNode }>) => {
   useThemeSwitching();
 
   return (

@@ -22,11 +22,11 @@ function BooleanBadge({
   value,
   trueLabel,
   falseLabel
-}: {
+}: Readonly<{
   value: boolean;
   trueLabel: string;
   falseLabel: string;
-}) {
+}>) {
   return (
     <Badge variant={value ? 'default' : 'secondary'}>
       {value ? <CheckIcon className='mr-1 h-3 w-3' /> : <CloseIcon className='mr-1 h-3 w-3' />}

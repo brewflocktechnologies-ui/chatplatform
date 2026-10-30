@@ -28,11 +28,13 @@ function ToggleGroup({
   orientation = 'horizontal',
   children,
   ...props
-}: ToggleGroupPrimitive.Props &
-  VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-    orientation?: 'horizontal' | 'vertical';
-  }) {
+}: Readonly<
+  ToggleGroupPrimitive.Props &
+    VariantProps<typeof toggleVariants> & {
+      spacing?: number;
+      orientation?: 'horizontal' | 'vertical';
+    }
+>) {
   return (
     <ToggleGroupPrimitive
       data-slot='toggle-group'
@@ -60,7 +62,7 @@ function ToggleGroupItem({
   variant = 'default',
   size = 'default',
   ...props
-}: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
+}: Readonly<TogglePrimitive.Props & VariantProps<typeof toggleVariants>>) {
   const context = React.useContext(ToggleGroupContext);
 
   return (

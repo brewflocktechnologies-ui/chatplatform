@@ -17,10 +17,12 @@ export function DatePickerField({
   required,
   placeholder = 'Pick a date',
   disabledDates
-}: BaseFieldProps & {
-  placeholder?: string;
-  disabledDates?: (date: Date) => boolean;
-}) {
+}: Readonly<
+  BaseFieldProps & {
+    placeholder?: string;
+    disabledDates?: (date: Date) => boolean;
+  }
+>) {
   const field = useFieldContext<Date | undefined>();
   const isInvalid = useFieldInvalid();
 
@@ -76,7 +78,7 @@ export function DateRangeField({
   description,
   required,
   placeholder = 'Pick a date range'
-}: BaseFieldProps & { placeholder?: string }) {
+}: Readonly<BaseFieldProps & { placeholder?: string }>) {
   const field = useFieldContext<DateRange | undefined>();
   const isInvalid = useFieldInvalid();
   const range = field.state.value;

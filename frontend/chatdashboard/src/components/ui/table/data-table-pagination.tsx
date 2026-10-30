@@ -22,7 +22,7 @@ export function DataTablePagination<TData>({
   pageSizeOptions = [10, 20, 30, 40, 50],
   className,
   ...props
-}: DataTablePaginationProps<TData>) {
+}: Readonly<DataTablePaginationProps<TData>>) {
   return (
     <div
       className={cn(

@@ -7,7 +7,7 @@ interface HeadingProps {
   infoContent?: InfobarContent;
 }
 
-export function Heading({ title, description, infoContent }: HeadingProps) {
+export function Heading({ title, description, infoContent }: Readonly<HeadingProps>) {
   return (
     <div>
       <div className='flex items-center gap-2'>

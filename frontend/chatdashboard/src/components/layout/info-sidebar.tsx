@@ -31,7 +31,7 @@ const defaultData = {
   ]
 };
 
-export function InfoSidebar({ ...props }: React.ComponentProps<typeof Infobar>) {
+export function InfoSidebar({ ...props }: Readonly<React.ComponentProps<typeof Infobar>>) {
   const { content } = useInfobar();
   const data = content || defaultData;
 

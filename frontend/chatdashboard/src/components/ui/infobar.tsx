@@ -74,11 +74,13 @@ function InfobarProvider({
   style,
   children,
   ...props
-}: React.ComponentProps<'div'> & {
-  defaultOpen?: boolean;
-  open?: boolean;
-  onOpenChange?: (open: boolean) => void;
-}) {
+}: Readonly<
+  React.ComponentProps<'div'> & {
+    defaultOpen?: boolean;
+    open?: boolean;
+    onOpenChange?: (open: boolean) => void;
+  }
+>) {
   const isMobile = useIsMobile();
   const [openMobile, setOpenMobile] = React.useState(false);
   const [content, setContent] = React.useState<InfobarContent | null>(null);
@@ -224,11 +226,13 @@ function Infobar({
   className,
   children,
   ...props
-}: React.ComponentProps<'div'> & {
-  side?: 'left' | 'right';
-  variant?: 'sidebar' | 'floating' | 'inset';
-  collapsible?: 'offcanvas' | 'icon' | 'none';
-}) {
+}: Readonly<
+  React.ComponentProps<'div'> & {
+    side?: 'left' | 'right';
+    variant?: 'sidebar' | 'floating' | 'inset';
+    collapsible?: 'offcanvas' | 'icon' | 'none';
+  }
+>) {
   const { isMobile, state, setOpen, openMobile, setOpenMobile, isPathnameChanging } = useInfobar();
 
   if (collapsible === 'none') {
@@ -314,7 +318,11 @@ function Infobar({
   );
 }
 
-function InfobarTrigger({ className, onClick, ...props }: React.ComponentProps<typeof Button>) {
+function InfobarTrigger({
+  className,
+  onClick,
+  ...props
+}: Readonly<React.ComponentProps<typeof Button>>) {
   const { toggleInfobar } = useInfobar();
 
   return (
@@ -336,7 +344,7 @@ function InfobarTrigger({ className, onClick, ...props }: React.ComponentProps<t
   );
 }
 
-function InfobarRail({ className, ...props }: React.ComponentProps<'button'>) {
+function InfobarRail({ className, ...props }: Readonly<React.ComponentProps<'button'>>) {
   const { toggleInfobar } = useInfobar();
 
   return (
@@ -362,7 +370,7 @@ function InfobarRail({ className, ...props }: React.ComponentProps<'button'>) {
   );
 }
 
-function InfobarInset({ className, ...props }: React.ComponentProps<'main'>) {
+function InfobarInset({ className, ...props }: Readonly<React.ComponentProps<'main'>>) {
   return (
     <main
       data-slot='infobar-inset'
@@ -376,7 +384,7 @@ function InfobarInset({ className, ...props }: React.ComponentProps<'main'>) {
   );
 }
 
-function InfobarInput({ className, ...props }: React.ComponentProps<typeof Input>) {
+function InfobarInput({ className, ...props }: Readonly<React.ComponentProps<typeof Input>>) {
   return (
     <Input
       data-slot='infobar-input'
@@ -387,7 +395,7 @@ function InfobarInput({ className, ...props }: React.ComponentProps<typeof Input
   );
 }
 
-function InfobarHeader({ className, ...props }: React.ComponentProps<'div'>) {
+function InfobarHeader({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='infobar-header'
@@ -398,7 +406,7 @@ function InfobarHeader({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function InfobarFooter({ className, ...props }: React.ComponentProps<'div'>) {
+function InfobarFooter({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='infobar-footer'
@@ -409,7 +417,10 @@ function InfobarFooter({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function InfobarSeparator({ className, ...props }: React.ComponentProps<typeof Separator>) {
+function InfobarSeparator({
+  className,
+  ...props
+}: Readonly<React.ComponentProps<typeof Separator>>) {
   return (
     <Separator
       data-slot='infobar-separator'
@@ -420,7 +431,7 @@ function InfobarSeparator({ className, ...props }: React.ComponentProps<typeof S
   );
 }
 
-function InfobarContent({ className, ...props }: React.ComponentProps<'div'>) {
+function InfobarContent({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='infobar-content'
@@ -434,7 +445,7 @@ function InfobarContent({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function InfobarGroup({ className, ...props }: React.ComponentProps<'div'>) {
+function InfobarGroup({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='infobar-group'
@@ -485,7 +496,7 @@ function InfobarGroupAction({ className, render, ...props }: useRender.Component
   });
 }
 
-function InfobarGroupContent({ className, ...props }: React.ComponentProps<'div'>) {
+function InfobarGroupContent({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='infobar-group-content'
@@ -496,7 +507,7 @@ function InfobarGroupContent({ className, ...props }: React.ComponentProps<'div'
   );
 }
 
-function InfobarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
+function InfobarMenu({ className, ...props }: Readonly<React.ComponentProps<'ul'>>) {
   return (
     <ul
       data-slot='infobar-menu'
@@ -507,7 +518,7 @@ function InfobarMenu({ className, ...props }: React.ComponentProps<'ul'>) {
   );
 }
 
-function InfobarMenuItem({ className, ...props }: React.ComponentProps<'li'>) {
+function InfobarMenuItem({ className, ...props }: Readonly<React.ComponentProps<'li'>>) {
   return (
     <li
       data-slot='infobar-menu-item'
@@ -548,10 +559,12 @@ function InfobarMenuButton({
   tooltip,
   className,
   ...props
-}: useRender.ComponentProps<'button'> & {
-  isActive?: boolean;
-  tooltip?: string | React.ComponentProps<typeof TooltipContent>;
-} & VariantProps<typeof infobarMenuButtonVariants>) {
+}: Readonly<
+  useRender.ComponentProps<'button'> & {
+    isActive?: boolean;
+    tooltip?: string | React.ComponentProps<typeof TooltipContent>;
+  } & VariantProps<typeof infobarMenuButtonVariants>
+>) {
   const { isMobile, state } = useInfobar();
 
   const button = useRender({
@@ -625,7 +638,7 @@ function InfobarMenuAction({
   });
 }
 
-function InfobarMenuBadge({ className, ...props }: React.ComponentProps<'div'>) {
+function InfobarMenuBadge({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='infobar-menu-badge'
@@ -648,9 +661,11 @@ function InfobarMenuSkeleton({
   className,
   showIcon = false,
   ...props
-}: React.ComponentProps<'div'> & {
-  showIcon?: boolean;
-}) {
+}: Readonly<
+  React.ComponentProps<'div'> & {
+    showIcon?: boolean;
+  }
+>) {
   // Random width between 50 to 90%.
   const width = React.useMemo(() => {
     return `${Math.floor(randomFraction() * 40) + 50}%`;
@@ -677,7 +692,7 @@ function InfobarMenuSkeleton({
   );
 }
 
-function InfobarMenuSub({ className, ...props }: React.ComponentProps<'ul'>) {
+function InfobarMenuSub({ className, ...props }: Readonly<React.ComponentProps<'ul'>>) {
   return (
     <ul
       data-slot='infobar-menu-sub'
@@ -692,7 +707,7 @@ function InfobarMenuSub({ className, ...props }: React.ComponentProps<'ul'>) {
   );
 }
 
-function InfobarMenuSubItem({ className, ...props }: React.ComponentProps<'li'>) {
+function InfobarMenuSubItem({ className, ...props }: Readonly<React.ComponentProps<'li'>>) {
   return (
     <li
       data-slot='infobar-menu-sub-item'
