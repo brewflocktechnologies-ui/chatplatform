@@ -52,7 +52,7 @@ export function getOrCreateVisitorIdentity(): { visitorName: string; conversatio
 
     if (!conversationId) {
       const slug = visitorName.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-      conversationId = `conv-${slug}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+      conversationId = `conv-${slug}-${Date.now().toString(36)}-${crypto.randomUUID()}`;
       sessionStorage.setItem('cw_conversation_id', conversationId);
     }
 
