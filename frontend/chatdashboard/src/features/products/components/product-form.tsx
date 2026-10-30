@@ -88,9 +88,8 @@ export default function ProductForm({
           }}
         >
           <FieldGroup>
-            <form.AppField
-              name='image'
-              children={(field) => (
+            <form.AppField name='image'>
+              {(field) => (
                 <field.FileUploadField
                   label='Product Image'
                   description='Upload a product image'
@@ -98,19 +97,17 @@ export default function ProductForm({
                   maxFiles={4}
                 />
               )}
-            />
+            </form.AppField>
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <form.AppField
-                name='name'
-                children={(field) => (
+              <form.AppField name='name'>
+                {(field) => (
                   <field.TextField label='Product Name' required placeholder='Enter product name' />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='category'
-                children={(field) => (
+              <form.AppField name='category'>
+                {(field) => (
                   <field.SelectField
                     label='Category'
                     required
@@ -118,11 +115,10 @@ export default function ProductForm({
                     placeholder='Select category'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='price'
-                children={(field) => (
+              <form.AppField name='price'>
+                {(field) => (
                   <field.TextField
                     label='Price'
                     required
@@ -132,12 +128,11 @@ export default function ProductForm({
                     placeholder='Enter price'
                   />
                 )}
-              />
+              </form.AppField>
             </div>
 
-            <form.AppField
-              name='description'
-              children={(field) => (
+            <form.AppField name='description'>
+              {(field) => (
                 <field.TextareaField
                   label='Description'
                   required
@@ -146,7 +141,7 @@ export default function ProductForm({
                   rows={4}
                 />
               )}
-            />
+            </form.AppField>
           </FieldGroup>
 
           <div className='flex justify-end gap-2'>

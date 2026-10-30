@@ -171,12 +171,9 @@ export default function DemoForm() {
             <SectionTitle>Text Inputs</SectionTitle>
 
             <FieldGroup className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <form.AppField
-                name='name'
-                children={(field) => (
-                  <field.TextField label='Full Name' required placeholder='John Doe' />
-                )}
-              />
+              <form.AppField name='name'>
+                {(field) => <field.TextField label='Full Name' required placeholder='John Doe' />}
+              </form.AppField>
 
               {/* Async validation: simulated server-side email check */}
               <form.AppField
@@ -192,7 +189,8 @@ export default function DemoForm() {
                     return undefined;
                   }
                 }}
-                children={(field) => (
+              >
+                {(field) => (
                   <field.TextField
                     label='Email'
                     required
@@ -200,11 +198,10 @@ export default function DemoForm() {
                     placeholder='john@example.com'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='password'
-                children={(field) => (
+              <form.AppField name='password'>
+                {(field) => (
                   <field.TextField
                     label='Password'
                     required
@@ -212,11 +209,10 @@ export default function DemoForm() {
                     placeholder='Min 8 characters'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='age'
-                children={(field) => (
+              <form.AppField name='age'>
+                {(field) => (
                   <field.TextField
                     label='Age'
                     required
@@ -226,11 +222,10 @@ export default function DemoForm() {
                     placeholder='18'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='phone'
-                children={(field) => (
+              <form.AppField name='phone'>
+                {(field) => (
                   <field.TextField
                     label='Phone'
                     required
@@ -238,20 +233,18 @@ export default function DemoForm() {
                     placeholder='+1 (555) 000-0000'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='website'
-                children={(field) => (
+              <form.AppField name='website'>
+                {(field) => (
                   <field.TextField label='Website' type='url' placeholder='https://example.com' />
                 )}
-              />
+              </form.AppField>
             </FieldGroup>
 
             {/* ─── TEXTAREA ─── */}
-            <form.AppField
-              name='bio'
-              children={(field) => (
+            <form.AppField name='bio'>
+              {(field) => (
                 <field.TextareaField
                   label='Bio'
                   required
@@ -261,15 +254,14 @@ export default function DemoForm() {
                   showCount
                 />
               )}
-            />
+            </form.AppField>
 
             {/* ─── SELECT & COMBOBOX ─── */}
             <SectionTitle>Select & Combobox</SectionTitle>
 
             <FieldGroup className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <form.AppField
-                name='country'
-                children={(field) => (
+              <form.AppField name='country'>
+                {(field) => (
                   <field.SelectField
                     label='Country'
                     required
@@ -277,11 +269,10 @@ export default function DemoForm() {
                     placeholder='Select your country'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='framework'
-                children={(field) => (
+              <form.AppField name='framework'>
+                {(field) => (
                   <field.ComboboxField
                     label='Framework'
                     required
@@ -290,16 +281,14 @@ export default function DemoForm() {
                     placeholder='Search frameworks...'
                   />
                 )}
-              />
+              </form.AppField>
             </FieldGroup>
 
             {/* ─── CHECKBOX & RADIO ─── */}
             <SectionTitle>Checkbox & Radio</SectionTitle>
 
-            <form.AppField
-              name='interests'
-              mode='array'
-              children={(field) => (
+            <form.AppField name='interests' mode='array'>
+              {(field) => (
                 <field.CheckboxGroupField
                   label='Interests'
                   required
@@ -308,7 +297,7 @@ export default function DemoForm() {
                   className='grid grid-cols-2 gap-3 md:grid-cols-3'
                 />
               )}
-            />
+            </form.AppField>
             {formValues.interests.length > 0 && (
               <div className='flex flex-wrap gap-2'>
                 {formValues.interests.map((v) => (
@@ -319,30 +308,24 @@ export default function DemoForm() {
               </div>
             )}
 
-            <form.AppField
-              name='gender'
-              children={(field) => (
-                <field.RadioGroupField label='Gender' required options={genderOptions} />
-              )}
-            />
+            <form.AppField name='gender'>
+              {(field) => <field.RadioGroupField label='Gender' required options={genderOptions} />}
+            </form.AppField>
 
             {/* ─── TOGGLE & SWITCH ─── */}
             <SectionTitle>Toggle & Switch</SectionTitle>
 
-            <form.AppField
-              name='newsletter'
-              children={(field) => (
+            <form.AppField name='newsletter'>
+              {(field) => (
                 <field.SwitchField
                   label='Subscribe to Newsletter'
                   description='Receive updates about new features and products'
                 />
               )}
-            />
+            </form.AppField>
 
-            <form.AppField
-              name='formatting'
-              mode='array'
-              children={(field) => (
+            <form.AppField name='formatting' mode='array'>
+              {(field) => (
                 <field.ToggleGroupField
                   label='Text Formatting'
                   description='Multi-select toggle group'
@@ -358,21 +341,19 @@ export default function DemoForm() {
                   </ToggleGroupItem>
                 </field.ToggleGroupField>
               )}
-            />
+            </form.AppField>
 
-            <form.AppField
-              name='terms'
-              children={(field) => (
+            <form.AppField name='terms'>
+              {(field) => (
                 <field.CheckboxField label='I agree to the Terms and Conditions' required />
               )}
-            />
+            </form.AppField>
 
             {/* ─── SLIDER ─── */}
             <SectionTitle>Slider</SectionTitle>
 
-            <form.AppField
-              name='rating'
-              children={(field) => (
+            <form.AppField name='rating'>
+              {(field) => (
                 <field.SliderField
                   label='Overall Rating'
                   description='Rate your experience (0-10)'
@@ -381,77 +362,69 @@ export default function DemoForm() {
                   step={0.5}
                 />
               )}
-            />
+            </form.AppField>
 
             {/* ─── DATE & TIME ─── */}
             <SectionTitle>Date & Time</SectionTitle>
 
             <FieldGroup className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <form.AppField
-                name='birthDate'
-                children={(field) => (
+              <form.AppField name='birthDate'>
+                {(field) => (
                   <field.DatePickerField
                     label='Birth Date'
                     disabledDates={(date) => date > new Date()}
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='eventTime'
-                children={(field) => <field.TextField label='Event Time' type='time' />}
-              />
+              <form.AppField name='eventTime'>
+                {(field) => <field.TextField label='Event Time' type='time' />}
+              </form.AppField>
             </FieldGroup>
 
-            <form.AppField
-              name='dateRange'
-              children={(field) => <field.DateRangeField label='Date Range' />}
-            />
+            <form.AppField name='dateRange'>
+              {(field) => <field.DateRangeField label='Date Range' />}
+            </form.AppField>
 
             {/* ─── SPECIAL INPUTS ─── */}
             <SectionTitle>Special Inputs</SectionTitle>
 
             <FieldGroup className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-              <form.AppField
-                name='otp'
-                children={(field) => (
+              <form.AppField name='otp'>
+                {(field) => (
                   <field.OtpField
                     label='Verification Code'
                     required
                     description='6-digit OTP input'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='favoriteColor'
-                children={(field) => (
+              <form.AppField name='favoriteColor'>
+                {(field) => (
                   <field.ColorField
                     label='Favorite Color'
                     description='Native color picker with hex'
                   />
                 )}
-              />
+              </form.AppField>
             </FieldGroup>
 
-            <form.AppField
-              name='tags'
-              mode='array'
-              children={(field) => (
+            <form.AppField name='tags' mode='array'>
+              {(field) => (
                 <field.TagsField
                   label='Tags'
                   required
                   description='Press Enter or click Add to create tags'
                 />
               )}
-            />
+            </form.AppField>
 
             {/* ─── FILE UPLOAD ─── */}
             <SectionTitle>File Upload</SectionTitle>
 
-            <form.AppField
-              name='avatar'
-              children={(field) => (
+            <form.AppField name='avatar'>
+              {(field) => (
                 <field.FileUploadField
                   label='Profile Picture'
                   description='Drag & drop or click to upload (max 5MB)'
@@ -459,7 +432,7 @@ export default function DemoForm() {
                   maxFiles={1}
                 />
               )}
-            />
+            </form.AppField>
 
             {/* ─── SUBMIT ─── */}
             <Separator />

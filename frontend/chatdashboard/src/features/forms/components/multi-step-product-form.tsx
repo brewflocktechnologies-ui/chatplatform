@@ -155,20 +155,18 @@ export default function MultiStepProductForm() {
                 <h3 className='text-lg font-semibold'>Basic Info</h3>
                 <FieldDescription>Enter the product name, category, and price.</FieldDescription>
 
-                <form.AppField
-                  name='name'
-                  children={(field) => (
+                <form.AppField name='name'>
+                  {(field) => (
                     <field.TextField
                       label='Product Name'
                       required
                       placeholder='Enter product name'
                     />
                   )}
-                />
+                </form.AppField>
 
-                <form.AppField
-                  name='category'
-                  children={(field) => (
+                <form.AppField name='category'>
+                  {(field) => (
                     <field.SelectField
                       label='Category'
                       required
@@ -176,11 +174,10 @@ export default function MultiStepProductForm() {
                       placeholder='Select category'
                     />
                   )}
-                />
+                </form.AppField>
 
-                <form.AppField
-                  name='price'
-                  children={(field) => (
+                <form.AppField name='price'>
+                  {(field) => (
                     <field.TextField
                       label='Price'
                       required
@@ -190,7 +187,7 @@ export default function MultiStepProductForm() {
                       placeholder='Enter price'
                     />
                   )}
-                />
+                </form.AppField>
               </FieldGroup>
             )}
 
@@ -199,9 +196,8 @@ export default function MultiStepProductForm() {
                 <h3 className='text-lg font-semibold'>Details</h3>
                 <FieldDescription>Add a detailed product description.</FieldDescription>
 
-                <form.AppField
-                  name='description'
-                  children={(field) => (
+                <form.AppField name='description'>
+                  {(field) => (
                     <field.TextareaField
                       label='Description'
                       required
@@ -210,7 +206,7 @@ export default function MultiStepProductForm() {
                       rows={5}
                     />
                   )}
-                />
+                </form.AppField>
               </FieldGroup>
             )}
 

@@ -38,9 +38,8 @@ export default function UserAuthForm() {
         }}
       >
         <FieldGroup>
-          <form.AppField
-            name='email'
-            children={(field) => (
+          <form.AppField name='email'>
+            {(field) => (
               <field.TextField
                 label='Email'
                 type='email'
@@ -48,7 +47,7 @@ export default function UserAuthForm() {
                 disabled={loading}
               />
             )}
-          />
+          </form.AppField>
         </FieldGroup>
         <LoadingButton loading={loading} type='submit' className='mt-2 ml-auto w-full'>
           Continue With Email

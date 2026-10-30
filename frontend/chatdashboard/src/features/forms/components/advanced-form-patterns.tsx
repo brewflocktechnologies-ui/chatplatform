@@ -153,14 +153,14 @@ export default function AdvancedFormPatterns() {
                   return undefined;
                 }
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <field.TextField label='Username' required placeholder='Choose a username' />
               )}
-            />
+            </form.AppField>
 
-            <form.AppField
-              name='email'
-              children={(field) => (
+            <form.AppField name='email'>
+              {(field) => (
                 <field.TextField
                   label='Email'
                   required
@@ -168,11 +168,10 @@ export default function AdvancedFormPatterns() {
                   placeholder='you@example.com'
                 />
               )}
-            />
+            </form.AppField>
 
-            <form.AppField
-              name='password'
-              children={(field) => (
+            <form.AppField name='password'>
+              {(field) => (
                 <field.TextField
                   label='Password'
                   required
@@ -180,7 +179,7 @@ export default function AdvancedFormPatterns() {
                   placeholder='Min 8 characters'
                 />
               )}
-            />
+            </form.AppField>
 
             {/* Confirm Password — linked validation via onChangeListenTo */}
             <form.AppField
@@ -195,7 +194,8 @@ export default function AdvancedFormPatterns() {
                   return undefined;
                 }
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <field.TextField
                   label='Confirm Password'
                   required
@@ -203,7 +203,7 @@ export default function AdvancedFormPatterns() {
                   placeholder='Confirm password'
                 />
               )}
-            />
+            </form.AppField>
           </FieldGroup>
 
           <Separator />
@@ -215,15 +215,13 @@ export default function AdvancedFormPatterns() {
           </div>
 
           <FieldGroup className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-            <form.AppField
-              name='team.name'
-              children={(field) => (
+            <form.AppField name='team.name'>
+              {(field) => (
                 <field.TextField label='Team Name' required placeholder='e.g. Alpha Squad' />
               )}
-            />
-            <form.AppField
-              name='team.size'
-              children={(field) => (
+            </form.AppField>
+            <form.AppField name='team.size'>
+              {(field) => (
                 <field.TextField
                   label='Team Size'
                   required
@@ -233,7 +231,7 @@ export default function AdvancedFormPatterns() {
                   placeholder='1-100'
                 />
               )}
-            />
+            </form.AppField>
           </FieldGroup>
 
           <Separator />
@@ -244,16 +242,13 @@ export default function AdvancedFormPatterns() {
             <p className='text-muted-foreground text-sm'>Dynamic array rows with add / remove</p>
           </div>
 
-          <form.Field
-            name='members'
-            mode='array'
-            children={(field) => (
+          <form.Field name='members' mode='array'>
+            {(field) => (
               <div className='space-y-3'>
                 {field.state.value.map((_, i) => (
                   <div key={i} className='flex items-start gap-2'>
-                    <form.Field
-                      name={`members[${i}].name`}
-                      children={(subField) => {
+                    <form.Field name={`members[${i}].name`}>
+                      {(subField) => {
                         const isSubInvalid =
                           subField.state.meta.isTouched && !subField.state.meta.isValid;
                         return (
@@ -278,10 +273,9 @@ export default function AdvancedFormPatterns() {
                           </Field>
                         );
                       }}
-                    />
-                    <form.Field
-                      name={`members[${i}].role`}
-                      children={(subField) => {
+                    </form.Field>
+                    <form.Field name={`members[${i}].role`}>
+                      {(subField) => {
                         const isSubInvalid =
                           subField.state.meta.isTouched && !subField.state.meta.isValid;
                         return (
@@ -306,7 +300,7 @@ export default function AdvancedFormPatterns() {
                           </Field>
                         );
                       }}
-                    />
+                    </form.Field>
                     <Button
                       type='button'
                       variant='ghost'
@@ -340,7 +334,7 @@ export default function AdvancedFormPatterns() {
                 )}
               </div>
             )}
-          />
+          </form.Field>
 
           <Separator />
 
@@ -360,7 +354,8 @@ export default function AdvancedFormPatterns() {
                   fieldApi.form.setFieldValue('state', '');
                 }
               }}
-              children={(field) => (
+            >
+              {(field) => (
                 <field.SelectField
                   label='Country'
                   required
@@ -368,10 +363,9 @@ export default function AdvancedFormPatterns() {
                   placeholder='Select a country'
                 />
               )}
-            />
-            <form.AppField
-              name='state'
-              children={(field) => (
+            </form.AppField>
+            <form.AppField name='state'>
+              {(field) => (
                 <field.SelectField
                   label='State / Region'
                   required
@@ -379,7 +373,7 @@ export default function AdvancedFormPatterns() {
                   placeholder={selectedCountry ? 'Select state' : 'Select a country first'}
                 />
               )}
-            />
+            </form.AppField>
           </FieldGroup>
 
           <Separator />

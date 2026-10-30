@@ -43,16 +43,14 @@ export default function ProfileViewPage() {
             }}
             className='space-y-4'
           >
-            <form.AppField
-              name='name'
-              children={(field) => <field.TextField label='Name' placeholder='Your name' />}
-            />
-            <form.AppField
-              name='email'
-              children={(field) => (
+            <form.AppField name='name'>
+              {(field) => <field.TextField label='Name' placeholder='Your name' />}
+            </form.AppField>
+            <form.AppField name='email'>
+              {(field) => (
                 <field.TextField label='Email' type='email' placeholder='you@example.com' />
               )}
-            />
+            </form.AppField>
             <LoadingButton type='submit' className='w-full'>
               Save changes
             </LoadingButton>
