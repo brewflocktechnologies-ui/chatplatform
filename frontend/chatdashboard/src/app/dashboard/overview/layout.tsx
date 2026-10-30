@@ -16,12 +16,12 @@ export default function OverViewLayout({
   pie_stats,
   bar_stats,
   area_stats
-}: {
+}: Readonly<{
   sales: React.ReactNode;
   pie_stats: React.ReactNode;
   bar_stats: React.ReactNode;
   area_stats: React.ReactNode;
-}) {
+}>) {
   return (
     <PageContainer>
       <div className='flex flex-1 flex-col gap-4'>
