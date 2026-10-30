@@ -8,10 +8,10 @@ import { captureClientError } from '@/lib/sentry';
 export default function GlobalError({
   error,
   reset
-}: {
+}: Readonly<{
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}>) {
   useEffect(() => {
     void captureClientError(error);
   }, [error]);

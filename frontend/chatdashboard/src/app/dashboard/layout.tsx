@@ -13,7 +13,9 @@ export const metadata: Metadata = {
   description: 'Basic dashboard with Next.js and Shadcn'
 };
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children
+}: Readonly<{ children: React.ReactNode }>) {
   // Gate the whole /dashboard segment: redirect to sign-in when signed out.
   // Persisting the sidebar state in the cookie.
   const cookieStore = await cookies();

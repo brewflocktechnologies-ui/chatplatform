@@ -10,12 +10,13 @@ export const metadata = {
 
 type PageProps = { params: Promise<{ productId: string }> };
 
-export default async function Page(props: PageProps) {
+export default async function Page(props: Readonly<PageProps>) {
   const params = await props.params;
   const queryClient = getQueryClient();
 
   if (params.productId !== 'new') {
-    void queryClient.prefetchQuery(productByIdOptions(Number(params.productId)));
+    // Prefetch is best-effort: a failure falls back to the client-side fetch.
+    void queryClient.query(productByIdOptions(Number(params.productId))).catch(() => {});
   }
 
   return (

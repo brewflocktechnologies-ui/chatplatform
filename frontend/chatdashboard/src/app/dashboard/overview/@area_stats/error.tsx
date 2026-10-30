@@ -7,7 +7,10 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useTransition } from 'react';
 import { captureClientError } from '@/lib/sentry';
 
-export default function AreaStatsError({ error, reset }: { error: Error; reset: () => void }) {
+export default function AreaStatsError({
+  error,
+  reset
+}: Readonly<{ error: Error; reset: () => void }>) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
 
