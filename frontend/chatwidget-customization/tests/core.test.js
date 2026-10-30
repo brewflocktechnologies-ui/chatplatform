@@ -155,3 +155,18 @@ describe('CWCore.validateWidgetConfig', () => {
     expect(res.errors.join(' ')).toMatch(/nesting depth/);
   });
 });
+
+describe('CWCore.createMessagingPolicy.targetOrigin', () => {
+  it('falls back to a wildcard only for an opaque origin with nothing configured', () => {
+    const p = core().createMessagingPolicy({ selfOrigin: 'null' });
+    expect(p.targetOrigin()).toBe('*');
+  });
+
+  it('prefers the self origin, then configured origins, and locks after confirmation', () => {
+    expect(core().createMessagingPolicy({ selfOrigin: 'https://a.example' }).targetOrigin()).toBe('https://a.example');
+    const p = core().createMessagingPolicy({ selfOrigin: 'null', configuredOrigins: ['https://b.example'] });
+    expect(p.targetOrigin()).toBe('https://b.example');
+    p.confirmOrigin('https://c.example');
+    expect(p.targetOrigin()).toBe('https://c.example');
+  });
+});
