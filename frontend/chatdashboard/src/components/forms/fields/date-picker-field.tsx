@@ -64,6 +64,12 @@ export function DatePickerField({
   );
 }
 
+function formatDateRange(range: DateRange | undefined): string | null {
+  if (!range?.from) return null;
+  const from = format(range.from, 'LLL dd, y');
+  return range.to ? `${from} - ${format(range.to, 'LLL dd, y')}` : from;
+}
+
 /** Date range — two-month Calendar in range mode. */
 export function DateRangeField({
   label,
@@ -97,17 +103,7 @@ export function DateRangeField({
           }
         >
           <Icons.calendar className='mr-2 h-4 w-4' />
-          {range?.from ? (
-            range.to ? (
-              <>
-                {format(range.from, 'LLL dd, y')} - {format(range.to, 'LLL dd, y')}
-              </>
-            ) : (
-              format(range.from, 'LLL dd, y')
-            )
-          ) : (
-            <span>{placeholder}</span>
-          )}
+          {formatDateRange(range) ?? <span>{placeholder}</span>}
         </PopoverTrigger>
         <PopoverContent className='w-auto p-0' align='start'>
           <Calendar

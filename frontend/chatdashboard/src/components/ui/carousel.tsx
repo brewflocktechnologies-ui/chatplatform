@@ -13,8 +13,8 @@ type CarouselOptions = UseCarouselParameters[0];
 type CarouselPlugin = UseCarouselParameters[1];
 
 type CarouselProps = {
-  opts?: CarouselOptions;
-  plugins?: CarouselPlugin;
+  opts?: NonNullable<CarouselOptions>;
+  plugins?: NonNullable<CarouselPlugin>;
   orientation?: 'horizontal' | 'vertical';
   setApi?: (api: CarouselApi) => void;
 };
@@ -102,19 +102,32 @@ function Carousel({
     };
   }, [api, onSelect]);
 
+  const resolvedOrientation = orientation || (opts?.axis === 'y' ? 'vertical' : 'horizontal');
+  const contextValue = React.useMemo(
+    () => ({
+      carouselRef,
+      api: api,
+      opts,
+      orientation: resolvedOrientation,
+      scrollPrev,
+      scrollNext,
+      canScrollPrev,
+      canScrollNext
+    }),
+    [
+      carouselRef,
+      api,
+      opts,
+      resolvedOrientation,
+      scrollPrev,
+      scrollNext,
+      canScrollPrev,
+      canScrollNext
+    ]
+  );
+
   return (
-    <CarouselContext.Provider
-      value={{
-        carouselRef,
-        api: api,
-        opts,
-        orientation: orientation || (opts?.axis === 'y' ? 'vertical' : 'horizontal'),
-        scrollPrev,
-        scrollNext,
-        canScrollPrev,
-        canScrollNext
-      }}
-    >
+    <CarouselContext.Provider value={contextValue}>
       <div
         onKeyDownCapture={handleKeyDown}
         className={cn('relative', className)}

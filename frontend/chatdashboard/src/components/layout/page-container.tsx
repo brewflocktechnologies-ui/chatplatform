@@ -30,7 +30,7 @@ export default function PageContainer({
   pageDescription,
   infoContent,
   pageHeaderAction
-}: {
+}: Readonly<{
   children: React.ReactNode;
   isLoading?: boolean;
   access?: boolean;
@@ -39,7 +39,7 @@ export default function PageContainer({
   pageDescription?: string;
   infoContent?: InfobarContent;
   pageHeaderAction?: React.ReactNode;
-}) {
+}>) {
   if (!access) {
     return (
       <div role='status' className='flex flex-1 items-center justify-center p-4 md:px-6'>

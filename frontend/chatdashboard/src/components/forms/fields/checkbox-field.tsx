@@ -11,7 +11,7 @@ import {
 import { useFieldContext, useFieldInvalid, type BaseFieldProps } from '@/lib/form-context';
 
 /** Single boolean checkbox (terms, consent, …). */
-export function CheckboxField({ label, description, required }: BaseFieldProps) {
+export function CheckboxField({ label, description, required }: Readonly<BaseFieldProps>) {
   const field = useFieldContext<boolean>();
   const isInvalid = useFieldInvalid();
 

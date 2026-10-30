@@ -6,15 +6,15 @@ import { ContextMenu as ContextMenuPrimitive } from '@base-ui/react/context-menu
 import { cn } from '@/lib/utils';
 import { IconChevronRight, IconCheck } from '@tabler/icons-react';
 
-function ContextMenu({ ...props }: ContextMenuPrimitive.Root.Props) {
+function ContextMenu({ ...props }: Readonly<ContextMenuPrimitive.Root.Props>) {
   return <ContextMenuPrimitive.Root data-slot='context-menu' {...props} />;
 }
 
-function ContextMenuPortal({ ...props }: ContextMenuPrimitive.Portal.Props) {
+function ContextMenuPortal({ ...props }: Readonly<ContextMenuPrimitive.Portal.Props>) {
   return <ContextMenuPrimitive.Portal data-slot='context-menu-portal' {...props} />;
 }
 
-function ContextMenuTrigger({ className, ...props }: ContextMenuPrimitive.Trigger.Props) {
+function ContextMenuTrigger({ className, ...props }: Readonly<ContextMenuPrimitive.Trigger.Props>) {
   return (
     <ContextMenuPrimitive.Trigger
       data-slot='context-menu-trigger'
@@ -55,7 +55,7 @@ function ContextMenuContent({
   );
 }
 
-function ContextMenuGroup({ ...props }: ContextMenuPrimitive.Group.Props) {
+function ContextMenuGroup({ ...props }: Readonly<ContextMenuPrimitive.Group.Props>) {
   return <ContextMenuPrimitive.Group data-slot='context-menu-group' {...props} />;
 }
 
@@ -102,7 +102,7 @@ function ContextMenuItem({
   );
 }
 
-function ContextMenuSub({ ...props }: ContextMenuPrimitive.SubmenuRoot.Props) {
+function ContextMenuSub({ ...props }: Readonly<ContextMenuPrimitive.SubmenuRoot.Props>) {
   return <ContextMenuPrimitive.SubmenuRoot data-slot='context-menu-sub' {...props} />;
 }
 
@@ -171,7 +171,7 @@ function ContextMenuCheckboxItem({
   );
 }
 
-function ContextMenuRadioGroup({ ...props }: ContextMenuPrimitive.RadioGroup.Props) {
+function ContextMenuRadioGroup({ ...props }: Readonly<ContextMenuPrimitive.RadioGroup.Props>) {
   return <ContextMenuPrimitive.RadioGroup data-slot='context-menu-radio-group' {...props} />;
 }
 
@@ -203,7 +203,10 @@ function ContextMenuRadioItem({
   );
 }
 
-function ContextMenuSeparator({ className, ...props }: ContextMenuPrimitive.Separator.Props) {
+function ContextMenuSeparator({
+  className,
+  ...props
+}: Readonly<ContextMenuPrimitive.Separator.Props>) {
   return (
     <ContextMenuPrimitive.Separator
       data-slot='context-menu-separator'

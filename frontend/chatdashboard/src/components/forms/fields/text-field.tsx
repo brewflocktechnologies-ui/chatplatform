@@ -6,6 +6,11 @@ import { Input } from '@/components/ui/input';
 import { Spinner } from '@/components/ui/spinner';
 import { useFieldContext, useFieldInvalid, type BaseFieldProps } from '@/lib/form-context';
 
+function parseInputValue(type: string | undefined, raw: string): string | number | undefined {
+  if (type !== 'number') return raw;
+  return raw === '' ? undefined : Number(raw);
+}
+
 /**
  * Text-style input (text, email, password, tel, url, time, number).
  * For `type='number'` the value converts at the edge: clearing writes
@@ -34,15 +39,7 @@ export function TextField({
           name={field.name}
           value={field.state.value ?? ''}
           onBlur={field.handleBlur}
-          onChange={(e) =>
-            field.handleChange(
-              inputProps.type === 'number'
-                ? e.target.value === ''
-                  ? undefined
-                  : Number(e.target.value)
-                : e.target.value
-            )
-          }
+          onChange={(e) => field.handleChange(parseInputValue(inputProps.type, e.target.value))}
           aria-invalid={isInvalid}
           aria-describedby={isInvalid ? `${field.name}-error` : undefined}
           {...inputProps}
