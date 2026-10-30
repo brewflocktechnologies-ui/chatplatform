@@ -69,7 +69,7 @@ export function ChatHeader({
             {conversation.status === 'online' && !isTyping && (
               <span className='inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 shrink-0'>
                 <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse' />
-                online
+                <span>online</span>
               </span>
             )}
           </div>

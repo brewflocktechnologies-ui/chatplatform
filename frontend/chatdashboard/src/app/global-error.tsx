@@ -34,6 +34,7 @@ export default function GlobalError({
             An unexpected error occurred. Please try again.
           </p>
           <button
+            type='button'
             onClick={() => reset()}
             style={{
               padding: '0.5rem 1.25rem',

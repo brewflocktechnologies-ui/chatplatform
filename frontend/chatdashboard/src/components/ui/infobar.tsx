@@ -341,6 +341,7 @@ function InfobarRail({ className, ...props }: React.ComponentProps<'button'>) {
 
   return (
     <button
+      type='button'
       data-infobar='rail'
       data-slot='infobar-rail'
       aria-label='Toggle Infobar'
