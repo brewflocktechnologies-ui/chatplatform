@@ -14,8 +14,8 @@ export function hexToRgba(hex: string, alpha = 1): string {
   if (hex.startsWith('#')) {
     const v = hex.replace('#', '');
     const normalized = v.length === 3 ? v.split('').map((c) => c + c).join('') : v;
-    const bigint = parseInt(normalized, 16);
-    if (!isNaN(bigint)) {
+    const bigint = Number.parseInt(normalized, 16);
+    if (!Number.isNaN(bigint)) {
       return `rgba(${(bigint >> 16) & 255},${(bigint >> 8) & 255},${bigint & 255},${alpha})`;
     }
   }
@@ -206,7 +206,7 @@ export function formatTime(isoString: string | undefined): string {
     return str;
   }
   const d = new Date(str);
-  if (isNaN(d.getTime())) {
+  if (Number.isNaN(d.getTime())) {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

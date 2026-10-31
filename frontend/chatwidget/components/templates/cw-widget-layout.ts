@@ -82,7 +82,7 @@ export class CwWidgetLayout extends LitElement {
       ? Number(cws.offsetBottom)
       : triggerBottom;
 
-    const panelDefaultBottom = typeof rawPanelBottom === 'number' && !isNaN(rawPanelBottom) ? rawPanelBottom : triggerBottom;
+    const panelDefaultBottom = typeof rawPanelBottom === 'number' && !Number.isNaN(rawPanelBottom) ? rawPanelBottom : triggerBottom;
 
     let panelBottomPx: number = panelDefaultBottom;
     if (isChatbarTrigger && !cbs.hideOnOpen) {

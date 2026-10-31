@@ -1265,7 +1265,7 @@ export function setupGreetTimers() {
   if (gw.inputBox) gw.inputBox = { ...gw.inputBox, visible: false };
   emit('store:greetWindow');
 
-  const greetDelay = parseFloat(String(gw.openingTimeAfterInitialLoadSec ?? 2));
+  const greetDelay = Number.parseFloat(String(gw.openingTimeAfterInitialLoadSec ?? 2));
   _greetTimer = setTimeout(() => {
     const s = getStore();
     const curGw = s?.greetWindow;
@@ -1276,7 +1276,7 @@ export function setupGreetTimers() {
   }, greetDelay * 1000);
 
   if (gw.inputBox && gw.inputBox.enabled) {
-    const inputDelay = parseFloat(String(gw.inputBox.openingTimeAfterInitialLoadSec ?? 4));
+    const inputDelay = Number.parseFloat(String(gw.inputBox.openingTimeAfterInitialLoadSec ?? 4));
     _inputTimer = setTimeout(() => {
       const s = getStore();
       const curGw = s?.greetWindow;

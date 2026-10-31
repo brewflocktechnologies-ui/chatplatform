@@ -16,9 +16,9 @@ export function createAccentGradient(hex: string): string {
   if (c.length === 3) c = c.split('').map(x => x + x).join('');
   if (c.length !== 6) return `linear-gradient(135deg, ${hex}, ${hex})`;
 
-  let r = parseInt(c.substring(0, 2), 16) / 255;
-  let g = parseInt(c.substring(2, 4), 16) / 255;
-  let b = parseInt(c.substring(4, 6), 16) / 255;
+  let r = Number.parseInt(c.substring(0, 2), 16) / 255;
+  let g = Number.parseInt(c.substring(2, 4), 16) / 255;
+  let b = Number.parseInt(c.substring(4, 6), 16) / 255;
 
   let max = Math.max(r, g, b), min = Math.min(r, g, b);
   let h = 0, s = 0, l = (max + min) / 2;
