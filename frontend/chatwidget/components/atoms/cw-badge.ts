@@ -87,11 +87,11 @@ export class CwBadge extends LitElement {
     } else if (animCss === 'wiggle') {
       animCss = 'badgeWiggle 2.5s ease-in-out infinite';
     } else if (animCss.includes('pulse')) {
-      animCss = animCss.replace(/pulse/g, 'badgePulse');
+      animCss = animCss.replaceAll('pulse', 'badgePulse');
     } else if (animCss.includes('bounce')) {
-      animCss = animCss.replace(/bounce/g, 'badgeBounce');
+      animCss = animCss.replaceAll('bounce', 'badgeBounce');
     } else if (animCss.includes('wiggle')) {
-      animCss = animCss.replace(/wiggle/g, 'badgeWiggle');
+      animCss = animCss.replaceAll('wiggle', 'badgeWiggle');
     }
 
     const isRelative = pos === 'relative' || pos === 'static';

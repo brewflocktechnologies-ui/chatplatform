@@ -134,7 +134,7 @@ export class CwMessageBubble extends LitElement {
         return str;
       }
       const d = new Date(str);
-      if (!isNaN(d.getTime())) {
+      if (!Number.isNaN(d.getTime())) {
         return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       }
       return str;

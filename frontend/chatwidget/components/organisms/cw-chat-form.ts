@@ -2,6 +2,7 @@ import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { CORE_STYLES } from '../../styles/core-styles.js';
 import type { FormSchema } from '../../config/form-schemas.js';
+import { isValidEmail } from '../../utils/email.js';
 import '../molecules/cw-form-field.js';
 import '../atoms/cw-button.js';
 
@@ -109,8 +110,7 @@ export class CwChatForm extends LitElement {
       if (f.required && !val) {
         errs[f.name] = `${f.label} is required`;
       } else if (f.type === 'email' && val) {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        if (!emailRegex.test(val)) {
+        if (!isValidEmail(val)) {
           errs[f.name] = 'Enter a valid email address';
         }
       }

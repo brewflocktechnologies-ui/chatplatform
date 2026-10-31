@@ -159,7 +159,7 @@ export class CwChatbar extends LitElement {
                 <span
                   style="font-weight: 600; line-height: 1.2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; text-align: left; font-size: ${getChatbarFontSize(s.textSize, typeof s.height === 'number' ? s.height : 46)}; letter-spacing: ${(s.letterSpacing || 0)}px; color: ${s.textColor || '#ffffff'}"
                 >
-                  ${(s.text || 'Chat with us').replace(/\n/g, ' ')}
+                  ${(s.text || 'Chat with us').replaceAll('\n', ' ')}
                 </span>
 
                 <div style="display: flex; align-items: center; justify-content: center; position: relative; flex-shrink: 0; margin-left: 10px">
