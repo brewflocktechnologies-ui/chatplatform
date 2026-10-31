@@ -370,7 +370,7 @@ export class CwWidgetRoot extends LitElement {
     }
   }
 
-  static styles = css`
+  static readonly styles = css`
     :host {
       display: block;
       font-family: inherit;

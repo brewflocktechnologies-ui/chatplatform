@@ -17,7 +17,7 @@ export class CwWelcomeHero extends LitElement {
   @property({ type: Boolean }) hideLogo = false;
   @property({ type: Boolean }) logoOnly = false;
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

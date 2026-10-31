@@ -41,7 +41,7 @@ export class CwComposer extends LitElement {
 
   @state() focused = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {

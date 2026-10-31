@@ -17,7 +17,7 @@ export class CwAvatar extends LitElement {
   @property({ type: Boolean }) showOnlineDot = true;
   @property({ type: Boolean }) showOnline = true;
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

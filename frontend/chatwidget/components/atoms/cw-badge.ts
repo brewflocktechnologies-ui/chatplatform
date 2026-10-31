@@ -25,7 +25,9 @@ function resolveAnimation(raw: string): string {
 
 /** First truthy value: the property, then the config, then the default (0 and '' fall through). */
 function firstTruthy<T>(own: T | undefined, fromConfig: T | undefined, fallback: T): T {
-  return own || fromConfig || fallback;
+  if (own) return own;
+  if (fromConfig) return fromConfig;
+  return fallback;
 }
 
 /** First defined value: like firstTruthy, but 0 and '' count as real values. */

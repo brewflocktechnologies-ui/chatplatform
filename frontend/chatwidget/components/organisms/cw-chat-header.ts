@@ -16,7 +16,7 @@ export class CwChatHeader extends LitElement {
   @property({ type: String }) state = 'active';
   @property({ type: Number }) rev = 0;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {

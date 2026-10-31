@@ -34,7 +34,7 @@ export class CwImageCropper extends LitElement {
 
   private imageObj: HTMLImageElement | null = null;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {

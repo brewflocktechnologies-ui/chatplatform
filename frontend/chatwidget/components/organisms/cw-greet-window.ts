@@ -30,7 +30,7 @@ export class CwGreetWindow extends LitElement {
     leaveMs: () => 300,
   });
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`

@@ -24,7 +24,7 @@ export class CwChatbar extends LitElement {
 
   @state() hovered = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {

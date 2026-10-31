@@ -32,7 +32,7 @@ export class CwChatPanel extends LitElement {
   /** Guards "focus on open" so it runs once per open instead of every render. */
   private didFocus = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`

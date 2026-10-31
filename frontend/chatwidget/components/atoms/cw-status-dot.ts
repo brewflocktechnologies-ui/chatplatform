@@ -10,7 +10,7 @@ export class CwStatusDot extends LitElement {
   @property({ type: Number }) borderWidth = 0;
   @property({ type: String }) borderColor = '#ffffff';
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

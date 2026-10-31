@@ -13,7 +13,7 @@ export class CwMessageBubble extends LitElement {
   @property({ type: Boolean }) isGroupStart = true;
   @property({ type: String }) agentName = '';
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {

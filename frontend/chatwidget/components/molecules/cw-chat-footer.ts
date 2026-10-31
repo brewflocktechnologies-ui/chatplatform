@@ -27,7 +27,7 @@ export class CwChatFooter extends LitElement {
   @property({ type: Number }) footerPaddingBottom?: number;
   @property({ type: Number }) widgetBorderRadius?: number;
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

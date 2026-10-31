@@ -18,7 +18,7 @@ export class CwChatForm extends LitElement {
   @state() private localErrors: Record<string, string> = {};
   private lastSyncedValues = '';
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {

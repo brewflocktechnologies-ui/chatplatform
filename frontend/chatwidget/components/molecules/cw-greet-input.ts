@@ -24,7 +24,7 @@ export class CwGreetInput extends LitElement {
     leaveMs: () => 0,
   });
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
     :host {

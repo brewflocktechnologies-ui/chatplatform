@@ -10,7 +10,7 @@ export class CwFormField extends LitElement {
   @property({ type: String }) error = '';
   @property({ type: Boolean }) disabled = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {

@@ -27,7 +27,7 @@ export class CwBubble extends LitElement {
 
   @state() hovered = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`
