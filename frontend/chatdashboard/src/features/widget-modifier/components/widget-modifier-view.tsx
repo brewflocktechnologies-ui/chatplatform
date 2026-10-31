@@ -355,23 +355,18 @@ export function WidgetModifierView() {
                   filteredConfigs.map((config) => (
                     <div
                       key={config.id}
-                      role='button'
-                      tabIndex={0}
-                      onClick={() => handleSelectConfig(config)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          handleSelectConfig(config);
-                        }
-                      }}
                       className={cn(
-                        'group flex cursor-pointer items-center justify-between rounded-md px-2.5 py-1.5 text-xs',
+                        'group flex items-center justify-between rounded-md pr-2.5 text-xs',
                         config.id === params.configId
                           ? 'bg-accent font-semibold'
                           : 'hover:bg-accent/60'
                       )}
                     >
-                      <div className='flex min-w-0 items-center gap-2'>
+                      <button
+                        type='button'
+                        onClick={() => handleSelectConfig(config)}
+                        className='flex min-w-0 flex-1 cursor-pointer items-center gap-2 py-1.5 pl-2.5 text-left'
+                      >
                         <span className='w-4 shrink-0'>
                           {config.id === params.configId && <Icons.check className='h-3.5 w-3.5' />}
                         </span>
@@ -381,7 +376,7 @@ export function WidgetModifierView() {
                             Active
                           </Badge>
                         )}
-                      </div>
+                      </button>
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger
                           render={

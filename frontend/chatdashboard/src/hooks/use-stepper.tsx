@@ -1,6 +1,11 @@
 import type { AnyFormApi } from '@tanstack/react-form';
 import { useCallback, useState } from 'react';
-import type { ZodTypeAny } from 'zod';
+import type { ZodType } from 'zod';
+
+function appendPathSegment(acc: string, seg: PropertyKey): string {
+  if (typeof seg === 'number') return `${acc}[${seg}]`;
+  return acc ? `${acc}.${String(seg)}` : String(seg);
+}
 
 /**
  * Options for handling cancel/back actions
@@ -35,11 +40,7 @@ export function applyStepIssues(
   const byField = new Map<string, string[]>();
   const pathless: string[] = [];
   for (const issue of issues) {
-    const path = issue.path.reduce<string>(
-      (acc, seg) =>
-        typeof seg === 'number' ? `${acc}[${seg}]` : acc ? `${acc}.${String(seg)}` : String(seg),
-      ''
-    );
+    const path = issue.path.reduce<string>((acc, seg) => appendPathSegment(acc, seg), '');
     if (!path) {
       pathless.push(issue.message);
       continue;
@@ -68,7 +69,7 @@ type UseFormStepperOptions = {
   /** The complete form schema. When provided, the FINAL submit re-validates
    *  the whole form (not just the last step); on failure the wizard jumps to
    *  the first failing step and surfaces its errors. */
-  fullSchema?: ZodTypeAny;
+  fullSchema?: ZodType;
 };
 
 /**
@@ -82,7 +83,7 @@ type UseFormStepperOptions = {
  * @param schemas - Array of Zod schemas, one per step
  * @param options - Optional fullSchema for final-submit re-validation
  */
-export function useFormStepper(schemas: ZodTypeAny[], options?: UseFormStepperOptions) {
+export function useFormStepper(schemas: ZodType[], options?: UseFormStepperOptions) {
   const stepCount = schemas.length;
   const [currentStep, setCurrentStep] = useState(1); // Start from 1
 
@@ -131,7 +132,7 @@ export function useFormStepper(schemas: ZodTypeAny[], options?: UseFormStepperOp
     if (!result.success) {
       applyStepIssues(form, result.error.issues);
     }
-    const hasFieldErrors = fieldErrors.flat(Infinity).filter(Boolean).length > 0;
+    const hasFieldErrors = fieldErrors.flat(Infinity).some(Boolean);
     if (!result.success || hasFieldErrors) {
       return { ...result, success: false as const };
     }

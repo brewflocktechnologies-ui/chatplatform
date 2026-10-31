@@ -1,9 +1,9 @@
 import { queryOptions } from '@tanstack/react-query';
 import { entityRoots } from '@/lib/cache/keys';
 import { getWebsites } from './service';
-import type { Website, WebsiteFilters } from './types';
+import type { WebsiteFilters } from './types';
 
-export type { Website };
+export type { Website } from './types';
 
 export const websiteKeys = {
   all: entityRoots.websites,

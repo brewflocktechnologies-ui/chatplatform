@@ -356,20 +356,13 @@ describe('WidgetModifierView MFE messaging', () => {
 });
 
 describe('WidgetModifierView config management', () => {
-  it('lists, filters and selects configs (click and keyboard)', async () => {
+  it('lists, filters and selects configs', async () => {
     await loadSelected();
     const search = screen.getByPlaceholderText('Search configs...');
     fireEvent.change(search, { target: { value: 'amb' } });
-    expect(document.querySelectorAll('[role=button][tabindex="0"]')).toHaveLength(1);
-    fireEvent.click(screen.getByText('Amber'));
+    expect(screen.getAllByRole('button', { name: /Amber/ })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: /Amber/ }));
     expect(h.setParamsSpy).toHaveBeenCalledWith({ configId: 'cfg2' });
-
-    const item = document.querySelector('[role=button][tabindex="0"]') as HTMLElement;
-    h.setParamsSpy.mockClear();
-    fireEvent.keyDown(item, { key: 'Enter' });
-    fireEvent.keyDown(item, { key: ' ' });
-    fireEvent.keyDown(item, { key: 'a' });
-    expect(h.setParamsSpy).toHaveBeenCalledTimes(2);
 
     fireEvent.change(search, { target: { value: 'zzz' } });
     expect(screen.getByText('No matching configs')).toBeInTheDocument();

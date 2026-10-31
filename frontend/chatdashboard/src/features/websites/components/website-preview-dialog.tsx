@@ -51,8 +51,8 @@ function buildPreviewDocument(website: Website, cdnConfig: Record<string, unknow
       }
     }, 50);
     setTimeout(function () { clearInterval(timer); }, 3000);
-  <\/script>
-  <script defer src="${getChatWidgetUrl()}"><\/script>
+  </script>
+  <script defer src="${getChatWidgetUrl()}"></script>
   <style>
     body {
       margin: 0;

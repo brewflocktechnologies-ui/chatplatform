@@ -19,11 +19,9 @@ function getClientPromise(): Promise<MongoClient> {
     throw new Error('MONGODB_URI is not set. Add it to .env.local (see env.example.txt).');
   }
 
-  if (!globalThis._mongoClientPromise) {
-    globalThis._mongoClientPromise = new MongoClient(uri, {
-      serverSelectionTimeoutMS: 15000
-    }).connect();
-  }
+  globalThis._mongoClientPromise ??= new MongoClient(uri, {
+    serverSelectionTimeoutMS: 15000
+  }).connect();
   return globalThis._mongoClientPromise;
 }
 

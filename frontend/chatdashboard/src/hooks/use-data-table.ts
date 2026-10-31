@@ -20,7 +20,7 @@ import {
   useReactTable
 } from '@tanstack/react-table';
 import {
-  type Parser,
+  type SingleParser,
   type UseQueryStateOptions,
   parseAsArrayOf,
   parseAsInteger,
@@ -40,6 +40,12 @@ const SORT_KEY = 'sort';
 const ARRAY_SEPARATOR = ',';
 const DEBOUNCE_MS = 300;
 const THROTTLE_MS = 50;
+
+function toFilterValues(value: string | string[]): string[] {
+  if (Array.isArray(value)) return value;
+  if (/[^a-zA-Z0-9]/.test(value)) return value.split(/[^a-zA-Z0-9]+/).filter(Boolean);
+  return [value];
+}
 
 interface UseDataTableProps<TData>
   extends
@@ -169,7 +175,7 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
   const filterParsers = React.useMemo(() => {
     if (enableAdvancedFilter) return {};
 
-    return filterableColumns.reduce<Record<string, Parser<string> | Parser<string[]>>>(
+    return filterableColumns.reduce<Record<string, SingleParser<string> | SingleParser<string[]>>>(
       (acc, column) => {
         if (column.meta?.options) {
           acc[column.id ?? ''] = parseAsArrayOf(parseAsString, ARRAY_SEPARATOR).withOptions(
@@ -196,11 +202,7 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
 
     return Object.entries(filterValues).reduce<ColumnFiltersState>((filters, [key, value]) => {
       if (value !== null) {
-        const processedValue = Array.isArray(value)
-          ? value
-          : typeof value === 'string' && /[^a-zA-Z0-9]/.test(value)
-            ? value.split(/[^a-zA-Z0-9]+/).filter(Boolean)
-            : [value];
+        const processedValue = toFilterValues(value);
 
         filters.push({
           id: key,
@@ -223,7 +225,7 @@ export function useDataTable<TData>(props: UseDataTableProps<TData>) {
 
         const filterUpdates = next.reduce<Record<string, string | string[] | null>>(
           (acc, filter) => {
-            if (filterableColumns.find((column) => column.id === filter.id)) {
+            if (filterableColumns.some((column) => column.id === filter.id)) {
               acc[filter.id] = filter.value as string | string[];
             }
             return acc;
