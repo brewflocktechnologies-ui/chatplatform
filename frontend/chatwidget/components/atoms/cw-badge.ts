@@ -3,6 +3,62 @@ import { customElement, property } from 'lit/decorators.js';
 import { CORE_STYLES } from '../../styles/core-styles.js';
 import { REDUCED_MOTION_CSS } from '../../tokens/accessibility.js';
 
+const NAMED_ANIMATIONS: Readonly<Record<string, string>> = {
+  pulse: 'badgePulse 1.5s ease-in-out infinite',
+  bounce: 'badgeBounce 1s infinite',
+  wiggle: 'badgeWiggle 2.5s ease-in-out infinite',
+};
+
+// Order matters: the first alias found in a custom animation string wins.
+const ANIMATION_ALIASES: ReadonlyArray<readonly [string, string]> = [
+  ['pulse', 'badgePulse'],
+  ['bounce', 'badgeBounce'],
+  ['wiggle', 'badgeWiggle'],
+];
+
+/** Maps the short names (and names embedded in a custom string) to the keyframes defined below. */
+function resolveAnimation(raw: string): string {
+  if (Object.hasOwn(NAMED_ANIMATIONS, raw)) return NAMED_ANIMATIONS[raw];
+  const alias = ANIMATION_ALIASES.find(([name]) => raw.includes(name));
+  return alias ? raw.replaceAll(alias[0], alias[1]) : raw;
+}
+
+/** First truthy value: the property, then the config, then the default (0 and '' fall through). */
+function firstTruthy<T>(own: T | undefined, fromConfig: T | undefined, fallback: T): T {
+  return own || fromConfig || fallback;
+}
+
+/** First defined value: like firstTruthy, but 0 and '' count as real values. */
+function firstDefined<T>(own: T | null | undefined, fromConfig: T | null | undefined, fallback: T): T {
+  return own ?? fromConfig ?? fallback;
+}
+
+const DEFAULT_SHADOW = '0 1px 3px rgba(0,0,0,0.15)';
+
+/** A bare colour becomes a soft drop shadow; a full shadow value (or `none`) is used as-is. */
+function resolveShadow(raw?: string): string {
+  if (!raw) return DEFAULT_SHADOW;
+  return raw.includes('px') || raw === 'none' ? raw : `0 2px 6px ${raw}`;
+}
+
+/** Numbers are pixels; strings pass through; nothing falls back. */
+function toCssLength(raw: number | string | null | undefined, fallback: string): string {
+  if (raw === undefined || raw === null) return fallback;
+  return typeof raw === 'number' ? `${raw}px` : raw;
+}
+
+// [vertical edge, horizontal edge] for each corner; anything else is top-right.
+const CORNERS: ReadonlyMap<string, readonly [string, string]> = new Map([
+  ['top-left', ['top', 'left']],
+  ['bottom-right', ['bottom', 'right']],
+  ['bottom-left', ['bottom', 'left']],
+]);
+
+function cornerOffsets(pos: string, offsetX: number, offsetY: number): Record<string, string> {
+  const [vertical, horizontal] = CORNERS.get(pos) ?? ['top', 'right'];
+  return { [vertical]: `${offsetY}px`, [horizontal]: `${offsetX}px` };
+}
+
 /**
  * cw-badge
  * Pure presentational atom for unread count indicator.
@@ -27,7 +83,7 @@ export class CwBadge extends LitElement {
   @property({ type: String }) padding?: string;
   @property({ type: Object }) config?: Record<string, any>;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`
@@ -74,71 +130,32 @@ export class CwBadge extends LitElement {
     if (!this.count || this.count <= 0) return html``;
 
     const b = this.config || {};
-    const pos = this.position || b.position || 'top-right';
-    const offsetX = this.offsetX !== undefined ? this.offsetX : (b.offsetX !== undefined ? b.offsetX : -6);
-    const offsetY = this.offsetY !== undefined ? this.offsetY : (b.offsetY !== undefined ? b.offsetY : -6);
-    const badgeSize = this.size || b.size || 20;
-
-    let animCss = this.animation || b.animation || 'none';
-    if (animCss === 'pulse') {
-      animCss = 'badgePulse 1.5s ease-in-out infinite';
-    } else if (animCss === 'bounce') {
-      animCss = 'badgeBounce 1s infinite';
-    } else if (animCss === 'wiggle') {
-      animCss = 'badgeWiggle 2.5s ease-in-out infinite';
-    } else if (animCss.includes('pulse')) {
-      animCss = animCss.replaceAll('pulse', 'badgePulse');
-    } else if (animCss.includes('bounce')) {
-      animCss = animCss.replaceAll('bounce', 'badgeBounce');
-    } else if (animCss.includes('wiggle')) {
-      animCss = animCss.replaceAll('wiggle', 'badgeWiggle');
-    }
-
+    const pos: string = firstTruthy(this.position, b.position, 'top-right');
+    const badgeSize: number = firstTruthy(this.size, b.size, 20);
     const isRelative = pos === 'relative' || pos === 'static';
-
-    const rawShadow = this.boxShadow || b.boxShadow;
-    let shadowVal = '0 1px 3px rgba(0,0,0,0.15)';
-    if (rawShadow) {
-      shadowVal = rawShadow.includes('px') || rawShadow === 'none' ? rawShadow : `0 2px 6px ${rawShadow}`;
-    }
-
-    const rawPadding = this.padding !== undefined ? this.padding : b.padding;
-    const paddingVal = rawPadding !== undefined ? (typeof rawPadding === 'number' ? `${rawPadding}px` : rawPadding) : '0 4px';
-
-    const rawRadius = this.borderRadius !== undefined ? this.borderRadius : b.borderRadius;
-    const radiusVal = rawRadius !== undefined ? (typeof rawRadius === 'number' ? `${rawRadius}px` : rawRadius) : '9999px';
+    const borderWidth: number = firstDefined(this.borderWidth, b.borderWidth, 2);
 
     const styleObj: Record<string, string> = {
       position: isRelative ? pos : 'absolute',
-      backgroundColor: this.backgroundColor || b.backgroundColor || 'var(--cw-error, #f43f5e)',
-      color: this.textColor || b.textColor || '#ffffff',
-      fontSize: `${this.fontSize || b.fontSize || 11}px`,
+      backgroundColor: firstTruthy(this.backgroundColor, b.backgroundColor, 'var(--cw-error, #f43f5e)'),
+      color: firstTruthy(this.textColor, b.textColor, '#ffffff'),
+      fontSize: `${firstTruthy(this.fontSize, b.fontSize, 11)}px`,
       lineHeight: '1',
       minWidth: `${badgeSize}px`,
       height: `${badgeSize}px`,
-      border: `${this.borderWidth !== undefined ? this.borderWidth : (b.borderWidth !== undefined ? b.borderWidth : 2)}px solid ${this.borderColor || b.borderColor || '#ffffff'}`,
-      borderRadius: radiusVal,
-      fontWeight: this.fontWeight || b.fontWeight || '700',
-      boxShadow: shadowVal,
-      padding: paddingVal,
+      border: `${borderWidth}px solid ${firstTruthy(this.borderColor, b.borderColor, '#ffffff')}`,
+      borderRadius: toCssLength(firstDefined(this.borderRadius, b.borderRadius, undefined), '9999px'),
+      fontWeight: firstTruthy(this.fontWeight, b.fontWeight, '700'),
+      boxShadow: resolveShadow(this.boxShadow || b.boxShadow),
+      padding: toCssLength(firstDefined(this.padding, b.padding, undefined), '0 4px'),
       zIndex: '50',
-      animation: animCss,
+      animation: resolveAnimation(firstTruthy(this.animation, b.animation, 'none')),
     };
 
     if (!isRelative) {
-      if (pos === 'top-left') {
-        styleObj.top = `${offsetY}px`;
-        styleObj.left = `${offsetX}px`;
-      } else if (pos === 'bottom-right') {
-        styleObj.bottom = `${offsetY}px`;
-        styleObj.right = `${offsetX}px`;
-      } else if (pos === 'bottom-left') {
-        styleObj.bottom = `${offsetY}px`;
-        styleObj.left = `${offsetX}px`;
-      } else {
-        styleObj.top = `${offsetY}px`;
-        styleObj.right = `${offsetX}px`;
-      }
+      const offsetX: number = firstDefined(this.offsetX, b.offsetX, -6);
+      const offsetY: number = firstDefined(this.offsetY, b.offsetY, -6);
+      Object.assign(styleObj, cornerOffsets(pos, offsetX, offsetY));
     }
 
     const cssString = Object.entries(styleObj)
