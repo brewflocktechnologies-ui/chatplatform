@@ -50,6 +50,32 @@ describe('CwWidgetRoot Page Component', () => {
     errEl.remove();
   });
 
+  it('does not wire up listeners or a socket when removed before the store finishes loading', async () => {
+    const storeModule = await import('../../../store/chat-store.js');
+    let release!: () => void;
+    const pending = new Promise<void>((resolve) => {
+      release = resolve;
+    });
+    const initSpy = vi.spyOn(storeModule, 'initStore').mockReturnValueOnce(pending as never);
+    const socketSpy = vi.spyOn(chatStore, 'initSocket').mockImplementation(() => {});
+    const addSpy = vi.spyOn(window, 'addEventListener');
+
+    const early = new CwWidgetRoot();
+    document.body.appendChild(early);
+    early.remove(); // disconnected while initStore is still pending
+    release();
+    await pending;
+    await Promise.resolve();
+
+    expect(early.initialized).toBe(false);
+    expect(socketSpy).not.toHaveBeenCalled();
+    expect(addSpy).not.toHaveBeenCalledWith('toggle-contact-widget', expect.any(Function));
+
+    initSpy.mockRestore();
+    socketSpy.mockRestore();
+    addSpy.mockRestore();
+  });
+
   it('should clean up listeners on disconnectedCallback', async () => {
     const unsubSpy = vi.fn();
     (element as any).unsubAll = unsubSpy;

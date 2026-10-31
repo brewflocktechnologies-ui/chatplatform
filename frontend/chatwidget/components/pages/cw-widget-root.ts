@@ -264,34 +264,42 @@ export class CwWidgetRoot extends LitElement {
     this.cachedTheme = this.useWebsiteTheme !== false ? getParentTheme() : null;
   }
 
-  async connectedCallback() {
+  // Lit calls this and ignores its result, so it must not return a promise.
+  connectedCallback() {
     super.connectedCallback();
+    void this.bootstrap();
+  }
 
+  private async bootstrap() {
     try {
       await initStore();
     } catch (err) {
       console.warn('CwWidgetRoot initStore warning:', err);
-    } finally {
-      this.applyThemeCache();
-      this.unsubAll = subscribeAll(() => {
-        this.rev++;
-      });
-
-      window.addEventListener('toggle-contact-widget', this.toggleListener);
-      window.addEventListener('close-contact-widget', this.closeListener);
-
-      this.addEventListener('keydown', this.onKeydown);
-
-      this.registerLeafEvents();
-      chatStore.initSocket(
-        this.socketUrl,
-        this.tenantId,
-        this.conversationId,
-        this.visitorName
-      );
-      this.initialized = true;
-      this.requestUpdate();
     }
+
+    // Removed while the store was loading: disconnectedCallback already ran and found
+    // nothing to undo, so wiring up now would leak listeners, a subscription and a socket.
+    if (!this.isConnected) return;
+
+    this.applyThemeCache();
+    this.unsubAll = subscribeAll(() => {
+      this.rev++;
+    });
+
+    window.addEventListener('toggle-contact-widget', this.toggleListener);
+    window.addEventListener('close-contact-widget', this.closeListener);
+
+    this.addEventListener('keydown', this.onKeydown);
+
+    this.registerLeafEvents();
+    chatStore.initSocket(
+      this.socketUrl,
+      this.tenantId,
+      this.conversationId,
+      this.visitorName
+    );
+    this.initialized = true;
+    this.requestUpdate();
   }
 
   disconnectedCallback() {
