@@ -16,6 +16,51 @@ const SearchIcon = Icons.search;
 const ChatIcon = Icons.chat;
 const ChecksIcon = Icons.checks;
 
+type ConversationMessage = Conversation['messages'][number];
+
+function ConversationPreview({
+  isTyping,
+  lastMessage,
+  isSentByAgent
+}: Readonly<{
+  isTyping: boolean;
+  lastMessage: ConversationMessage | undefined;
+  isSentByAgent: boolean;
+}>) {
+  if (isTyping) {
+    return (
+      <span className='text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-xs font-medium'>
+        <span
+          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+          style={{ animationDelay: '0ms' }}
+        />
+        <span
+          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+          style={{ animationDelay: '150ms' }}
+        />
+        <span
+          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+          style={{ animationDelay: '300ms' }}
+        />
+        <span>typing...</span>
+      </span>
+    );
+  }
+
+  if (lastMessage) {
+    return (
+      <p className='text-muted-foreground flex items-center gap-1 truncate text-xs'>
+        {isSentByAgent && (
+          <ChecksIcon className='text-primary shrink-0 h-3.5 w-3.5' aria-label='Sent' />
+        )}
+        <span className='truncate'>{lastMessage.text}</span>
+      </p>
+    );
+  }
+
+  return <p className='text-muted-foreground text-xs italic'>No messages yet</p>;
+}
+
 interface ConversationListProps {
   conversations: Conversation[];
   selectedId: string;
@@ -207,7 +252,7 @@ export function ConversationList({
 
         {filtered.map((conversation) => {
           const isActive = conversation.id === selectedId;
-          const lastMessage = conversation.messages[conversation.messages.length - 1];
+          const lastMessage = conversation.messages.at(-1);
           const isTyping = !!typingMap[conversation.id];
           const isSentByAgent = lastMessage?.sender === 'user';
 
@@ -265,35 +310,11 @@ export function ConversationList({
                 {/* Bottom Row: Message snippet / Typing & Unread badge */}
                 <div className='mt-0.5 flex items-center justify-between gap-2'>
                   <div className='min-w-0 flex-1'>
-                    {isTyping ? (
-                      <span className='text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-xs font-medium'>
-                        <span
-                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
-                          style={{ animationDelay: '0ms' }}
-                        />
-                        <span
-                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
-                          style={{ animationDelay: '150ms' }}
-                        />
-                        <span
-                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
-                          style={{ animationDelay: '300ms' }}
-                        />
-                        <span>typing...</span>
-                      </span>
-                    ) : lastMessage ? (
-                      <p className='text-muted-foreground flex items-center gap-1 truncate text-xs'>
-                        {isSentByAgent && (
-                          <ChecksIcon
-                            className='text-primary shrink-0 h-3.5 w-3.5'
-                            aria-label='Sent'
-                          />
-                        )}
-                        <span className='truncate'>{lastMessage.text}</span>
-                      </p>
-                    ) : (
-                      <p className='text-muted-foreground text-xs italic'>No messages yet</p>
-                    )}
+                    <ConversationPreview
+                      isTyping={isTyping}
+                      lastMessage={lastMessage}
+                      isSentByAgent={isSentByAgent}
+                    />
                   </div>
 
                   {/* WhatsApp-style Unread Badge */}

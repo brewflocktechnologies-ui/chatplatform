@@ -2,9 +2,9 @@ import { keepPreviousData, queryOptions } from '@tanstack/react-query';
 import { entityRoots } from '@/lib/cache/keys';
 import { cachePolicy } from '@/lib/cache/policy';
 import { getAllCustomers, getCustomer, getCustomers } from './service';
-import type { Customer, CustomerFilters, CustomerSort } from './types';
+import type { CustomerFilters, CustomerSort } from './types';
 
-export type { Customer };
+export type { Customer } from './types';
 
 export const CUSTOMER_PAGE_SIZE = 10;
 

@@ -21,7 +21,7 @@ export default function ProductListingPage() {
 
   const queryClient = getQueryClient();
 
-  void queryClient.prefetchQuery(productsQueryOptions(filters));
+  void queryClient.query(productsQueryOptions(filters)).catch(() => {});
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

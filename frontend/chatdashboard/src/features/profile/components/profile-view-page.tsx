@@ -9,7 +9,7 @@ import * as z from 'zod';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
-  email: z.string().email({ message: 'Enter a valid email address' })
+  email: z.email('Enter a valid email address')
 });
 
 export default function ProfileViewPage() {

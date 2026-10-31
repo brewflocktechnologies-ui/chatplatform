@@ -44,6 +44,18 @@ function generateRandomProductData(id: number): Product {
 }
 
 // Mock product data store
+function parseCategories(categories: string | string[] | undefined): string[] {
+  if (!categories) return [];
+  return Array.isArray(categories) ? categories : String(categories).split(/[.,]/);
+}
+
+function toSortString(value: unknown): string {
+  if (value === null || value === undefined) return '';
+  if (typeof value === 'string') return value.toLowerCase();
+  if (typeof value === 'object') return (JSON.stringify(value) ?? '').toLowerCase();
+  return String(value).toLowerCase();
+}
+
 export const fakeProducts = {
   records: [] as Product[], // Holds the list of product objects
 
@@ -91,11 +103,7 @@ export const fakeProducts = {
     search?: string;
     sort?: string;
   }) {
-    const categoriesArray = categories
-      ? Array.isArray(categories)
-        ? categories
-        : String(categories).split(/[.,]/)
-      : [];
+    const categoriesArray = parseCategories(categories);
     const allProducts = await this.getAll({
       categories: categoriesArray,
       search
@@ -116,8 +124,8 @@ export const fakeProducts = {
             if (typeof aVal === 'number' && typeof bVal === 'number') {
               return desc ? bVal - aVal : aVal - bVal;
             }
-            const aStr = String(aVal ?? '').toLowerCase();
-            const bStr = String(bVal ?? '').toLowerCase();
+            const aStr = toSortString(aVal);
+            const bStr = toSortString(bVal);
             return desc ? bStr.localeCompare(aStr) : aStr.localeCompare(bStr);
           });
         }
@@ -149,7 +157,6 @@ export const fakeProducts = {
 
   // Get a specific product by its ID
   async getProductById(id: number) {
-
     // Find the product by its ID
     const product = this.records.find((product) => product.id === id);
 
@@ -173,7 +180,6 @@ export const fakeProducts = {
 
   // Create a new product
   async createProduct(data: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'photo_url'>) {
-
     const newProduct: Product = {
       ...data,
       id: this.records.length + 1,
@@ -196,7 +202,6 @@ export const fakeProducts = {
     id: number,
     data: Omit<Product, 'id' | 'created_at' | 'updated_at' | 'photo_url'>
   ) {
-
     const index = this.records.findIndex((product) => product.id === id);
 
     if (index === -1) {
@@ -221,7 +226,6 @@ export const fakeProducts = {
 
   // Delete a product
   async deleteProduct(id: number) {
-
     const index = this.records.findIndex((product) => product.id === id);
 
     if (index === -1) {

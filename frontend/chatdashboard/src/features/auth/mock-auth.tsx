@@ -49,7 +49,7 @@ export function MockAuthProvider({ children }: Readonly<{ children: React.ReactN
     (name?: string) => {
       const nextUser: MockUser = {
         ...DEMO_USER,
-        fullName: name && name.trim() ? name.trim() : DEMO_USER.fullName
+        fullName: name?.trim() ? name.trim() : DEMO_USER.fullName
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
       setUser(nextUser);

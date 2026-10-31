@@ -48,6 +48,12 @@ const formatDate = (date: string | Date): string => {
   });
 };
 
+const getActionStyleClass = (style: ActionStyle | undefined): string => {
+  if (style === 'primary') return 'bg-primary/10 text-primary hover:bg-primary/20';
+  if (style === 'danger') return 'bg-destructive/10 text-destructive hover:bg-destructive/20';
+  return 'bg-accent text-muted-foreground hover:bg-accent hover:text-foreground';
+};
+
 const getActionIcon = (actionType: ActionType) => {
   const iconProps = { size: 12, strokeWidth: 2.5 };
   switch (actionType) {
@@ -147,11 +153,7 @@ export const NotificationCard: FC<NotificationCardProps> = ({
                     onClick={() => onAction?.(id, action.id, action.type)}
                     className={cn(
                       'flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-normal transition',
-                      action.style === 'primary'
-                        ? 'bg-primary/10 text-primary hover:bg-primary/20'
-                        : action.style === 'danger'
-                          ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
-                          : 'bg-accent text-muted-foreground hover:bg-accent hover:text-foreground',
+                      getActionStyleClass(action.style),
                       showLoading && 'opacity-50',
                       isExecuted && 'cursor-not-allowed opacity-60'
                     )}

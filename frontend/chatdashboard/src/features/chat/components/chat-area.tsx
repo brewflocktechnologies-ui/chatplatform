@@ -1,6 +1,6 @@
 'use client';
 
-import { FormEvent, useEffect, useRef } from 'react';
+import { SyntheticEvent, useEffect, useRef } from 'react';
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import type { Attachment, Conversation } from '../utils/types';
 import { ChatHeader } from './chat-header';
@@ -11,7 +11,7 @@ interface ChatAreaProps {
   conversation: Conversation;
   draft: string;
   onDraftChange: (text: string) => void;
-  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
+  onSubmit: (e: SyntheticEvent<HTMLFormElement>) => void;
   attachments: Attachment[];
   onAddAttachments: (files: FileList) => void;
   onRemoveAttachment: (id: string) => void;
@@ -54,7 +54,7 @@ export function ChatArea({
 
   useEffect(() => {
     if (!liveRegionRef.current) return;
-    const lastMessage = conversation.messages[conversation.messages.length - 1];
+    const lastMessage = conversation.messages.at(-1);
     if (!lastMessage) return;
     liveRegionRef.current.textContent =
       lastMessage.author + ' at ' + lastMessage.timestamp + ': ' + lastMessage.text;
