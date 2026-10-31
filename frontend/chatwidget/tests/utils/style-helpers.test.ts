@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  cssLength,
   hexToRgba,
   getBorderRadius,
   getGradient,
@@ -143,5 +144,22 @@ describe('utils/style-helpers.ts', () => {
     expect(getCompositeBackground({ useWebsiteTheme: false, gradientType: 'linear' })).toBe('#0b5fff');
 
     expect(typeof formatTime('2024-01-01T00:00:00.000Z')).toBe('string');
+  });
+});
+
+describe('cssLength', () => {
+  it('turns numbers into pixels, including zero', () => {
+    expect(cssLength(12, '1px')).toBe('12px');
+    expect(cssLength(0, '1px')).toBe('0px');
+  });
+
+  it('passes strings through unchanged, even an empty one', () => {
+    expect(cssLength('50%', '1px')).toBe('50%');
+    expect(cssLength('', '1px')).toBe('');
+  });
+
+  it('falls back only when nothing is set', () => {
+    expect(cssLength(undefined, '9999px')).toBe('9999px');
+    expect(cssLength(null, '9999px')).toBe('9999px');
   });
 });

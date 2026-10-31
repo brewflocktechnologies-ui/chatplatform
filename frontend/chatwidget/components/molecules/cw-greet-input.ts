@@ -2,6 +2,7 @@ import { LitElement, html, css, type PropertyValues } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import type { InputBoxConfig } from '../../store/types.js';
 import { EnterLeaveController } from '../../utils/transition.js';
+import { cssLength } from '../../utils/style-helpers.js';
 import { REDUCED_MOTION_CSS } from '../../tokens/accessibility.js';
 import '../atoms/cw-icon.js';
 import '../atoms/cw-button.js';
@@ -19,8 +20,8 @@ export class CwGreetInput extends LitElement {
 
   @state() draft = '';
 
-  private transition = new EnterLeaveController(this, {
-    enterMs: () => (this.config?.animationOpeningSec !== undefined ? this.config.animationOpeningSec : 0.3) * 1000,
+  private readonly transition = new EnterLeaveController(this, {
+    enterMs: () => (this.config?.animationOpeningSec ?? 0.3) * 1000,
     leaveMs: () => 0,
   });
 
@@ -94,22 +95,20 @@ export class CwGreetInput extends LitElement {
   }
 
   render() {
-    if (!this.transition.render || !this.config || !this.config.enabled) return html``;
+    if (!this.transition.render || !this.config?.enabled) return html``;
 
     const ib = this.config;
     const isSeparated = ib.layout === 'separated';
 
     const phase = this.transition.phase;
     const isHidden = phase === 'enter';
-    const openingSec = ib.animationOpeningSec !== undefined ? ib.animationOpeningSec : 0.3;
+    const openingSec = ib.animationOpeningSec ?? 0.3;
     const phaseStyle =
       `opacity: ${isHidden ? '0' : '1'}; ` +
       `transform: ${isHidden ? 'translateY(8px)' : 'translateY(0)'}; ` +
       `transition: opacity ${openingSec}s ease, transform ${openingSec}s ease;`;
 
-    const borderRadiusCss = ib.borderRadius !== undefined
-      ? (typeof ib.borderRadius === 'number' ? `${ib.borderRadius}px` : ib.borderRadius)
-      : '24px';
+    const borderRadiusCss = cssLength(ib.borderRadius, '24px');
 
     if (isSeparated) {
       const btnBg = ib.buttonBgColor || ib.buttonColor || this.accentColor || 'var(--cw-accent, #0b5fff)';
@@ -117,8 +116,6 @@ export class CwGreetInput extends LitElement {
       if (btnIconColor.toLowerCase() === btnBg.toLowerCase() || btnBg !== '#ffffff') {
         btnIconColor = '#ffffff';
       }
-      const btnSize = ib.buttonSize || 42;
-
       return html`
         <div class="input-container" style="gap: 8px; ${phaseStyle}">
           <div

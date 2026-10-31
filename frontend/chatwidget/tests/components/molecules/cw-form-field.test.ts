@@ -123,3 +123,56 @@ describe('CwFormField Molecule Component', () => {
     expect(input.getAttribute('type')).toBe('text');
   });
 });
+
+describe('CwFormField controls', () => {
+  const mount = async (props: Partial<CwFormField>) => {
+    document.body.innerHTML = '';
+    const el = new CwFormField();
+    Object.assign(el, props);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    return el;
+  };
+
+  it('renders a textarea with its row count and placeholder', async () => {
+    const el = await mount({ field: { name: 'msg', label: 'Message', type: 'textarea', rows: 5, placeholder: 'Say it' } as never, value: 'hi' });
+    const ta = el.shadowRoot!.querySelector('textarea') as HTMLTextAreaElement;
+    expect(ta.getAttribute('rows')).toBe('5');
+    expect(ta.getAttribute('placeholder')).toBe('Say it');
+    expect(ta.value).toBe('hi');
+    expect(el.shadowRoot!.querySelector('input,select')).toBeNull();
+  });
+
+  it('defaults a textarea to three rows', async () => {
+    const el = await mount({ field: { name: 'msg', label: 'Message', type: 'textarea' } as never });
+    expect(el.shadowRoot!.querySelector('textarea')!.getAttribute('rows')).toBe('3');
+  });
+
+  it('renders a select with a disabled placeholder option and marks the chosen one', async () => {
+    const el = await mount({
+      field: { name: 'topic', label: 'Topic', type: 'select', placeholder: 'Pick one', options: [{ value: 'a', label: 'A' }, { value: 'b', label: 'B' }] } as never,
+      value: 'b'
+    });
+    const options = Array.from(el.shadowRoot!.querySelectorAll('option'));
+    expect(options.map((o) => o.textContent!.trim())).toEqual(['Pick one', 'A', 'B']);
+    expect(options[0].hasAttribute('disabled')).toBe(true);
+    expect(options[0].hasAttribute('selected')).toBe(false);
+    expect(options[2].hasAttribute('selected')).toBe(true);
+  });
+
+  it('selects the placeholder when nothing is chosen, and copes with missing options', async () => {
+    const el = await mount({ field: { name: 'topic', label: 'Topic', type: 'select', placeholder: 'Pick one' } as never, value: '' });
+    const options = Array.from(el.shadowRoot!.querySelectorAll('option'));
+    expect(options).toHaveLength(1);
+    expect(options[0].hasAttribute('selected')).toBe(true);
+  });
+
+  it('renders a plain input, defaulting its type to text', async () => {
+    const el = await mount({ field: { name: 'who', label: 'Name' } as never, disabled: true });
+    const input = el.shadowRoot!.querySelector('input') as HTMLInputElement;
+    expect(input.type).toBe('text');
+    expect(input.disabled).toBe(true);
+    const email = await mount({ field: { name: 'mail', label: 'Email', type: 'email' } as never });
+    expect(email.shadowRoot!.querySelector('input')!.type).toBe('email');
+  });
+});

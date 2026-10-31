@@ -61,7 +61,7 @@ export class CwChatFooter extends LitElement {
     const isModern = this.modernUi;
     const paddingBottom = formatPx(this.footerPaddingBottom, isModern ? '16px' : '8px');
     const bg = this.footerBg || (isModern ? '#ffffff' : '#f9fafb');
-    const borderRadius = this.widgetBorderRadius !== undefined ? this.widgetBorderRadius : (isModern ? 24 : 0);
+    const borderRadius = this.widgetBorderRadius ?? (isModern ? 24 : 0);
     const fontSize = formatPx(this.footerFontSize, '11px');
     const textColor = this.footerTextColor || 'var(--cw-muted, #667085)';
     const poweredByLink = this.poweredByLink || '#';

@@ -10,7 +10,7 @@ export function isValidEmail(value: string): boolean {
   if (/\s/.test(value)) return false;
 
   const at = value.indexOf('@');
-  if (at < 1 || value.indexOf('@', at + 1) !== -1) return false;
+  if (at < 1 || value.includes('@', at + 1)) return false;
 
   const domain = value.slice(at + 1);
   // A dot strictly inside the domain: something before it and something after it.

@@ -68,6 +68,7 @@ describe('CwEmojiPicker Molecule Component', () => {
 
   it('handles Intl.Segmenter exception fallback and empty segmenter fallback', async () => {
     const origSegmenter = Intl.Segmenter;
+    const debugSpy = vi.spyOn(console, 'debug').mockImplementation(() => {});
     (Intl as any).Segmenter = function () {
       throw new Error('Not supported');
     };
@@ -77,6 +78,9 @@ describe('CwEmojiPicker Molecule Component', () => {
 
     let btns = element.shadowRoot?.querySelectorAll('.emoji-btn');
     expect(btns?.length).toBe(3);
+    // The fallback is reported, not silently swallowed.
+    expect(debugSpy).toHaveBeenCalledWith(expect.stringContaining('Intl.Segmenter unavailable'), expect.any(Error));
+    debugSpy.mockRestore();
 
     (Intl as any).Segmenter = origSegmenter;
 

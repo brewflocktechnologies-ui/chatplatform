@@ -61,10 +61,10 @@ export class CwAvatar extends LitElement {
     const textCol = this.textColor || this.color || '#ffffff';
     const showDot = this.showOnlineDot && this.showOnline;
 
-    const dotSize = this.activeDot?.size !== undefined ? this.activeDot.size : 8;
+    const dotSize = this.activeDot?.size ?? 8;
     const dotColor = this.activeDot?.color || 'var(--cw-success, #22c55e)';
     const dotAnimate = this.activeDot?.animate !== false;
-    const dotBorderWidth = this.activeDot?.borderWidth !== undefined ? this.activeDot.borderWidth : 0;
+    const dotBorderWidth = this.activeDot?.borderWidth ?? 0;
     const dotBorderColor = this.activeDot?.borderColor || '#ffffff';
 
     return html`

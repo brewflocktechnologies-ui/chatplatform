@@ -25,7 +25,7 @@ export class CwGreetWindow extends LitElement {
   /** When true (default) the window is fixed to the viewport; set false to position it inside a container (used by stories). */
   @property({ type: Boolean }) fixed = true;
 
-  private transition = new EnterLeaveController(this, {
+  private readonly transition = new EnterLeaveController(this, {
     enterMs: () => 300,
     leaveMs: () => 300,
   });

@@ -9,6 +9,12 @@
 // ---------------------------------------------------------------------------
 
 /** Converts a hex color string to rgba(...). */
+/** Numbers are pixels; strings pass through unchanged; nothing falls back. */
+export function cssLength(value: number | string | null | undefined, fallback: string): string {
+  if (typeof value === 'number') return `${value}px`;
+  return value ?? fallback;
+}
+
 export function hexToRgba(hex: string, alpha = 1): string {
   if (!hex) return '';
   if (hex.startsWith('#')) {

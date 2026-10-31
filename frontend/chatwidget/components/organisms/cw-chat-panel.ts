@@ -24,7 +24,7 @@ export class CwChatPanel extends LitElement {
   /** When true (default) the panel is fixed to the viewport; set false to position it inside a container (used by stories). */
   @property({ type: Boolean }) fixed = true;
 
-  private transition = new EnterLeaveController(this, {
+  private readonly transition = new EnterLeaveController(this, {
     enterMs: () => (this.chatWindowConfig?.animationOpeningSec !== undefined ? this.chatWindowConfig.animationOpeningSec : 0.3) * 1000,
     leaveMs: () => (this.chatWindowConfig?.animationClosingSec !== undefined ? this.chatWindowConfig.animationClosingSec : 0.2) * 1000,
   });
