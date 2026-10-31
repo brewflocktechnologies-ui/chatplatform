@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { mount, unmount } from '../src/mount.js';
+import { mount, unmount, resolveChatWidgetHost } from '../src/mount.js';
 
 function fakeFrameEnv(iframe) {
   const frameDoc = document.implementation.createHTMLDocument('frame');
@@ -160,5 +160,74 @@ describe('unmount', () => {
   it('ignores a missing element and an unmounted one', () => {
     expect(() => unmount(null)).not.toThrow();
     expect(() => unmount(document.createElement('div'))).not.toThrow();
+  });
+});
+
+describe('resolveChatWidgetHost', () => {
+  it('uses the local preview port for localhost and 127.0.0.1', () => {
+    expect(resolveChatWidgetHost('localhost', 'http://localhost:5001/mount.js')).toBe(
+      'http://localhost:4173'
+    );
+    expect(resolveChatWidgetHost('127.0.0.1', 'http://127.0.0.1:5001/mount.js')).toBe(
+      'http://localhost:4173'
+    );
+  });
+
+  it('resolves the bundled dist folder relative to the module when deployed', () => {
+    expect(resolveChatWidgetHost('example.github.io', 'https://example.github.io/app/src/mount.js')).toBe(
+      'https://example.github.io/app/dist'
+    );
+  });
+});
+
+describe('dark-mode sync tolerates partially initialised frames', () => {
+  const flush = () => new Promise((r) => setTimeout(r, 0));
+
+  it('skips the frame document when it has no documentElement', async () => {
+    await mount(host);
+    const iframe = host.querySelector('iframe');
+    Object.defineProperty(iframe, 'contentDocument', { value: { documentElement: null }, configurable: true });
+    Object.defineProperty(iframe, 'contentWindow', { value: {}, configurable: true });
+    document.body.classList.add('dark');
+    await flush();
+    expect(iframe.style.background).toMatch(/#000|rgb\(0, 0, 0\)|black/);
+  });
+
+  it('skips the widget store and alpine refresh when they are not ready', async () => {
+    await mount(host);
+    const iframe = host.querySelector('iframe');
+    const { frameWin } = fakeFrameEnv(iframe);
+    frameWin.ChatWidgetLit = undefined;
+    frameWin.updateAlpineStores = undefined;
+    document.body.classList.add('dark');
+    await flush();
+    expect(iframe.style.background).toMatch(/#000|rgb\(0, 0, 0\)|black/);
+  });
+
+  it('refreshes alpine stores only when a customization config exists', async () => {
+    await mount(host);
+    const iframe = host.querySelector('iframe');
+    const { frameWin } = fakeFrameEnv(iframe);
+    frameWin.cutomizationConfig = undefined;
+    document.body.classList.add('dark');
+    await flush();
+    expect(frameWin.updateAlpineStores).not.toHaveBeenCalled();
+    frameWin.cutomizationConfig = { a: 1 };
+    document.body.classList.remove('dark');
+    await flush();
+    expect(frameWin.updateAlpineStores).toHaveBeenCalledWith({ a: 1 });
+  });
+
+  it('swallows errors thrown while syncing a cross-origin frame', async () => {
+    await mount(host);
+    const iframe = host.querySelector('iframe');
+    Object.defineProperty(iframe, 'contentDocument', {
+      get() {
+        throw new Error('cross-origin');
+      },
+      configurable: true
+    });
+    document.body.classList.add('dark');
+    await expect(flush()).resolves.toBeUndefined();
   });
 });
