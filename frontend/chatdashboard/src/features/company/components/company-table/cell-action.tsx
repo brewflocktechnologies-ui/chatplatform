@@ -19,11 +19,15 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { CompanyFormSheet } from '../company-form-sheet';
 
+const EllipsisIcon = Icons.ellipsis;
+const EditIcon = Icons.edit;
+const TrashIcon = Icons.trash;
+
 interface CellActionProps {
-  data: Company;
+  readonly data: Company;
 }
 
-export function CellAction({ data }: CellActionProps) {
+export function CellAction({ data }: Readonly<CellActionProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const queryClient = useQueryClient();
@@ -51,9 +55,9 @@ export function CellAction({ data }: CellActionProps) {
       />
       <CompanyFormSheet company={data} open={editOpen} onOpenChange={setEditOpen} />
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
+        <DropdownMenuTrigger render={<Button type='button' variant='ghost' className='h-8 w-8 p-0' />}>
           <span className='sr-only'>Open menu</span>
-          <Icons.ellipsis className='h-4 w-4' />
+          <EllipsisIcon className='h-4 w-4' />
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>
           <DropdownMenuGroup>
@@ -61,10 +65,10 @@ export function CellAction({ data }: CellActionProps) {
           </DropdownMenuGroup>
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <Icons.edit className='mr-2 h-4 w-4' /> Update
+              <EditIcon className='mr-2 h-4 w-4' /> Update
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-              <Icons.trash className='mr-2 h-4 w-4' /> Delete
+              <TrashIcon className='mr-2 h-4 w-4' /> Delete
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

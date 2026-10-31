@@ -38,7 +38,7 @@ export class CwChatBody extends LitElement {
 
   private lastCount = -1;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`

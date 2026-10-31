@@ -13,9 +13,9 @@ import '../atoms/cw-menu-item.js';
 export class CwChatMenu extends LitElement {
   @property({ type: Boolean }) soundsOn = true;
 
-  private dismiss = new DismissController(this);
+  private readonly dismiss = new DismissController(this);
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

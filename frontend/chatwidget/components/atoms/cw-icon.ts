@@ -9,7 +9,7 @@ export class CwIcon extends LitElement {
   @property({ type: String }) color = 'currentColor';
   @property({ type: String }) customSvg = '';
 
-  static styles = css`
+  static readonly styles = css`
     :host {
       display: inline-flex;
       align-items: center;

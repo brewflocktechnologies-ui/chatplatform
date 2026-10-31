@@ -9,13 +9,19 @@
 // ---------------------------------------------------------------------------
 
 /** Converts a hex color string to rgba(...). */
+/** Numbers are pixels; strings pass through unchanged; nothing falls back. */
+export function cssLength(value: number | string | null | undefined, fallback: string): string {
+  if (typeof value === 'number') return `${value}px`;
+  return value ?? fallback;
+}
+
 export function hexToRgba(hex: string, alpha = 1): string {
   if (!hex) return '';
   if (hex.startsWith('#')) {
     const v = hex.replace('#', '');
     const normalized = v.length === 3 ? v.split('').map((c) => c + c).join('') : v;
-    const bigint = parseInt(normalized, 16);
-    if (!isNaN(bigint)) {
+    const bigint = Number.parseInt(normalized, 16);
+    if (!Number.isNaN(bigint)) {
       return `rgba(${(bigint >> 16) & 255},${(bigint >> 8) & 255},${bigint & 255},${alpha})`;
     }
   }
@@ -206,7 +212,7 @@ export function formatTime(isoString: string | undefined): string {
     return str;
   }
   const d = new Date(str);
-  if (isNaN(d.getTime())) {
+  if (Number.isNaN(d.getTime())) {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });

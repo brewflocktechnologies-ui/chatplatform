@@ -10,8 +10,13 @@ const sortingItemSchema = z.object({
   desc: z.boolean()
 });
 
+function toKeySet(columnIds?: string[] | Set<string>): Set<string> | null {
+  if (!columnIds) return null;
+  return columnIds instanceof Set ? columnIds : new Set(columnIds);
+}
+
 export const getSortingStateParser = <TData>(columnIds?: string[] | Set<string>) => {
-  const validKeys = columnIds ? (columnIds instanceof Set ? columnIds : new Set(columnIds)) : null;
+  const validKeys = toKeySet(columnIds);
 
   return createParser({
     parse: (value) => {
@@ -48,7 +53,7 @@ const filterItemSchema = z.object({
 export type FilterItemSchema = z.infer<typeof filterItemSchema>;
 
 export const getFiltersStateParser = <TData>(columnIds?: string[] | Set<string>) => {
-  const validKeys = columnIds ? (columnIds instanceof Set ? columnIds : new Set(columnIds)) : null;
+  const validKeys = toKeySet(columnIds);
 
   return createParser({
     parse: (value) => {

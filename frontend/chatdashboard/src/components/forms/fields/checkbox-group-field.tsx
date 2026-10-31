@@ -28,11 +28,13 @@ export function CheckboxGroupField({
   required,
   options,
   className
-}: BaseFieldProps & {
-  options: { value: string; label: string; disabled?: boolean }[];
-  /** Layout for the option grid, e.g. 'grid grid-cols-2 gap-3'. */
-  className?: string;
-}) {
+}: Readonly<
+  BaseFieldProps & {
+    options: { value: string; label: string; disabled?: boolean }[];
+    /** Layout for the option grid, e.g. 'grid grid-cols-2 gap-3'. */
+    className?: string;
+  }
+>) {
   const field = useFieldContext<string[]>();
   const isInvalid = useFieldInvalid();
 

@@ -29,12 +29,21 @@ function getIsValidRange(value: unknown): value is RangeValue {
   );
 }
 
+function getSliderStep(rangeSize: number): number {
+  if (rangeSize <= 20) return 1;
+  if (rangeSize <= 100) return Math.ceil(rangeSize / 20);
+  return Math.ceil(rangeSize / 50);
+}
+
 interface DataTableSliderFilterProps<TData> {
   column: Column<TData, unknown>;
   title?: string;
 }
 
-export function DataTableSliderFilter<TData>({ column, title }: DataTableSliderFilterProps<TData>) {
+export function DataTableSliderFilter<TData>({
+  column,
+  title
+}: Readonly<DataTableSliderFilterProps<TData>>) {
   const id = React.useId();
 
   const columnFilterValue = getIsValidRange(column.getFilterValue())
@@ -62,12 +71,7 @@ export function DataTableSliderFilter<TData>({ column, title }: DataTableSliderF
     }
 
     const rangeSize = maxValue - minValue;
-    const step =
-      rangeSize <= 20
-        ? 1
-        : rangeSize <= 100
-          ? Math.ceil(rangeSize / 20)
-          : Math.ceil(rangeSize / 50);
+    const step = getSliderStep(rangeSize);
 
     return { min: minValue, max: maxValue, step };
   }, [column, defaultRange]);

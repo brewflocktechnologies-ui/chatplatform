@@ -16,9 +16,11 @@ export function RadioGroupField({
   description,
   required,
   options
-}: BaseFieldProps & {
-  options: { value: string; label: string; disabled?: boolean }[];
-}) {
+}: Readonly<
+  BaseFieldProps & {
+    options: { value: string; label: string; disabled?: boolean }[];
+  }
+>) {
   const field = useFieldContext<string>();
   const isInvalid = useFieldInvalid();
 

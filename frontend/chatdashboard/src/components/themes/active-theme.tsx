@@ -1,6 +1,6 @@
 'use client';
 
-import { ReactNode, createContext, useContext, useEffect, useState } from 'react';
+import { ReactNode, createContext, useContext, useEffect, useMemo, useState } from 'react';
 
 import { DEFAULT_THEME } from './theme.config';
 
@@ -22,10 +22,10 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ActiveThemeProvider({
   children,
   initialTheme
-}: {
+}: Readonly<{
   children: ReactNode;
   initialTheme?: string;
-}) {
+}>) {
   const themeToUse = initialTheme || DEFAULT_THEME;
   const [activeTheme, setActiveTheme] = useState<string>(themeToUse);
 
@@ -55,11 +55,9 @@ export function ActiveThemeProvider({
     }
   }, [activeTheme]);
 
-  return (
-    <ThemeContext.Provider value={{ activeTheme, setActiveTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
+  const contextValue = useMemo(() => ({ activeTheme, setActiveTheme }), [activeTheme]);
+
+  return <ThemeContext.Provider value={contextValue}>{children}</ThemeContext.Provider>;
 }
 
 export function useThemeConfig() {

@@ -26,6 +26,7 @@ test.describe('Company', () => {
 
   test.beforeAll(async () => {
     test.setTimeout(90_000);
+    // Reason: Skipped when the remote billing backend service is unreachable or timed out.
     test.skip(!(await isBillingReachable()), 'billing service is unreachable');
   });
 

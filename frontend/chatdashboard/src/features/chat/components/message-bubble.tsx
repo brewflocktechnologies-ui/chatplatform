@@ -10,7 +10,7 @@ interface MessageBubbleProps {
   message: Message;
 }
 
-export function MessageBubble({ message }: MessageBubbleProps) {
+export function MessageBubble({ message }: Readonly<MessageBubbleProps>) {
   const shouldReduceMotion = useReducedMotion();
   const isUser = message.sender === 'user';
 

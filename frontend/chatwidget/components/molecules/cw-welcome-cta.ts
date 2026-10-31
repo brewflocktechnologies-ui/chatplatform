@@ -15,7 +15,7 @@ export class CwWelcomeCta extends LitElement {
   @property({ type: Object }) config?: WelcomeConfig;
   @property({ type: String }) accentColor = 'var(--cw-accent, #0b5fff)';
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

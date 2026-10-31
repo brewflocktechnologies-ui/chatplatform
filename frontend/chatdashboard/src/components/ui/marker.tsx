@@ -41,7 +41,7 @@ function Marker({
   });
 }
 
-function MarkerIcon({ className, ...props }: React.ComponentProps<'span'>) {
+function MarkerIcon({ className, ...props }: Readonly<React.ComponentProps<'span'>>) {
   return (
     <span
       data-slot='marker-icon'
@@ -52,7 +52,7 @@ function MarkerIcon({ className, ...props }: React.ComponentProps<'span'>) {
   );
 }
 
-function MarkerContent({ className, ...props }: React.ComponentProps<'span'>) {
+function MarkerContent({ className, ...props }: Readonly<React.ComponentProps<'span'>>) {
   return (
     <span
       data-slot='marker-content'

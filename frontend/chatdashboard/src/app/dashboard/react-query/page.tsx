@@ -15,7 +15,7 @@ export default function ReactQueryPage() {
   const queryClient = getQueryClient();
 
   // Prefetch on the server — data is ready before client JS loads
-  void queryClient.prefetchQuery(pokemonOptions(25));
+  void queryClient.query(pokemonOptions(25)).catch(() => {});
 
   return (
     <PageContainer

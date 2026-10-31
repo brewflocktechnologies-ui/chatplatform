@@ -16,6 +16,9 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
+
+const AddIcon = Icons.add;
+
 import { useAppForm } from '@/lib/form';
 import { ApiError, unwrap } from '@/lib/billing/errors';
 import { createPocWidget, updatePocWidget } from '../api/service';
@@ -37,9 +40,9 @@ const THEME_OPTIONS = [
 ];
 
 interface PocWidgetFormSheetProps {
-  widget?: PocWidget;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly widget?: PocWidget;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 const errorMessage = (error: unknown, fallback: string) =>
@@ -48,7 +51,7 @@ const errorMessage = (error: unknown, fallback: string) =>
 // The API stores blank optional text as null.
 const orNull = (value: string) => value.trim() || null;
 
-export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetFormSheetProps) {
+export function PocWidgetFormSheet({ widget, open, onOpenChange }: Readonly<PocWidgetFormSheetProps>) {
   const isEdit = !!widget;
   const router = useRouter();
 
@@ -156,52 +159,44 @@ export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetForm
           >
             <FormGrid>
               <FormRow>
-                <form.AppField
-                  name='widgetName'
-                  children={(field) => (
+                <form.AppField name='widgetName'>
+                  {(field) => (
                     <field.TextField label='Widget Name' required placeholder='Support widget' />
                   )}
-                />
+                </form.AppField>
               </FormRow>
-              <form.AppField
-                name='companyId'
-                children={(field) => (
+              <form.AppField name='companyId'>
+                {(field) => (
                   <field.TextField label='Company ID' type='number' min={1} required />
                 )}
-              />
-              <form.AppField
-                name='assistantId'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='assistantId'>
+                {(field) => (
                   <field.TextField label='Assistant ID' type='number' min={1} required />
                 )}
-              />
+              </form.AppField>
               <FormRow>
-                <form.AppField
-                  name='websiteUrl'
-                  children={(field) => (
+                <form.AppField name='websiteUrl'>
+                  {(field) => (
                     <field.TextField label='Website URL' placeholder='https://example.com' />
                   )}
-                />
+                </form.AppField>
               </FormRow>
-              <form.AppField
-                name='position'
-                children={(field) => (
+              <form.AppField name='position'>
+                {(field) => (
                   <field.SelectField label='Position' required options={POSITION_OPTIONS} />
                 )}
-              />
-              <form.AppField
-                name='theme'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='theme'>
+                {(field) => (
                   <field.SelectField label='Theme' required options={THEME_OPTIONS} />
                 )}
-              />
-              <form.AppField
-                name='primaryColor'
-                children={(field) => <field.ColorField label='Primary Color' />}
-              />
-              <form.AppField
-                name='maxFileSizeMb'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='primaryColor'>
+                {(field) => <field.ColorField label='Primary Color' />}
+              </form.AppField>
+              <form.AppField name='maxFileSizeMb'>
+                {(field) => (
                   <field.TextField
                     label='Max File Size (MB)'
                     type='number'
@@ -209,63 +204,55 @@ export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetForm
                     description='Applies when file upload is enabled.'
                   />
                 )}
-              />
-              <form.AppField
-                name='greetingMessage'
-                children={(field) => <field.TextareaField label='Greeting Message' />}
-              />
-              <form.AppField
-                name='offlineMessage'
-                children={(field) => <field.TextareaField label='Offline Message' />}
-              />
-              <form.AppField
-                name='showAgentName'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='greetingMessage'>
+                {(field) => <field.TextareaField label='Greeting Message' />}
+              </form.AppField>
+              <form.AppField name='offlineMessage'>
+                {(field) => <field.TextareaField label='Offline Message' />}
+              </form.AppField>
+              <form.AppField name='showAgentName'>
+                {(field) => (
                   <field.SwitchField
                     label='Show agent name'
                     description='Display the agent name on replies.'
                   />
                 )}
-              />
-              <form.AppField
-                name='showTypingIndicator'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='showTypingIndicator'>
+                {(field) => (
                   <field.SwitchField
                     label='Typing indicator'
                     description='Show when an agent is typing.'
                   />
                 )}
-              />
-              <form.AppField
-                name='enableFileUpload'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='enableFileUpload'>
+                {(field) => (
                   <field.SwitchField label='File upload' description='Let visitors attach files.' />
                 )}
-              />
-              <form.AppField
-                name='enableSoundNotification'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='enableSoundNotification'>
+                {(field) => (
                   <field.SwitchField
                     label='Sound notification'
                     description='Play a sound on new messages.'
                   />
                 )}
-              />
-              <form.AppField
-                name='autoPopup'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='autoPopup'>
+                {(field) => (
                   <field.SwitchField
                     label='Auto popup'
                     description='Open the widget automatically.'
                   />
                 )}
-              />
+              </form.AppField>
               <form.Subscribe selector={(state) => state.values.autoPopup}>
                 {(autoPopup) =>
                   autoPopup && (
-                    <form.AppField
-                      name='popupDelaySeconds'
-                      children={(field) => (
+                    <form.AppField name='popupDelaySeconds'>
+                      {(field) => (
                         <field.TextField
                           label='Popup Delay (seconds)'
                           type='number'
@@ -273,17 +260,16 @@ export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetForm
                           placeholder='5'
                         />
                       )}
-                    />
+                    </form.AppField>
                   )
                 }
               </form.Subscribe>
               <FormRow>
-                <form.AppField
-                  name='isActive'
-                  children={(field) => (
+                <form.AppField name='isActive'>
+                  {(field) => (
                     <field.SwitchField label='Active' description='Serve this widget on the site.' />
                   )}
-                />
+                </form.AppField>
               </FormRow>
             </FormGrid>
           </form>
@@ -308,7 +294,7 @@ export function PocWidgetFormSheetTrigger() {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Icons.add className='mr-2 h-4 w-4' /> Add Widget
+        <AddIcon className='mr-2 h-4 w-4' /> Add Widget
       </Button>
       <PocWidgetFormSheet open={open} onOpenChange={setOpen} />
     </>

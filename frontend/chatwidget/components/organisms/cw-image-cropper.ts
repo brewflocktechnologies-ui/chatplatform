@@ -34,7 +34,7 @@ export class CwImageCropper extends LitElement {
 
   private imageObj: HTMLImageElement | null = null;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {
@@ -302,7 +302,7 @@ export class CwImageCropper extends LitElement {
   }
 
   private handleZoomChange(e: Event) {
-    this.zoom = parseFloat((e.target as HTMLInputElement).value);
+    this.zoom = Number.parseFloat((e.target as HTMLInputElement).value);
     this.drawCanvas();
   }
 

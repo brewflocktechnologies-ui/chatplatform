@@ -54,7 +54,7 @@ export interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> 
    * ```
    * @example accept={["image/png", "image/jpeg"]}
    */
-  accept?: DropzoneProps['accept'];
+  accept?: NonNullable<DropzoneProps['accept']>;
 
   /**
    * Maximum file size for the uploader.
@@ -62,7 +62,7 @@ export interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> 
    * @default 1024 * 1024 * 2 // 2MB
    * @example maxSize={1024 * 1024 * 2} // 2MB
    */
-  maxSize?: DropzoneProps['maxSize'];
+  maxSize?: NonNullable<DropzoneProps['maxSize']>;
 
   /**
    * Maximum number of files for the uploader.
@@ -70,7 +70,7 @@ export interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> 
    * @default 1
    * @example maxFiles={5}
    */
-  maxFiles?: DropzoneProps['maxFiles'];
+  maxFiles?: NonNullable<DropzoneProps['maxFiles']>;
 
   /**
    * Whether the uploader should accept multiple files.
@@ -89,7 +89,7 @@ export interface FileUploaderProps extends React.HTMLAttributes<HTMLDivElement> 
   disabled?: boolean;
 }
 
-export function FileUploader(props: FileUploaderProps) {
+export function FileUploader(props: Readonly<FileUploaderProps>) {
   const {
     value: valueProp,
     onValueChange,
@@ -175,6 +175,7 @@ export function FileUploader(props: FileUploaderProps) {
   }, []);
 
   const isDisabled = disabled || (files?.length ?? 0) >= maxFiles;
+  const maxFilesLabel = maxFiles === Infinity ? 'multiple' : maxFiles;
 
   return (
     <div className='relative flex flex-col gap-6 overflow-hidden'>
@@ -218,7 +219,7 @@ export function FileUploader(props: FileUploaderProps) {
                   <p className='text-muted-foreground/70 text-sm'>
                     You can upload
                     {maxFiles > 1
-                      ? ` ${maxFiles === Infinity ? 'multiple' : maxFiles}
+                      ? ` ${maxFilesLabel}
                       files (up to ${formatBytes(maxSize)} each)`
                       : ` a file with ${formatBytes(maxSize)}`}
                   </p>
@@ -233,7 +234,7 @@ export function FileUploader(props: FileUploaderProps) {
           <div className='max-h-48 space-y-4'>
             {files?.map((file, index) => (
               <FileCard
-                key={index}
+                key={getFileKey(file)}
                 file={file}
                 onRemove={() => onRemove(index)}
                 progress={progresses?.[file.name]}
@@ -252,7 +253,7 @@ interface FileCardProps {
   progress?: number;
 }
 
-function FileCard({ file, progress, onRemove }: FileCardProps) {
+function FileCard({ file, progress, onRemove }: Readonly<FileCardProps>) {
   return (
     <div className='relative flex items-center space-x-4'>
       <div className='flex flex-1 space-x-4'>
@@ -289,6 +290,10 @@ function FileCard({ file, progress, onRemove }: FileCardProps) {
       </div>
     </div>
   );
+}
+
+function getFileKey(file: File): string {
+  return isFileWithPreview(file) ? file.preview : `${file.name}-${file.size}-${file.lastModified}`;
 }
 
 function isFileWithPreview(file: File): file is File & { preview: string } {

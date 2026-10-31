@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll } from 'vitest';
+import { describe, it, expect, beforeAll, vi } from 'vitest';
 
 // core.js is a classic script that attaches CWCore to the global object;
 // importing it as a module runs the IIFE.
@@ -153,5 +153,76 @@ describe('CWCore.validateWidgetConfig', () => {
     const res = core().validateWidgetConfig({ clientId: 'x', extra: deep });
     expect(res.ok).toBe(false);
     expect(res.errors.join(' ')).toMatch(/nesting depth/);
+  });
+});
+
+describe('CWCore.createMessagingPolicy.targetOrigin', () => {
+  it('falls back to a wildcard only for an opaque origin with nothing configured', () => {
+    const p = core().createMessagingPolicy({ selfOrigin: 'null' });
+    expect(p.targetOrigin()).toBe('*');
+  });
+
+  it('prefers the self origin, then configured origins, and locks after confirmation', () => {
+    expect(core().createMessagingPolicy({ selfOrigin: 'https://a.example' }).targetOrigin()).toBe('https://a.example');
+    const p = core().createMessagingPolicy({ selfOrigin: 'null', configuredOrigins: ['https://b.example'] });
+    expect(p.targetOrigin()).toBe('https://b.example');
+    p.confirmOrigin('https://c.example');
+    expect(p.targetOrigin()).toBe('https://c.example');
+  });
+});
+
+describe('CWCore.validateWidgetConfig — hostile shapes', () => {
+  it('rejects configs nested deeper than the limit', () => {
+    const deep = {};
+    let cursor = deep;
+    for (let i = 0; i < 40; i += 1) {
+      cursor.next = {};
+      cursor = cursor.next;
+    }
+    const result = core().validateWidgetConfig({ custom: deep });
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(' ')).toMatch(/maximum nesting depth/);
+  });
+
+  it('rejects forbidden prototype-pollution keys at any depth', () => {
+    const cfg = JSON.parse('{"custom":{"inner":{"__proto__":{"polluted":true}}}}');
+    const result = core().validateWidgetConfig(cfg);
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(' ')).toMatch(/forbidden key "__proto__"/);
+  });
+
+  it('walks arrays and reports the index in the path', () => {
+    const cfg = JSON.parse('{"custom":[{"ok":1},{"constructor":{}}]}');
+    const result = core().validateWidgetConfig(cfg);
+    expect(result.ok).toBe(false);
+    expect(result.errors.join(' ')).toMatch(/custom\[1\]/);
+  });
+});
+
+describe('CWCore.createMessagingPolicy defaults and processHostMessage guards', () => {
+  it('works with no options at all', () => {
+    const policy = core().createMessagingPolicy();
+    expect(policy.targetOrigin()).toBe('*');
+    expect(policy._debug().configured).toEqual([]);
+  });
+
+  it('ignores empty events and events without data', () => {
+    const policy = core().createMessagingPolicy({ selfOrigin: 'https://a.example' });
+    const actions = { updateDomain() {}, applyConfig() {} };
+    expect(core().processHostMessage(null, policy, window, actions)).toBe('ignored:empty');
+    expect(core().processHostMessage({ data: null }, policy, window, actions)).toBe('ignored:empty');
+  });
+});
+
+describe('CWCore bootstrap without a window', () => {
+  it('attaches to globalThis when window is undefined', async () => {
+    const previous = globalThis.CWCore;
+    vi.stubGlobal('window', undefined);
+    delete globalThis.CWCore;
+    vi.resetModules();
+    await import('../src/core.js');
+    expect(globalThis.CWCore).toBeDefined();
+    vi.unstubAllGlobals();
+    globalThis.CWCore = previous || globalThis.CWCore;
   });
 });

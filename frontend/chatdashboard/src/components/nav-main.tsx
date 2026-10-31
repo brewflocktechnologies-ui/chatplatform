@@ -1,6 +1,6 @@
 'use client';
 
-import { Icons } from '@/components/icons';
+import { Icons, type Icon } from '@/components/icons';
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
 import {
@@ -14,11 +14,10 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem
 } from '@/components/ui/sidebar';
-import { Icon } from '@/components/icons';
 
 export function NavMain({
   items
-}: {
+}: Readonly<{
   items: {
     title: string;
     url: string;
@@ -29,7 +28,7 @@ export function NavMain({
       url: string;
     }[];
   }[];
-}) {
+}>) {
   return (
     <SidebarGroup>
       <SidebarGroupLabel>Platform</SidebarGroupLabel>

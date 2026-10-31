@@ -29,6 +29,14 @@ export type SortParam<F extends string = string> = { field: F; dir: SortDirectio
 const REQUEST_TIMEOUT_MS = 30_000;
 const MAX_PAGE_SIZE = 100;
 
+function trimTrailingSlashes(url: string) {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === '/') {
+    end--;
+  }
+  return url.slice(0, end);
+}
+
 /** Clamps client-supplied paging, since server actions take arbitrary input. */
 export function pageParams(page: number, size: number, defaultSize = 10) {
   return new URLSearchParams({
@@ -70,8 +78,13 @@ export async function billingRequest<T>(
   const qs = query?.size ? `?${query}` : '';
 
   let res: Response;
+
   try {
-    res = await fetch(`${origin?.replace(/\/+$/, '') ?? origins.billing()}${path}${qs}`, {
+    const baseOrigin = origin
+      ? trimTrailingSlashes(origin)
+      : origins.billing();
+
+    res = await fetch(`${baseOrigin}${path}${qs}`, {
       method,
       cache: 'no-store',
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
@@ -81,11 +94,18 @@ export async function billingRequest<T>(
       })
     });
   } catch {
-    return { ok: false, status: 0, message: 'Billing service is unreachable' };
+    return {
+      ok: false,
+      status: 0,
+      message: 'Billing service is unreachable'
+    };
   }
 
   const data = await res.json().catch(() => null);
-  if (res.ok) return { ok: true, data: data as T };
+
+  if (res.ok) {
+    return { ok: true, data: data as T };
+  }
 
   return {
     ok: false,

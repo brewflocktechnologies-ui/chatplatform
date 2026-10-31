@@ -9,7 +9,7 @@ import * as z from 'zod';
 
 const formSchema = z.object({
   name: z.string().min(1, { message: 'Name is required' }),
-  email: z.string().email({ message: 'Enter a valid email address' })
+  email: z.email('Enter a valid email address')
 });
 
 export default function ProfileViewPage() {
@@ -43,16 +43,14 @@ export default function ProfileViewPage() {
             }}
             className='space-y-4'
           >
-            <form.AppField
-              name='name'
-              children={(field) => <field.TextField label='Name' placeholder='Your name' />}
-            />
-            <form.AppField
-              name='email'
-              children={(field) => (
+            <form.AppField name='name'>
+              {(field) => <field.TextField label='Name' placeholder='Your name' />}
+            </form.AppField>
+            <form.AppField name='email'>
+              {(field) => (
                 <field.TextField label='Email' type='email' placeholder='you@example.com' />
               )}
-            />
+            </form.AppField>
             <LoadingButton type='submit' className='w-full'>
               Save changes
             </LoadingButton>

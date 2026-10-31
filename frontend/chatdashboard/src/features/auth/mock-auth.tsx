@@ -29,7 +29,7 @@ interface MockAuthContextValue {
 
 const MockAuthContext = React.createContext<MockAuthContextValue | null>(null);
 
-export function MockAuthProvider({ children }: { children: React.ReactNode }) {
+export function MockAuthProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [user, setUser] = React.useState<MockUser | null>(null);
   const [isLoaded, setIsLoaded] = React.useState(false);
   const router = useRouter();
@@ -49,7 +49,7 @@ export function MockAuthProvider({ children }: { children: React.ReactNode }) {
     (name?: string) => {
       const nextUser: MockUser = {
         ...DEMO_USER,
-        fullName: name && name.trim() ? name.trim() : DEMO_USER.fullName
+        fullName: name?.trim() ? name.trim() : DEMO_USER.fullName
       };
       localStorage.setItem(STORAGE_KEY, JSON.stringify(nextUser));
       setUser(nextUser);

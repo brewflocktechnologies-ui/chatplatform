@@ -1,6 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property, state } from 'lit/decorators.js';
 import { CORE_STYLES } from '../../styles/core-styles.js';
+import { cssLength } from '../../utils/style-helpers.js';
 import '../atoms/cw-icon.js';
 import '../atoms/cw-button.js';
 
@@ -41,7 +42,7 @@ export class CwComposer extends LitElement {
 
   @state() focused = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {
@@ -143,9 +144,7 @@ export class CwComposer extends LitElement {
     const padding = this.inputPadding || '6px 8px';
     const margin = this.inputMargin || '12px 16px';
     const bg = this.inputBg || 'var(--cw-surface, #ffffff)';
-    const borderRadius = typeof this.inputBorderRadius === 'number'
-      ? `${this.inputBorderRadius}px`
-      : (this.inputBorderRadius !== undefined ? this.inputBorderRadius : '9999px');
+    const borderRadius = cssLength(this.inputBorderRadius, '9999px');
 
     const borderColor = isFocused
       ? this.inputFocusBorderColor || this.accentColor || 'var(--cw-accent, #0b5fff)'

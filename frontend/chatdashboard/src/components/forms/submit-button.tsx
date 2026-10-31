@@ -9,7 +9,7 @@ export function SubmitButton({
   children,
   disabled,
   ...props
-}: React.ComponentProps<typeof LoadingButton>) {
+}: Readonly<React.ComponentProps<typeof LoadingButton>>) {
   const form = useFormContext();
 
   return (

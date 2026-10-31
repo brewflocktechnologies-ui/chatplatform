@@ -1,10 +1,23 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, type SyntheticEvent } from 'react';
 import type { ArchivedChat } from '../types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
+
+const UserIcon = Icons.user;
+const PostIcon = Icons.post;
+const GalleryVerticalEndIcon = Icons.galleryVerticalEnd;
+const ChevronRightIcon = Icons.chevronRight;
+const MoreHorizontalIcon = Icons.moreHorizontal;
+const ClockIcon = Icons.clock;
+const MapPinIcon = Icons.mapPin;
+const ExternalLinkIcon = Icons.externalLink;
+const InfoIcon = Icons.info;
+const AddIcon = Icons.add;
+const PageIcon = Icons.page;
+
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -20,11 +33,11 @@ function copyToClipboard(text: string, label: string) {
 }
 
 interface ArchivesDetailsProps {
-  chat: ArchivedChat;
-  isOpen: boolean;
-  onToggle: () => void;
-  activeTab: DetailsTab;
-  onTabChange: (tab: DetailsTab) => void;
+  readonly chat: ArchivedChat;
+  readonly isOpen: boolean;
+  readonly onToggle: () => void;
+  readonly activeTab: DetailsTab;
+  readonly onTabChange: (tab: DetailsTab) => void;
 }
 
 interface AgentNote {
@@ -76,7 +89,7 @@ export function ArchivesDetails({
   onToggle,
   activeTab,
   onTabChange
-}: ArchivesDetailsProps) {
+}: Readonly<ArchivesDetailsProps>) {
   const [notes, setNotes] = useState<Record<string, AgentNote[]>>(DEFAULT_NOTES);
   const [newNoteText, setNewNoteText] = useState('');
   const [cannedSearch, setCannedSearch] = useState('');
@@ -87,7 +100,7 @@ export function ArchivesDetails({
 
   const currentNotes = notes[chat.id] || [];
 
-  const handleAddNote = (e: FormEvent) => {
+  const handleAddNote = (e: SyntheticEvent) => {
     e.preventDefault();
     if (!newNoteText.trim()) return;
 
@@ -134,7 +147,7 @@ export function ArchivesDetails({
                 />
               }
             >
-              <Icons.user className='h-4 w-4' />
+              <UserIcon className='h-4 w-4' />
             </TooltipTrigger>
             <TooltipContent>Customer Details</TooltipContent>
           </Tooltip>
@@ -155,7 +168,7 @@ export function ArchivesDetails({
                 />
               }
             >
-              <Icons.post className='h-4 w-4' />
+              <PostIcon className='h-4 w-4' />
             </TooltipTrigger>
             <TooltipContent>Notes & Canned Responses</TooltipContent>
           </Tooltip>
@@ -176,7 +189,7 @@ export function ArchivesDetails({
                 />
               }
             >
-              <Icons.galleryVerticalEnd className='h-4 w-4' />
+              <GalleryVerticalEndIcon className='h-4 w-4' />
             </TooltipTrigger>
             <TooltipContent>Apps & Integrations</TooltipContent>
           </Tooltip>
@@ -195,7 +208,7 @@ export function ArchivesDetails({
               />
             }
           >
-            <Icons.chevronRight className='h-4 w-4' />
+            <ChevronRightIcon className='h-4 w-4' />
           </TooltipTrigger>
           <TooltipContent side='left'>Hide Details Panel</TooltipContent>
         </Tooltip>
@@ -209,7 +222,7 @@ export function ArchivesDetails({
             <div className='flex items-center justify-between'>
               <h4 className='text-xs font-semibold text-foreground tracking-tight'>General info</h4>
               <button type='button' className='text-muted-foreground hover:text-foreground'>
-                <Icons.moreHorizontal className='h-4 w-4' />
+                <MoreHorizontalIcon className='h-4 w-4' />
               </button>
             </div>
 
@@ -236,11 +249,11 @@ export function ArchivesDetails({
 
             <div className='space-y-1.5 pt-1 text-muted-foreground'>
               <div className='flex items-center gap-2'>
-                <Icons.clock className='h-3.5 w-3.5 shrink-0' />
+                <ClockIcon className='h-3.5 w-3.5 shrink-0' />
                 <span>{chat.customer.localTime}</span>
               </div>
               <div className='flex items-center gap-2'>
-                <Icons.mapPin className='h-3.5 w-3.5 shrink-0' />
+                <MapPinIcon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{chat.customer.location}</span>
               </div>
             </div>
@@ -251,7 +264,7 @@ export function ArchivesDetails({
               className='w-full h-8 text-xs font-normal justify-center border-border/70 text-foreground/80 hover:text-foreground'
             >
               <span>View all chats ({chat.customer.allChatsCount})</span>
-              <Icons.externalLink className='ml-1.5 h-3 w-3' />
+              <ExternalLinkIcon className='ml-1.5 h-3 w-3' />
             </Button>
           </div>
 
@@ -275,7 +288,7 @@ export function ArchivesDetails({
                 <span className='text-muted-foreground'>Chatting time:</span>
                 <div className='flex items-center gap-1 font-medium text-foreground'>
                   <span>{chat.chatInfo.chattingTime}</span>
-                  <Icons.info className='h-3 w-3 text-muted-foreground' />
+                  <InfoIcon className='h-3 w-3 text-muted-foreground' />
                 </div>
               </div>
 
@@ -372,7 +385,7 @@ export function ArchivesDetails({
               />
               <div className='flex justify-end'>
                 <Button type='submit' size='sm' className='h-7 text-xs'>
-                  <Icons.add className='mr-1 h-3 w-3' />
+                  <AddIcon className='mr-1 h-3 w-3' />
                   Add Note
                 </Button>
               </div>
@@ -416,9 +429,9 @@ export function ArchivesDetails({
             />
 
             <div className='space-y-2 pt-1'>
-              {filteredCanned.map((canned, idx) => (
+              {filteredCanned.map((canned) => (
                 <div
-                  key={idx}
+                  key={canned.title}
                   className='rounded-lg border border-border/50 bg-background/50 p-2.5 space-y-1.5 hover:bg-muted/40 transition-colors'
                 >
                   <div className='flex items-center justify-between'>
@@ -430,7 +443,7 @@ export function ArchivesDetails({
                       onClick={() => copyToClipboard(canned.text, canned.title)}
                       className='text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 font-medium'
                     >
-                      <Icons.page className='h-3 w-3' />
+                      <PageIcon className='h-3 w-3' />
                       Copy
                     </button>
                   </div>

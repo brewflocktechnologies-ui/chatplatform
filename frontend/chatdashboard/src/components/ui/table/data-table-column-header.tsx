@@ -25,10 +25,15 @@ export function DataTableColumnHeader<TData, TValue>({
   title,
   className,
   ...props
-}: DataTableColumnHeaderProps<TData, TValue>) {
+}: Readonly<DataTableColumnHeaderProps<TData, TValue>>) {
   if (!column.getCanSort() && !column.getCanHide()) {
     return <div className={cn(className)}>{title}</div>;
   }
+
+  const sorted = column.getIsSorted();
+  let SortIcon = Icons.chevronsUpDown;
+  if (sorted === 'desc') SortIcon = Icons.chevronDown;
+  else if (sorted === 'asc') SortIcon = Icons.chevronUp;
 
   return (
     <DropdownMenu>
@@ -40,14 +45,7 @@ export function DataTableColumnHeader<TData, TValue>({
         {...props}
       >
         {title}
-        {column.getCanSort() &&
-          (column.getIsSorted() === 'desc' ? (
-            <Icons.chevronDown />
-          ) : column.getIsSorted() === 'asc' ? (
-            <Icons.chevronUp />
-          ) : (
-            <Icons.chevronsUpDown />
-          ))}
+        {column.getCanSort() && <SortIcon />}
       </DropdownMenuTrigger>
       <DropdownMenuContent align='start' className='w-28'>
         {column.getCanSort() && (

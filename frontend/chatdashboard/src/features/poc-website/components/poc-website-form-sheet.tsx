@@ -16,6 +16,9 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
+
+const AddIcon = Icons.add;
+
 import { useAppForm } from '@/lib/form';
 import { ApiError, unwrap } from '@/lib/billing/errors';
 import { invalidateEntity } from '@/lib/cache/invalidation';
@@ -30,9 +33,9 @@ import type { PocWebsite, PocWebsiteMutationPayload } from '../api/types';
 import { pocWebsiteSchema, type PocWebsiteFormValues } from '../schemas/poc-website';
 
 interface PocWebsiteFormSheetProps {
-  website?: PocWebsite;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly website?: PocWebsite;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 // The API has no name, so the picker is sorted by email for scanning.
@@ -41,7 +44,7 @@ const CUSTOMER_SORT: CustomerSort = { field: 'email', dir: 'asc' };
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof ApiError ? error.message : fallback;
 
-export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteFormSheetProps) {
+export function PocWebsiteFormSheet({ website, open, onOpenChange }: Readonly<PocWebsiteFormSheetProps>) {
   const isEdit = !!website;
   const router = useRouter();
 
@@ -150,18 +153,16 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
             }}
           >
             <FormGrid>
-              <form.AppField
-                name='protocol'
-                children={(field) => (
+              <form.AppField name='protocol'>
+                {(field) => (
                   <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
                 )}
-              />
-              <form.AppField
-                name='domain'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='domain'>
+                {(field) => (
                   <field.TextField label='Domain' required placeholder='example.com' />
                 )}
-              />
+              </form.AppField>
               <FormRow>
                 {/* Picking a customer sets both customerId and customerName. */}
                 <form.AppField
@@ -172,7 +173,8 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
                       if (match) form.setFieldValue('customerName', match.label);
                     }
                   }}
-                  children={(field) => (
+                >
+                  {(field) => (
                     <field.ComboboxField
                       label='Customer'
                       required
@@ -184,11 +186,10 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
                       }
                     />
                   )}
-                />
+                </form.AppField>
               </FormRow>
-              <form.AppField
-                name='businessCategory'
-                children={(field) => (
+              <form.AppField name='businessCategory'>
+                {(field) => (
                   <field.SelectField
                     label='Business Category'
                     required
@@ -196,10 +197,9 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
                     placeholder='Select category'
                   />
                 )}
-              />
-              <form.AppField
-                name='flavour'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='flavour'>
+                {(field) => (
                   <field.TextField
                     label='Flavour / Config Name'
                     required
@@ -207,25 +207,23 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: PocWebsiteF
                     description='Widget config this website uses.'
                   />
                 )}
-              />
-              <form.AppField
-                name='isActive'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='isActive'>
+                {(field) => (
                   <field.SwitchField
                     label='Active'
                     description='Serve the chat widget on this website.'
                   />
                 )}
-              />
-              <form.AppField
-                name='isVerified'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='isVerified'>
+                {(field) => (
                   <field.SwitchField
                     label='Verified'
                     description='Domain ownership has been verified.'
                   />
                 )}
-              />
+              </form.AppField>
             </FormGrid>
           </form>
         </div>
@@ -249,7 +247,7 @@ export function PocWebsiteFormSheetTrigger() {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Icons.add className='mr-2 h-4 w-4' /> Add Website
+        <AddIcon className='mr-2 h-4 w-4' /> Add Website
       </Button>
       <PocWebsiteFormSheet open={open} onOpenChange={setOpen} />
     </>

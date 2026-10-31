@@ -17,7 +17,7 @@ export class CwWelcomeCard extends LitElement {
   @property({ type: Object }) config?: WelcomeConfig;
   @property({ type: String }) accentColor = 'var(--cw-accent, #0b5fff)';
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`

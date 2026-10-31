@@ -16,6 +16,8 @@ import { columns } from './columns';
 
 const columnIds = columns.map((c) => c.id).filter(Boolean) as string[];
 
+const SpinnerIcon = Icons.spinner;
+
 export function CompanyTable() {
   const [params] = useQueryStates({
     page: parseAsInteger.withDefault(1),
@@ -75,10 +77,10 @@ export function CompanyTable() {
     >
       <DataTableToolbar table={table} actions={<CompanyFormSheetTrigger />}>
         {search && all.isFetching && !all.data && (
-          <span className='text-muted-foreground flex items-center gap-2 text-sm' role='status'>
-            <Icons.spinner className='h-4 w-4 animate-spin' />
+          <output className='text-muted-foreground flex items-center gap-2 text-sm'>
+            <SpinnerIcon className='h-4 w-4 animate-spin' />
             Searching all companies…
-          </span>
+          </output>
         )}
       </DataTableToolbar>
     </DataTable>

@@ -4,6 +4,8 @@ import dynamic from 'next/dynamic';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 
+const NotificationIcon = Icons.notification;
+
 // The notifications popover (store, card list, ScrollArea) has no role in
 // first paint — load it as a low-priority async chunk instead of shipping it
 // in the eager dashboard shell. The fallback matches the trigger's footprint
@@ -17,7 +19,7 @@ const NotificationCenter = dynamic(
     ssr: false,
     loading: () => (
       <Button variant='ghost' size='icon' className='relative h-8 w-8'>
-        <Icons.notification className='h-4 w-4' />
+        <NotificationIcon className='h-4 w-4' />
         <span className='sr-only'>Notifications</span>
       </Button>
     )

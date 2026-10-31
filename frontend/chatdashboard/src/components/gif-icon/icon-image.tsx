@@ -7,13 +7,13 @@ type IconImageProps = Omit<IconProps, 'ref'> & {
 };
 
 /** Renders a single icon frame (static SVG or GIF) as an `<img>`. */
-export function IconImage({ src, className, ...props }: IconImageProps) {
+export function IconImage({ src, className, ...props }: Readonly<IconImageProps>) {
   return (
     // eslint-disable-next-line @next/next/no-img-element
     <img
       src={src}
-      alt=""
-      aria-hidden="true"
+      alt=''
+      aria-hidden='true'
       {...toImgProps(props)}
       className={cn('size-4 object-contain', className)}
     />

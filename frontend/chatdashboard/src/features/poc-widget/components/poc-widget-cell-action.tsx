@@ -20,7 +20,15 @@ import { deletePocWidget } from '../api/service';
 import type { PocWidget } from '../api/types';
 import { PocWidgetFormSheet } from './poc-widget-form-sheet';
 
-export function PocWidgetCellAction({ data }: { data: PocWidget }) {
+const EllipsisIcon = Icons.ellipsis;
+const EditIcon = Icons.edit;
+const TrashIcon = Icons.trash;
+
+interface PocWidgetCellActionProps {
+  readonly data: PocWidget;
+}
+
+export function PocWidgetCellAction({ data }: Readonly<PocWidgetCellActionProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const router = useRouter();
@@ -48,7 +56,7 @@ export function PocWidgetCellAction({ data }: { data: PocWidget }) {
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
           <span className='sr-only'>Open menu</span>
-          <Icons.ellipsis className='h-4 w-4' />
+          <EllipsisIcon className='h-4 w-4' />
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>
           <DropdownMenuGroup>
@@ -56,10 +64,10 @@ export function PocWidgetCellAction({ data }: { data: PocWidget }) {
           </DropdownMenuGroup>
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <Icons.edit className='mr-2 h-4 w-4' /> Update
+              <EditIcon className='mr-2 h-4 w-4' /> Update
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-              <Icons.trash className='mr-2 h-4 w-4' /> Delete
+              <TrashIcon className='mr-2 h-4 w-4' /> Delete
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

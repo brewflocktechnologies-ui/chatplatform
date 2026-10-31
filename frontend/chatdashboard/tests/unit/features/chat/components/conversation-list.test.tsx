@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react';
 import React from 'react';
 
 const { storeState } = vi.hoisted(() => ({
@@ -69,8 +69,9 @@ describe('ConversationList', () => {
     fireEvent.click(screen.getByText('Alice'));
     expect(onSelect).toHaveBeenCalledWith('a');
     const items = screen.getAllByRole('listitem');
-    expect(items[1]).toHaveAttribute('aria-current', 'true');
-    expect(items[0]).not.toHaveAttribute('aria-current');
+    expect(items).toHaveLength(2);
+    expect(within(items[1]).getByRole('button')).toHaveAttribute('aria-current', 'true');
+    expect(within(items[0]).getByRole('button')).not.toHaveAttribute('aria-current');
   });
 
   it('shows typing indicator', () => {

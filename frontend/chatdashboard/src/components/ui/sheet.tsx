@@ -12,7 +12,7 @@ import { useSheetDebugLog } from './sheet-debug-log';
  * Sheets hold forms, so a click on the backdrop must not discard what was typed. They still close
  * with Escape, the close button, or `onOpenChange`; pass `disablePointerDismissal={false}` to opt out.
  */
-function Sheet({ disablePointerDismissal = true, onOpenChange, ...props }: SheetPrimitive.Root.Props) {
+function Sheet({ disablePointerDismissal = true, onOpenChange, ...props }: Readonly<SheetPrimitive.Root.Props>) {
   // TEMPORARY dev-only logging of every open/close and its reason; see sheet-debug-log.ts.
   const loggedOnOpenChange = useSheetDebugLog(props.open, onOpenChange);
   return (
@@ -25,19 +25,19 @@ function Sheet({ disablePointerDismissal = true, onOpenChange, ...props }: Sheet
   );
 }
 
-function SheetTrigger({ ...props }: SheetPrimitive.Trigger.Props) {
+function SheetTrigger({ ...props }: Readonly<SheetPrimitive.Trigger.Props>) {
   return <SheetPrimitive.Trigger data-slot='sheet-trigger' {...props} />;
 }
 
-function SheetClose({ ...props }: SheetPrimitive.Close.Props) {
+function SheetClose({ ...props }: Readonly<SheetPrimitive.Close.Props>) {
   return <SheetPrimitive.Close data-slot='sheet-close' {...props} />;
 }
 
-function SheetPortal({ ...props }: SheetPrimitive.Portal.Props) {
+function SheetPortal({ ...props }: Readonly<SheetPrimitive.Portal.Props>) {
   return <SheetPrimitive.Portal data-slot='sheet-portal' {...props} />;
 }
 
-function SheetOverlay({ className, ...props }: SheetPrimitive.Backdrop.Props) {
+function SheetOverlay({ className, ...props }: Readonly<SheetPrimitive.Backdrop.Props>) {
   return (
     <SheetPrimitive.Backdrop
       data-slot='sheet-overlay'
@@ -56,11 +56,13 @@ function SheetContent({
   side = 'right',
   showCloseButton = true,
   ...props
-}: SheetPrimitive.Popup.Props & {
-  /** `center` renders a modal dialog in the middle of the screen instead of an edge panel. */
-  side?: 'top' | 'right' | 'bottom' | 'left' | 'center';
-  showCloseButton?: boolean;
-}) {
+}: Readonly<
+  SheetPrimitive.Popup.Props & {
+    /** `center` renders a modal dialog in the middle of the screen instead of an edge panel. */
+    side?: 'top' | 'right' | 'bottom' | 'left' | 'center';
+    showCloseButton?: boolean;
+  }
+>) {
   return (
     <SheetPortal>
       <SheetOverlay />
@@ -88,7 +90,7 @@ function SheetContent({
   );
 }
 
-function SheetHeader({ className, ...props }: React.ComponentProps<'div'>) {
+function SheetHeader({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='sheet-header'
@@ -98,7 +100,7 @@ function SheetHeader({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
+function SheetFooter({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='sheet-footer'
@@ -108,7 +110,7 @@ function SheetFooter({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
+function SheetTitle({ className, ...props }: Readonly<SheetPrimitive.Title.Props>) {
   return (
     <SheetPrimitive.Title
       data-slot='sheet-title'
@@ -118,7 +120,7 @@ function SheetTitle({ className, ...props }: SheetPrimitive.Title.Props) {
   );
 }
 
-function SheetDescription({ className, ...props }: SheetPrimitive.Description.Props) {
+function SheetDescription({ className, ...props }: Readonly<SheetPrimitive.Description.Props>) {
   return (
     <SheetPrimitive.Description
       data-slot='sheet-description'

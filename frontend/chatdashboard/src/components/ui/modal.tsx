@@ -15,7 +15,7 @@ interface ModalProps {
   children?: React.ReactNode;
 }
 
-export function Modal({ title, description, isOpen, onClose, children }: ModalProps) {
+export function Modal({ title, description, isOpen, onClose, children }: Readonly<ModalProps>) {
   const onChange = (open: boolean) => {
     if (!open) {
       onClose();

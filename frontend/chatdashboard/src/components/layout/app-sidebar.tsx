@@ -39,6 +39,16 @@ import { OrgSwitcher } from '../org-switcher';
 import { cn } from '@/lib/utils';
 import { useTheme } from 'next-themes';
 
+const ChevronRightIcon = Icons.chevronRight;
+const ChevronsDownIcon = Icons.chevronsDown;
+const ChatIcon = Icons.chat;
+const MoonIcon = Icons.moon;
+const SettingsIcon = Icons.settings;
+const AccountIcon = Icons.account;
+const CreditCardIcon = Icons.creditCard;
+const NotificationIcon = Icons.notification;
+const LogoutIcon = Icons.logout;
+
 /** Superscript tag for tabs that read from the billing API. Hidden when the sidebar is icon-only. */
 function ApiTag() {
   return (
@@ -111,7 +121,7 @@ export default function AppSidebar() {
                       {item.icon && <Icon />}
                       <span>{item.title}</span>
                       {item.api && <ApiTag />}
-                      <Icons.chevronRight className='ml-auto transition-transform duration-200 group-data-panel-open/collapsible:rotate-90 group-data-[collapsible=icon]:hidden' />
+                      <ChevronRightIcon className='ml-auto transition-transform duration-200 group-data-panel-open/collapsible:rotate-90 group-data-[collapsible=icon]:hidden' />
                     </CollapsibleTrigger>
                     <CollapsibleContent>
                       <SidebarMenuSub>
@@ -171,7 +181,7 @@ export default function AppSidebar() {
                     }}
                   />
                 )}
-                <Icons.chevronsDown className='ml-auto size-4  shrink-0 transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none' />
+                <ChevronsDownIcon className='ml-auto size-4  shrink-0 transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:pointer-events-none' />
               </DropdownMenuTrigger>
               <DropdownMenuContent
                 className='w-(--anchor-width) min-w-56 rounded-lg'
@@ -205,7 +215,7 @@ export default function AppSidebar() {
                     className='flex items-center justify-between'
                   >
                     <div className='flex items-center gap-2'>
-                      <Icons.chat className='h-4 w-4' />
+                      <ChatIcon className='h-4 w-4' />
                       <span>Accept chats</span>
                     </div>
                     <Switch
@@ -221,7 +231,7 @@ export default function AppSidebar() {
                     className='flex items-center justify-between'
                   >
                     <div className='flex items-center gap-2'>
-                      <Icons.moon className='h-4 w-4' />
+                      <MoonIcon className='h-4 w-4' />
                       <span>Dark mode</span>
                     </div>
                     <Switch
@@ -237,26 +247,26 @@ export default function AppSidebar() {
 
                 <DropdownMenuGroup>
                   <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
-                    <Icons.settings className='mr-2 h-4 w-4' />
+                    <SettingsIcon className='mr-2 h-4 w-4' />
                     Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
-                    <Icons.account className='mr-2 h-4 w-4' />
+                    <AccountIcon className='mr-2 h-4 w-4' />
                     Profile
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/dashboard/billing')}>
-                    <Icons.creditCard className='mr-2 h-4 w-4' />
+                    <CreditCardIcon className='mr-2 h-4 w-4' />
                     Billing
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/dashboard/notifications')}>
-                    <Icons.notification className='mr-2 h-4 w-4' />
+                    <NotificationIcon className='mr-2 h-4 w-4' />
                     Notifications
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuGroup>
                   <DropdownMenuItem onClick={() => logout()}>
-                    <Icons.logout aria-hidden className='mr-2 h-4 w-4' />
+                    <LogoutIcon aria-hidden className='mr-2 h-4 w-4' />
                     Sign out
                   </DropdownMenuItem>
                 </DropdownMenuGroup>

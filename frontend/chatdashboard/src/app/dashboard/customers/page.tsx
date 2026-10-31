@@ -12,7 +12,7 @@ type PageProps = {
   searchParams: Promise<SearchParams>;
 };
 
-export default async function CustomersPage(props: PageProps) {
+export default async function CustomersPage(props: Readonly<PageProps>) {
   const searchParams = await props.searchParams;
   searchParamsCache.parse(searchParams);
 

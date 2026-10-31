@@ -8,10 +8,10 @@ import { captureClientError } from '@/lib/sentry';
 export default function GlobalError({
   error,
   reset
-}: {
+}: Readonly<{
   error: Error & { digest?: string };
   reset: () => void;
-}) {
+}>) {
   useEffect(() => {
     void captureClientError(error);
   }, [error]);
@@ -34,6 +34,7 @@ export default function GlobalError({
             An unexpected error occurred. Please try again.
           </p>
           <button
+            type='button'
             onClick={() => reset()}
             style={{
               padding: '0.5rem 1.25rem',

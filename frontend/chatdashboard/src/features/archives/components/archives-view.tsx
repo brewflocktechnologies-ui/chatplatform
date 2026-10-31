@@ -10,6 +10,11 @@ import { Button } from '@/components/ui/button';
 import { Icons } from '@/components/icons';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+const ChevronLeftIcon = Icons.chevronLeft;
+const UserIcon = Icons.user;
+const PostIcon = Icons.post;
+const GalleryVerticalEndIcon = Icons.galleryVerticalEnd;
+
 export default function ArchivesView() {
   const [chats, setChats] = useState<ArchivedChat[]>(MOCK_ARCHIVED_CHATS);
   // Default to chat-5 ("Test 10.11") matching the exact screenshot
@@ -99,7 +104,7 @@ export default function ArchivesView() {
                   />
                 }
               >
-                <Icons.chevronLeft className='h-4 w-4' />
+                <ChevronLeftIcon className='h-4 w-4' />
               </TooltipTrigger>
               <TooltipContent side='left'>Open Details Panel</TooltipContent>
             </Tooltip>
@@ -120,7 +125,7 @@ export default function ArchivesView() {
                   />
                 }
               >
-                <Icons.user className='h-3.5 w-3.5' />
+                <UserIcon className='h-3.5 w-3.5' />
               </TooltipTrigger>
               <TooltipContent side='left'>Customer Details</TooltipContent>
             </Tooltip>
@@ -139,7 +144,7 @@ export default function ArchivesView() {
                   />
                 }
               >
-                <Icons.post className='h-3.5 w-3.5' />
+                <PostIcon className='h-3.5 w-3.5' />
               </TooltipTrigger>
               <TooltipContent side='left'>Notes & Canned Responses</TooltipContent>
             </Tooltip>
@@ -158,7 +163,7 @@ export default function ArchivesView() {
                   />
                 }
               >
-                <Icons.galleryVerticalEnd className='h-3.5 w-3.5' />
+                <GalleryVerticalEndIcon className='h-3.5 w-3.5' />
               </TooltipTrigger>
               <TooltipContent side='left'>Apps & Integrations</TooltipContent>
             </Tooltip>

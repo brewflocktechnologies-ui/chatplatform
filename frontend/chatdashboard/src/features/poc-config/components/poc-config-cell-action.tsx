@@ -27,6 +27,11 @@ import { deletePocConfig } from '../api/service';
 import type { PocConfig } from '../api/types';
 import { PocConfigFormSheet } from './poc-config-form-sheet';
 
+const EllipsisIcon = Icons.ellipsis;
+const EyeIcon = Icons.eye;
+const EditIcon = Icons.edit;
+const TrashIcon = Icons.trash;
+
 function formatCdnConfig(value: string) {
   try {
     return JSON.stringify(JSON.parse(value), null, 2);
@@ -35,7 +40,11 @@ function formatCdnConfig(value: string) {
   }
 }
 
-export function PocConfigCellAction({ data }: { data: PocConfig }) {
+interface PocConfigCellActionProps {
+  readonly data: PocConfig;
+}
+
+export function PocConfigCellAction({ data }: Readonly<PocConfigCellActionProps>) {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [viewOpen, setViewOpen] = useState(false);
@@ -73,9 +82,9 @@ export function PocConfigCellAction({ data }: { data: PocConfig }) {
         </DialogContent>
       </Dialog>
       <DropdownMenu modal={false}>
-        <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
+        <DropdownMenuTrigger render={<Button type='button' variant='ghost' className='h-8 w-8 p-0' />}>
           <span className='sr-only'>Open menu</span>
-          <Icons.ellipsis className='h-4 w-4' />
+          <EllipsisIcon className='h-4 w-4' />
         </DropdownMenuTrigger>
         <DropdownMenuContent align='end'>
           <DropdownMenuGroup>
@@ -83,13 +92,13 @@ export function PocConfigCellAction({ data }: { data: PocConfig }) {
           </DropdownMenuGroup>
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => setViewOpen(true)}>
-              <Icons.eye className='mr-2 h-4 w-4' /> View config
+              <EyeIcon className='mr-2 h-4 w-4' /> View config
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <Icons.edit className='mr-2 h-4 w-4' /> Update
+              <EditIcon className='mr-2 h-4 w-4' /> Update
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-              <Icons.trash className='mr-2 h-4 w-4' /> Delete
+              <TrashIcon className='mr-2 h-4 w-4' /> Delete
             </DropdownMenuItem>
           </DropdownMenuGroup>
         </DropdownMenuContent>

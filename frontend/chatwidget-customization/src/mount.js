@@ -11,11 +11,14 @@ import scriptsSource from '../scripts.js?raw';
 // • deployed: the widget bundle sits in this remote's own dist/ folder
 //   (copied there by .github/workflows/deploy.yml), resolved relative to
 //   this module — no edits needed when deploying.
-const REMOTE_HOSTNAME = new URL(import.meta.url).hostname;
-const CHAT_WIDGET_HOST =
-  REMOTE_HOSTNAME === 'localhost' || REMOTE_HOSTNAME === '127.0.0.1'
+export function resolveChatWidgetHost(hostname, moduleUrl) {
+  return hostname === 'localhost' || hostname === '127.0.0.1'
     ? 'http://localhost:4173'
-    : new URL('../dist', import.meta.url).href;
+    : new URL('../dist', moduleUrl).href;
+}
+
+const REMOTE_HOSTNAME = new URL(import.meta.url).hostname;
+const CHAT_WIDGET_HOST = resolveChatWidgetHost(REMOTE_HOSTNAME, import.meta.url);
 
 // Origin this remote is served from (e.g. http://localhost:5001). Used so
 // preset/config fetches resolve against the remote, not the host page origin.

@@ -168,7 +168,7 @@ const undoBtn = () => screen.getByRole('button', { name: /Undo/ });
 async function loadSelected() {
   h.initialParams = { customerId: 'cu1', websiteId: null, configId: null };
   renderView();
-  await waitFor(() => expect(screen.getByTestId('remote')).toBeInTheDocument());
+  expect(await screen.findByTestId('remote')).toBeInTheDocument();
   await waitFor(() => expect(h.post).toHaveBeenCalledWith('LOAD_WIDGET_CONFIG', expect.anything()));
 }
 
@@ -207,7 +207,7 @@ describe('WidgetModifierView toolbar and selection', () => {
     h.initialParams = { customerId: 'cu1', websiteId: null, configId: null };
     const { container } = renderView();
     expect(container.querySelector('.animate-spin')).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByTestId('remote')).toBeInTheDocument());
+    expect(await screen.findByTestId('remote')).toBeInTheDocument();
   });
 
   it('defaults to the first website and its linked config and pushes it to the frame', async () => {
@@ -227,7 +227,7 @@ describe('WidgetModifierView toolbar and selection', () => {
   it('does not select a config when the website has none', async () => {
     h.initialParams = { customerId: 'cu1', websiteId: 'w2', configId: null };
     renderView();
-    await waitFor(() => expect(screen.getByTestId('remote')).toBeInTheDocument());
+    expect(await screen.findByTestId('remote')).toBeInTheDocument();
     expect(h.post).not.toHaveBeenCalledWith('LOAD_WIDGET_CONFIG', expect.anything());
     expect(screen.getByText('Select config')).toBeInTheDocument();
   });
@@ -240,7 +240,7 @@ describe('WidgetModifierView toolbar and selection', () => {
       websiteId: null,
       configId: null
     });
-    await waitFor(() => expect(screen.getByTestId('remote')).toBeInTheDocument());
+    expect(await screen.findByTestId('remote')).toBeInTheDocument();
     fireEvent.click(screen.getByTestId('opt-w2'));
     expect(h.setParamsSpy).toHaveBeenCalledWith({ websiteId: 'w2', configId: null });
   });
@@ -356,20 +356,13 @@ describe('WidgetModifierView MFE messaging', () => {
 });
 
 describe('WidgetModifierView config management', () => {
-  it('lists, filters and selects configs (click and keyboard)', async () => {
+  it('lists, filters and selects configs', async () => {
     await loadSelected();
     const search = screen.getByPlaceholderText('Search configs...');
     fireEvent.change(search, { target: { value: 'amb' } });
-    expect(document.querySelectorAll('[role=button][tabindex="0"]')).toHaveLength(1);
-    fireEvent.click(screen.getByText('Amber'));
+    expect(screen.getAllByRole('button', { name: /Amber/ })).toHaveLength(1);
+    fireEvent.click(screen.getByRole('button', { name: /Amber/ }));
     expect(h.setParamsSpy).toHaveBeenCalledWith({ configId: 'cfg2' });
-
-    const item = document.querySelector('[role=button][tabindex="0"]') as HTMLElement;
-    h.setParamsSpy.mockClear();
-    fireEvent.keyDown(item, { key: 'Enter' });
-    fireEvent.keyDown(item, { key: ' ' });
-    fireEvent.keyDown(item, { key: 'a' });
-    expect(h.setParamsSpy).toHaveBeenCalledTimes(2);
 
     fireEvent.change(search, { target: { value: 'zzz' } });
     expect(screen.getByText('No matching configs')).toBeInTheDocument();
@@ -484,7 +477,7 @@ describe('WidgetModifierView config management', () => {
     const triggers = screen
       .getAllByRole('button')
       .filter((b) => b.className.includes('group-hover:opacity-100'));
-    expect(triggers.length).toBe(2);
+    expect(triggers).toHaveLength(2);
     fireEvent.click(triggers[0]);
     expect(h.setParamsSpy).not.toHaveBeenCalled();
   });
@@ -493,7 +486,7 @@ describe('WidgetModifierView config management', () => {
     h.websites = [{ id: 'w1', domain: 'acme.com', configName: 'Amber' }];
     h.initialParams = { customerId: 'cu1', websiteId: 'w1', configId: 'cfg2' };
     renderView();
-    await waitFor(() => expect(screen.getByText('Active')).toBeInTheDocument());
+    expect(await screen.findByText('Active')).toBeInTheDocument();
     expect(screen.getAllByText('Active')).toHaveLength(1);
   });
 });

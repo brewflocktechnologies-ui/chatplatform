@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 
-function InputGroup({ className, ...props }: React.ComponentProps<'div'>) {
+function InputGroup({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='input-group'
@@ -45,7 +45,7 @@ function InputGroupAddon({
   className,
   align = 'inline-start',
   ...props
-}: React.ComponentProps<'div'> & VariantProps<typeof inputGroupAddonVariants>) {
+}: Readonly<React.ComponentProps<'div'> & VariantProps<typeof inputGroupAddonVariants>>) {
   return (
     // oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/click-events-have-key-events -- mouse-only focus forwarding; keyboard users tab into the input directly
     <div
@@ -84,10 +84,12 @@ function InputGroupButton({
   variant = 'ghost',
   size = 'xs',
   ...props
-}: Omit<React.ComponentProps<typeof Button>, 'size' | 'type'> &
-  VariantProps<typeof inputGroupButtonVariants> & {
-    type?: 'button' | 'submit' | 'reset';
-  }) {
+}: Readonly<
+  Omit<React.ComponentProps<typeof Button>, 'size' | 'type'> &
+    VariantProps<typeof inputGroupButtonVariants> & {
+      type?: 'button' | 'submit' | 'reset';
+    }
+>) {
   return (
     <Button
       type={type}
@@ -99,7 +101,7 @@ function InputGroupButton({
   );
 }
 
-function InputGroupText({ className, ...props }: React.ComponentProps<'span'>) {
+function InputGroupText({ className, ...props }: Readonly<React.ComponentProps<'span'>>) {
   return (
     <span
       className={cn(
@@ -111,7 +113,7 @@ function InputGroupText({ className, ...props }: React.ComponentProps<'span'>) {
   );
 }
 
-function InputGroupInput({ className, ...props }: React.ComponentProps<'input'>) {
+function InputGroupInput({ className, ...props }: Readonly<React.ComponentProps<'input'>>) {
   return (
     <Input
       data-slot='input-group-control'
@@ -124,7 +126,7 @@ function InputGroupInput({ className, ...props }: React.ComponentProps<'input'>)
   );
 }
 
-function InputGroupTextarea({ className, ...props }: React.ComponentProps<'textarea'>) {
+function InputGroupTextarea({ className, ...props }: Readonly<React.ComponentProps<'textarea'>>) {
   return (
     <Textarea
       data-slot='input-group-control'

@@ -24,7 +24,7 @@ export class CwChatPanel extends LitElement {
   /** When true (default) the panel is fixed to the viewport; set false to position it inside a container (used by stories). */
   @property({ type: Boolean }) fixed = true;
 
-  private transition = new EnterLeaveController(this, {
+  private readonly transition = new EnterLeaveController(this, {
     enterMs: () => (this.chatWindowConfig?.animationOpeningSec !== undefined ? this.chatWindowConfig.animationOpeningSec : 0.3) * 1000,
     leaveMs: () => (this.chatWindowConfig?.animationClosingSec !== undefined ? this.chatWindowConfig.animationClosingSec : 0.2) * 1000,
   });
@@ -32,7 +32,7 @@ export class CwChatPanel extends LitElement {
   /** Guards "focus on open" so it runs once per open instead of every render. */
   private didFocus = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`

@@ -28,11 +28,18 @@ function ToggleGroup({
   orientation = 'horizontal',
   children,
   ...props
-}: ToggleGroupPrimitive.Props &
-  VariantProps<typeof toggleVariants> & {
-    spacing?: number;
-    orientation?: 'horizontal' | 'vertical';
-  }) {
+}: Readonly<
+  ToggleGroupPrimitive.Props &
+    VariantProps<typeof toggleVariants> & {
+      spacing?: number;
+      orientation?: 'horizontal' | 'vertical';
+    }
+>) {
+  const contextValue = React.useMemo(
+    () => ({ variant, size, spacing, orientation }),
+    [variant, size, spacing, orientation]
+  );
+
   return (
     <ToggleGroupPrimitive
       data-slot='toggle-group'
@@ -47,9 +54,7 @@ function ToggleGroup({
       )}
       {...props}
     >
-      <ToggleGroupContext.Provider value={{ variant, size, spacing, orientation }}>
-        {children}
-      </ToggleGroupContext.Provider>
+      <ToggleGroupContext.Provider value={contextValue}>{children}</ToggleGroupContext.Provider>
     </ToggleGroupPrimitive>
   );
 }
@@ -60,7 +65,7 @@ function ToggleGroupItem({
   variant = 'default',
   size = 'default',
   ...props
-}: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
+}: Readonly<TogglePrimitive.Props & VariantProps<typeof toggleVariants>>) {
   const context = React.useContext(ToggleGroupContext);
 
   return (

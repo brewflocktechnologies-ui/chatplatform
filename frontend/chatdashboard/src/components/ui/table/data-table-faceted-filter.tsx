@@ -33,7 +33,7 @@ export function DataTableFacetedFilter<TData, TValue>({
   title,
   options,
   multiple
-}: DataTableFacetedFilterProps<TData, TValue>) {
+}: Readonly<DataTableFacetedFilterProps<TData, TValue>>) {
   const [open, setOpen] = React.useState(false);
 
   const columnFilterValue = column?.getFilterValue();

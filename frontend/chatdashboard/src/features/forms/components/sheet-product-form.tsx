@@ -72,16 +72,14 @@ export default function SheetProductForm() {
             }}
           >
             <FieldGroup>
-              <form.AppField
-                name='name'
-                children={(field) => (
+              <form.AppField name='name'>
+                {(field) => (
                   <field.TextField label='Product Name' required placeholder='Enter product name' />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='category'
-                children={(field) => (
+              <form.AppField name='category'>
+                {(field) => (
                   <field.SelectField
                     label='Category'
                     required
@@ -89,11 +87,10 @@ export default function SheetProductForm() {
                     placeholder='Select category'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='price'
-                children={(field) => (
+              <form.AppField name='price'>
+                {(field) => (
                   <field.TextField
                     label='Price'
                     required
@@ -103,11 +100,10 @@ export default function SheetProductForm() {
                     placeholder='Enter price'
                   />
                 )}
-              />
+              </form.AppField>
 
-              <form.AppField
-                name='description'
-                children={(field) => (
+              <form.AppField name='description'>
+                {(field) => (
                   <field.TextareaField
                     label='Description'
                     required
@@ -117,7 +113,7 @@ export default function SheetProductForm() {
                     showCount
                   />
                 )}
-              />
+              </form.AppField>
             </FieldGroup>
           </form>
         </div>

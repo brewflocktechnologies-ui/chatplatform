@@ -33,7 +33,7 @@ interface WebsiteFormSheetProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormSheetProps) {
+export function WebsiteFormSheet({ website, open, onOpenChange }: Readonly<WebsiteFormSheetProps>) {
   const isEdit = !!website;
   const queryClient = useQueryClient();
 
@@ -130,22 +130,17 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
             }}
           >
             <FormGrid>
-              <form.AppField
-                name='protocol'
-                children={(field) => (
+              <form.AppField name='protocol'>
+                {(field) => (
                   <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
                 )}
-              />
-              <form.AppField
-                name='domain'
-                children={(field) => (
-                  <field.TextField label='Domain' required placeholder='example.com' />
-                )}
-              />
+              </form.AppField>
+              <form.AppField name='domain'>
+                {(field) => <field.TextField label='Domain' required placeholder='example.com' />}
+              </form.AppField>
               <FormRow>
-                <form.AppField
-                  name='customerId'
-                  children={(field) => (
+                <form.AppField name='customerId'>
+                  {(field) => (
                     <field.SelectField
                       label='Customer'
                       required
@@ -155,11 +150,10 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                       }
                     />
                   )}
-                />
+                </form.AppField>
               </FormRow>
-              <form.AppField
-                name='businessCategory'
-                children={(field) => (
+              <form.AppField name='businessCategory'>
+                {(field) => (
                   <field.SelectField
                     label='Business Category'
                     required
@@ -167,10 +161,9 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                     placeholder='Select category'
                   />
                 )}
-              />
-              <form.AppField
-                name='flavour'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='flavour'>
+                {(field) => (
                   <field.TextField
                     label='Flavour / Config Name'
                     required
@@ -178,25 +171,23 @@ export function WebsiteFormSheet({ website, open, onOpenChange }: WebsiteFormShe
                     description='Widget config this website uses.'
                   />
                 )}
-              />
-              <form.AppField
-                name='isActive'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='isActive'>
+                {(field) => (
                   <field.SwitchField
                     label='Active'
                     description='Serve the chat widget on this website.'
                   />
                 )}
-              />
-              <form.AppField
-                name='isVerified'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='isVerified'>
+                {(field) => (
                   <field.SwitchField
                     label='Verified'
                     description='Domain ownership has been verified.'
                   />
                 )}
-              />
+              </form.AppField>
             </FormGrid>
           </form>
         </div>

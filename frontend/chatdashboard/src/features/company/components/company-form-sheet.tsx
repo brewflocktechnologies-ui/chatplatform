@@ -14,6 +14,9 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
+
+const AddIcon = Icons.add;
+
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { createCompanyMutation, updateCompanyMutation } from '../api/mutations';
@@ -23,9 +26,9 @@ import type { Company, CompanyMutationPayload } from '../api/types';
 import { companySchema, type CompanyFormValues } from '../schemas/company';
 
 interface CompanyFormSheetProps {
-  company?: Company;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly company?: Company;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 const errorMessage = (error: unknown, fallback: string) =>
@@ -34,7 +37,7 @@ const errorMessage = (error: unknown, fallback: string) =>
 // The API stores empty details as null, so blank strings are sent as null.
 const orNull = (value: string) => value.trim() || null;
 
-export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormSheetProps) {
+export function CompanyFormSheet({ company, open, onOpenChange }: Readonly<CompanyFormSheetProps>) {
   const isEdit = !!company;
   const queryClient = useQueryClient();
 
@@ -137,68 +140,53 @@ export function CompanyFormSheet({ company, open, onOpenChange }: CompanyFormShe
             }}
           >
             <FormGrid>
-              <form.AppField
-                name='name'
-                children={(field) => (
-                  <field.TextField label='Name' required placeholder='Acme Corp' />
-                )}
-              />
-              <form.AppField
-                name='industry'
-                children={(field) => <field.TextField label='Industry' placeholder='Fintech' />}
-              />
-              <form.AppField
-                name='contactEmail'
-                children={(field) => (
+              <form.AppField name='name'>
+                {(field) => <field.TextField label='Name' required placeholder='Acme Corp' />}
+              </form.AppField>
+              <form.AppField name='industry'>
+                {(field) => <field.TextField label='Industry' placeholder='Fintech' />}
+              </form.AppField>
+              <form.AppField name='contactEmail'>
+                {(field) => (
                   <field.TextField
                     label='Contact Email'
                     type='email'
                     placeholder='hello@acme.com'
                   />
                 )}
-              />
-              <form.AppField
-                name='contactPhone'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='contactPhone'>
+                {(field) => (
                   <field.TextField label='Contact Phone' type='tel' placeholder='+91-9123456780' />
                 )}
-              />
-              <form.AppField
-                name='website'
-                children={(field) => (
-                  <field.TextField label='Website' placeholder='https://www.acme.io' />
-                )}
-              />
-              <form.AppField
-                name='employeeCount'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='website'>
+                {(field) => <field.TextField label='Website' placeholder='https://www.acme.io' />}
+              </form.AppField>
+              <form.AppField name='employeeCount'>
+                {(field) => (
                   <field.TextField label='Employees' type='number' min={0} placeholder='220' />
                 )}
-              />
+              </form.AppField>
               <FormRow>
-                <form.AppField
-                  name='streetAddress'
-                  children={(field) => (
+                <form.AppField name='streetAddress'>
+                  {(field) => (
                     <field.TextField label='Street Address' placeholder='45 Mount Road' />
                   )}
-                />
+                </form.AppField>
               </FormRow>
-              <form.AppField
-                name='city'
-                children={(field) => <field.TextField label='City' placeholder='Bengaluru' />}
-              />
-              <form.AppField
-                name='state'
-                children={(field) => <field.TextField label='State' placeholder='Karnataka' />}
-              />
-              <form.AppField
-                name='postalCode'
-                children={(field) => <field.TextField label='Postal Code' placeholder='560001' />}
-              />
-              <form.AppField
-                name='country'
-                children={(field) => <field.TextField label='Country' placeholder='India' />}
-              />
+              <form.AppField name='city'>
+                {(field) => <field.TextField label='City' placeholder='Bengaluru' />}
+              </form.AppField>
+              <form.AppField name='state'>
+                {(field) => <field.TextField label='State' placeholder='Karnataka' />}
+              </form.AppField>
+              <form.AppField name='postalCode'>
+                {(field) => <field.TextField label='Postal Code' placeholder='560001' />}
+              </form.AppField>
+              <form.AppField name='country'>
+                {(field) => <field.TextField label='Country' placeholder='India' />}
+              </form.AppField>
             </FormGrid>
           </form>
         </div>
@@ -222,7 +210,7 @@ export function CompanyFormSheetTrigger() {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Icons.add className='mr-2 h-4 w-4' /> Add Company
+        <AddIcon className='mr-2 h-4 w-4' /> Add Company
       </Button>
       <CompanyFormSheet open={open} onOpenChange={setOpen} />
     </>

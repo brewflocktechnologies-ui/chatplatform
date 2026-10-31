@@ -29,7 +29,7 @@ export const metadata = {
 };
 
 // Keys shown as table columns; everything else goes into the config popup.
-const TABLE_KEYS = [
+const TABLE_KEYS = new Set([
   'id',
   'companyId',
   'assistantId',
@@ -39,9 +39,9 @@ const TABLE_KEYS = [
   'totalImpressions',
   'totalConversationsInitiated',
   'lastActivityDate'
-];
+]);
 
-const fmt = (v: unknown) => (v ? new Date(String(v)).toLocaleString() : '—');
+const fmt = (v: string | null | undefined) => (v ? new Date(v).toLocaleString() : '—');
 
 async function loadWidgets() {
   try {
@@ -83,7 +83,7 @@ export default async function WidgetPage() {
               </TableHeader>
               <TableBody>
                 {result.widgets.map((widget) => {
-                  const config = Object.entries(widget).filter(([key]) => !TABLE_KEYS.includes(key));
+                  const config = Object.entries(widget).filter(([key]) => !TABLE_KEYS.has(key));
                   return (
                     <TableRow key={widget.id}>
                       <TableCell>{widget.id}</TableCell>

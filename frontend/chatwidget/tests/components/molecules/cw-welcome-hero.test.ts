@@ -123,3 +123,84 @@ describe('CwWelcomeHero Molecule Component', () => {
     expect(p?.textContent?.trim()).toBe('Our support heroes are here to assist you.');
   });
 });
+
+describe('CwWelcomeHero layout rules', () => {
+  const mount = async (props: Partial<CwWelcomeHero>) => {
+    document.body.innerHTML = '';
+    const el = new CwWelcomeHero();
+    Object.assign(el, props);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    return el;
+  };
+  const text = (el: CwWelcomeHero) => el.shadowRoot!.querySelector('.text-block') as HTMLElement;
+  const logo = (el: CwWelcomeHero) => el.shadowRoot!.querySelector('.logo-container') as HTMLElement;
+  const avatarsRow = (el: CwWelcomeHero) => el.shadowRoot!.querySelector('.avatars-row') as HTMLElement;
+
+  it('left-aligns everything outside the glassy card, whatever the config says', async () => {
+    const el = await mount({ config: { textAlign: 'center', cardAlign: 'center', logoAlign: 'center', avatarAlign: 'center' } as never });
+    expect(text(el).getAttribute('style')).toContain('text-align: left');
+    expect(logo(el).getAttribute('style')).toContain('justify-content: flex-start');
+    expect(avatarsRow(el).getAttribute('style')).toContain('justify-content: flex-start');
+    expect(logo(el).getAttribute('style')).toContain('margin-bottom: 28px');
+    expect(text(el).getAttribute('style')).toContain('margin-bottom: 24px');
+  });
+
+  it('honours the configured alignment on the glassy card', async () => {
+    const el = await mount({ isGlassy: true, config: { textAlign: 'right', logoAlign: 'flex-end', avatarAlign: 'center' } as never });
+    expect(text(el).getAttribute('style')).toContain('text-align: right');
+    expect(logo(el).getAttribute('style')).toContain('justify-content: flex-end');
+    expect(avatarsRow(el).getAttribute('style')).toContain('justify-content: center');
+    expect(logo(el).getAttribute('style')).toContain('margin-bottom: 20px');
+    expect(text(el).getAttribute('style')).toContain('margin-bottom: 0');
+  });
+
+  it('centres the glassy card from either centre setting when no explicit alignment is given', async () => {
+    for (const config of [{ textAlign: 'center' }, { cardAlign: 'center' }]) {
+      const el = await mount({ isGlassy: true, config: config as never });
+      expect(logo(el).getAttribute('style')).toContain('justify-content: center');
+      expect(avatarsRow(el).getAttribute('style')).toContain('justify-content: center');
+    }
+    const plain = await mount({ isGlassy: true, config: {} as never });
+    expect(logo(plain).getAttribute('style')).toContain('justify-content: flex-start');
+    expect(text(plain).getAttribute('style')).toContain('text-align: left');
+  });
+
+  it('only sets a font-size variable when a size is configured, in pixels for numbers', async () => {
+    const none = await mount({ config: {} as never });
+    expect(none.shadowRoot!.querySelector('.welcome-title')!.getAttribute('style')).not.toContain('--cw-welcome-title-size');
+    const sized = await mount({ config: { titleFontSize: 22, descriptionFontSize: '0.9rem' } as never });
+    expect(sized.shadowRoot!.querySelector('.welcome-title')!.getAttribute('style')).toContain('--cw-welcome-title-size: 22px;');
+    expect(sized.shadowRoot!.querySelector('.welcome-desc')!.getAttribute('style')).toContain('--cw-welcome-desc-size: 0.9rem;');
+  });
+
+  it('shows the logo image or the default icon, in both layouts, and can hide it', async () => {
+    const withImage = await mount({ config: { logoUrl: 'http://l/x.png', logoAlt: 'Acme' } as never });
+    expect(withImage.shadowRoot!.querySelector('img.logo-img')!.getAttribute('alt')).toBe('Acme');
+    const fallbackIcon = await mount({ config: {} as never });
+    expect(fallbackIcon.shadowRoot!.querySelector('cw-icon')).not.toBeNull();
+    expect(fallbackIcon.shadowRoot!.querySelector('img.logo-img')).toBeNull();
+
+    const logoOnly = await mount({ logoOnly: true, config: { logoUrl: 'http://l/x.png' } as never });
+    expect(logoOnly.shadowRoot!.querySelector('.text-block')).toBeNull();
+    expect(logoOnly.shadowRoot!.querySelector('img.logo-img')!.getAttribute('alt')).toBe('Company Logo');
+
+    const hidden = await mount({ hideLogo: true, config: {} as never });
+    expect(hidden.shadowRoot!.querySelector('.logo-container')).toBeNull();
+    expect(hidden.shadowRoot!.querySelector('.text-block')).not.toBeNull();
+  });
+
+  it('stacks avatars with a negative overlap, naming each one', async () => {
+    const el = await mount({
+      config: { avatars: ['http://a/1.png', { url: 'http://a/2.png', name: 'Mia' }, {}], avatarBorderColor: 'red' } as never
+    });
+    const avatars = Array.from(el.shadowRoot!.querySelectorAll('cw-avatar')) as any[];
+    expect(avatars).toHaveLength(3);
+    expect(avatars.map((a) => a.name)).toEqual(['Agent', 'Mia', 'Agent']);
+    expect(avatars.map((a) => a.src)).toEqual(['http://a/1.png', 'http://a/2.png', '']);
+    expect(avatars[0].getAttribute('style')).toContain('margin-left: 0');
+    expect(avatars[1].getAttribute('style')).toContain('margin-left: -10px');
+    expect(avatars[2].getAttribute('style')).toContain('z-index: 12');
+    expect(avatars[0].getAttribute('style')).toContain('border: 2px solid red');
+  });
+});

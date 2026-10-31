@@ -21,7 +21,7 @@ interface CellActionProps {
   data: Product;
 }
 
-export function CellAction({ data }: CellActionProps) {
+export function CellAction({ data }: Readonly<CellActionProps>) {
   const [open, setOpen] = useState(false);
   const router = useRouter();
 

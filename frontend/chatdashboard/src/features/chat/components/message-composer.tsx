@@ -1,21 +1,25 @@
 'use client';
 
-import { FormEvent, useRef } from 'react';
+import { type SyntheticEvent, useRef } from 'react';
 import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { FilePreview } from '@/components/ui/file-preview';
 import type { Attachment } from '../utils/types';
 
+const SparklesIcon = Icons.sparkles;
+const PaperclipIcon = Icons.paperclip;
+const SendIcon = Icons.send;
+
 interface MessageComposerProps {
-  draft: string;
-  onDraftChange: (text: string) => void;
-  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
-  contactName: string;
-  quickReplies: string[];
-  attachments: Attachment[];
-  onAddAttachments: (files: FileList) => void;
-  onRemoveAttachment: (id: string) => void;
+  readonly draft: string;
+  readonly onDraftChange: (text: string) => void;
+  readonly onSubmit: (e: SyntheticEvent<HTMLFormElement>) => void;
+  readonly contactName: string;
+  readonly quickReplies: readonly string[];
+  readonly attachments: readonly Attachment[];
+  readonly onAddAttachments: (files: FileList) => void;
+  readonly onRemoveAttachment: (id: string) => void;
 }
 
 export function MessageComposer({
@@ -27,7 +31,7 @@ export function MessageComposer({
   attachments,
   onAddAttachments,
   onRemoveAttachment
-}: MessageComposerProps) {
+}: Readonly<MessageComposerProps>) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   return (
@@ -44,7 +48,7 @@ export function MessageComposer({
       {quickReplies && quickReplies.length > 0 && (
         <div className='flex items-center gap-1.5 overflow-x-auto pb-2.5 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden'>
           <span className='text-[10px] font-medium text-muted-foreground shrink-0 flex items-center gap-1 mr-0.5'>
-            <Icons.sparkles className='h-3 w-3 text-primary' />
+            <SparklesIcon className='h-3 w-3 text-primary' />
             Suggested:
           </span>
           {quickReplies.map((reply) => (
@@ -97,7 +101,7 @@ export function MessageComposer({
           aria-label='Attach a file'
           onClick={() => fileInputRef.current?.click()}
         >
-          <Icons.paperclip className='h-4 w-4' />
+          <PaperclipIcon className='h-4 w-4' />
         </Button>
 
         <Textarea
@@ -127,7 +131,7 @@ export function MessageComposer({
           disabled={!draft.trim() && attachments.length === 0}
           aria-label='Send message'
         >
-          <Icons.send className='h-3.5 w-3.5' aria-hidden='true' />
+          <SendIcon className='h-3.5 w-3.5' aria-hidden='true' />
         </Button>
       </div>
     </form>

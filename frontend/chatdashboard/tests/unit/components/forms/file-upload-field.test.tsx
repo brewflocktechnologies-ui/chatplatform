@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { z } from 'zod';
 import { useAppForm } from '@/lib/form';
 
@@ -63,9 +63,7 @@ describe('FileUploadField', () => {
   it('writes array and functional updates into the form and shows validation errors', async () => {
     let formRef: any;
     render(<Harness onForm={(f) => (formRef = f)} />);
-    await act(async () => {
-      fireEvent.submit(document.querySelector('form') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
     expect(await screen.findByText('Upload a file')).toBeInTheDocument();
 
     fireEvent.click(screen.getByText('set-array'));

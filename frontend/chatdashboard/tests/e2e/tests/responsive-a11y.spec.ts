@@ -31,6 +31,7 @@ test.describe('Mobile viewport', () => {
     const mobileSidebar = page.locator('[data-slot="sidebar"][data-mobile="true"]');
     await mobileSidebar.getByRole('link', { name: 'Customers', exact: true }).click();
     await page.waitForURL('**/dashboard/customers', { waitUntil: 'commit' });
+    await expect(page).toHaveURL(/\/dashboard\/customers/);
   });
 
   test('the mobile sidebar closes on Escape', async ({ page }) => {

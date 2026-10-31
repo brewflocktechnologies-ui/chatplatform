@@ -52,19 +52,22 @@ function ChartContainer({
   config,
   initialDimension = INITIAL_DIMENSION,
   ...props
-}: React.ComponentProps<'div'> & {
-  config: ChartConfig;
-  children: React.ComponentProps<typeof ResponsiveContainer>['children'];
-  initialDimension?: {
-    width: number;
-    height: number;
-  };
-}) {
+}: Readonly<
+  React.ComponentProps<'div'> & {
+    config: ChartConfig;
+    children: React.ComponentProps<typeof ResponsiveContainer>['children'];
+    initialDimension?: {
+      width: number;
+      height: number;
+    };
+  }
+>) {
   const uniqueId = React.useId();
-  const chartId = `chart-${id ?? uniqueId.replace(/:/g, '')}`;
+  const chartId = `chart-${id ?? uniqueId.replaceAll(':', '')}`;
+  const contextValue = React.useMemo(() => ({ config }), [config]);
 
   return (
-    <ChartContext.Provider value={{ config }}>
+    <ChartContext.Provider value={contextValue}>
       <div
         data-slot='chart'
         data-chart={chartId}
@@ -81,7 +84,7 @@ function ChartContainer({
   );
 }
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+const ChartStyle = ({ id, config }: Readonly<{ id: string; config: ChartConfig }>) => {
   const colorConfig = Object.entries(config).filter(([, config]) => config.theme ?? config.color);
 
   if (!colorConfig.length) {
@@ -126,14 +129,16 @@ function ChartTooltipContent({
   color,
   nameKey,
   labelKey
-}: React.ComponentProps<typeof Tooltip> &
-  React.ComponentProps<'div'> & {
-    hideLabel?: boolean;
-    hideIndicator?: boolean;
-    indicator?: 'line' | 'dot' | 'dashed';
-    nameKey?: string;
-    labelKey?: string;
-  } & Omit<DefaultTooltipContentProps<TooltipValueType, TooltipNameType>, 'accessibilityLayer'>) {
+}: Readonly<
+  React.ComponentProps<typeof Tooltip> &
+    React.ComponentProps<'div'> & {
+      hideLabel?: boolean;
+      hideIndicator?: boolean;
+      indicator?: 'line' | 'dot' | 'dashed';
+      nameKey?: string;
+      labelKey?: string;
+    } & Omit<DefaultTooltipContentProps<TooltipValueType, TooltipNameType>, 'accessibilityLayer'>
+>) {
   const { config } = useChart();
 
   const tooltipLabel = React.useMemo(() => {
@@ -256,10 +261,12 @@ function ChartLegendContent({
   payload,
   verticalAlign = 'bottom',
   nameKey
-}: React.ComponentProps<'div'> & {
-  hideIcon?: boolean;
-  nameKey?: string;
-} & DefaultLegendContentProps) {
+}: Readonly<
+  React.ComponentProps<'div'> & {
+    hideIcon?: boolean;
+    nameKey?: string;
+  } & DefaultLegendContentProps
+>) {
   const { config } = useChart();
 
   if (!payload?.length) {

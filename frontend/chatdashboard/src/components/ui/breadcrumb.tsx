@@ -5,13 +5,13 @@ import { useRender } from '@base-ui/react/use-render';
 import { cn } from '@/lib/utils';
 import { IconChevronRight, IconDots } from '@tabler/icons-react';
 
-function Breadcrumb({ className, ...props }: React.ComponentProps<'nav'>) {
+function Breadcrumb({ className, ...props }: Readonly<React.ComponentProps<'nav'>>) {
   return (
     <nav aria-label='breadcrumb' data-slot='breadcrumb' className={cn(className)} {...props} />
   );
 }
 
-function BreadcrumbList({ className, ...props }: React.ComponentProps<'ol'>) {
+function BreadcrumbList({ className, ...props }: Readonly<React.ComponentProps<'ol'>>) {
   return (
     <ol
       data-slot='breadcrumb-list'
@@ -24,7 +24,7 @@ function BreadcrumbList({ className, ...props }: React.ComponentProps<'ol'>) {
   );
 }
 
-function BreadcrumbItem({ className, ...props }: React.ComponentProps<'li'>) {
+function BreadcrumbItem({ className, ...props }: Readonly<React.ComponentProps<'li'>>) {
   return (
     <li
       data-slot='breadcrumb-item'
@@ -50,7 +50,7 @@ function BreadcrumbLink({ className, render, ...props }: useRender.ComponentProp
   });
 }
 
-function BreadcrumbPage({ className, ...props }: React.ComponentProps<'span'>) {
+function BreadcrumbPage({ className, ...props }: Readonly<React.ComponentProps<'span'>>) {
   return (
     <span
       data-slot='breadcrumb-page'
@@ -63,7 +63,11 @@ function BreadcrumbPage({ className, ...props }: React.ComponentProps<'span'>) {
   );
 }
 
-function BreadcrumbSeparator({ children, className, ...props }: React.ComponentProps<'li'>) {
+function BreadcrumbSeparator({
+  children,
+  className,
+  ...props
+}: Readonly<React.ComponentProps<'li'>>) {
   return (
     <li
       data-slot='breadcrumb-separator'
@@ -77,7 +81,7 @@ function BreadcrumbSeparator({ children, className, ...props }: React.ComponentP
   );
 }
 
-function BreadcrumbEllipsis({ className, ...props }: React.ComponentProps<'span'>) {
+function BreadcrumbEllipsis({ className, ...props }: Readonly<React.ComponentProps<'span'>>) {
   return (
     <span
       data-slot='breadcrumb-ellipsis'

@@ -51,8 +51,8 @@ function buildPreviewDocument(website: Website, cdnConfig: Record<string, unknow
       }
     }, 50);
     setTimeout(function () { clearInterval(timer); }, 3000);
-  <\/script>
-  <script defer src="${getChatWidgetUrl()}"><\/script>
+  </script>
+  <script defer src="${getChatWidgetUrl()}"></script>
   <style>
     body {
       margin: 0;
@@ -78,7 +78,11 @@ function buildPreviewDocument(website: Website, cdnConfig: Record<string, unknow
 </html>`;
 }
 
-export function WebsitePreviewDialog({ website, open, onOpenChange }: WebsitePreviewDialogProps) {
+export function WebsitePreviewDialog({
+  website,
+  open,
+  onOpenChange
+}: Readonly<WebsitePreviewDialogProps>) {
   // Fetch the website's linked config so the preview shows the SAVED widget
   // appearance rather than the bundle defaults.
   const { data: config, isLoading } = useQuery({
