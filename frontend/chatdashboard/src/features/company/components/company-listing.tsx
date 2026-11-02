@@ -15,9 +15,8 @@ export default function CompanyListing() {
 
   // Search results are loaded on the client instead.
   if (!name) {
-    void queryClient.query(companiesQueryOptions({ page: page - 1, size: perPage, sort,
-    }),
-      )
+    void queryClient
+      .query(companiesQueryOptions({ page: page - 1, size: perPage, sort }))
       .catch(() => {});
   }
 

@@ -4,8 +4,8 @@ import { FormSheet, FormSheetTrigger } from '@/components/forms/form-sheet';
 import { FormGrid, FormRow } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCreateUpdateMutations } from '@/hooks/use-create-update-mutations';
 import { createCompanyMutation, updateCompanyMutation } from '../api/mutations';
 import { invalidateEntity } from '@/lib/cache/invalidation';
 import { CompanyApiError } from '../api/errors';
@@ -28,26 +28,14 @@ export function CompanyFormSheet({ company, open, onOpenChange }: Readonly<Compa
   const isEdit = !!company;
   const queryClient = useQueryClient();
 
-  const createMutation = useMutation({
-    ...createCompanyMutation,
-    // Overriding onSuccess replaces the base invalidation — re-do it here.
-    onSuccess: () => {
-      invalidateEntity('companies', queryClient);
-      toast.success('Company created');
-      onOpenChange(false);
-      form.reset();
-    },
-    onError: (error) => toast.error(errorMessage(error, "Couldn't create company. Try again."))
-  });
-
-  const updateMutation = useMutation({
-    ...updateCompanyMutation,
-    onSuccess: () => {
-      invalidateEntity('companies', queryClient);
-      toast.success('Company updated');
-      onOpenChange(false);
-    },
-    onError: (error) => toast.error(errorMessage(error, "Couldn't update company. Try again."))
+  const { save, isPending } = useCreateUpdateMutations({
+    noun: 'company',
+    create: createCompanyMutation,
+    update: updateCompanyMutation,
+    onSaved: () => invalidateEntity('companies', queryClient),
+    onOpenChange,
+    onCreated: () => form.reset(),
+    errorMessage
   });
 
   const d = company?.companyDetails;
@@ -91,19 +79,9 @@ export function CompanyFormSheet({ company, open, onOpenChange }: Readonly<Compa
         customPlanIds: company?.customPlanIds ?? [],
         customerIds: company?.customerIds ?? []
       };
-      try {
-        if (isEdit) {
-          await updateMutation.mutateAsync({ id: company.id, values: payload });
-        } else {
-          await createMutation.mutateAsync(payload);
-        }
-      } catch {
-        // Already reported by the mutation's onError.
-      }
+      await save(company?.id, payload);
     }
   });
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <FormSheet

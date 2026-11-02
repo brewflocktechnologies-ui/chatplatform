@@ -9,6 +9,8 @@ export const websiteSchema = z.object({
       message: 'Enter a bare domain like example.com (no protocol or path)'
     }),
   customerId: z.string().min(1, 'Please select a customer'),
+  // Not user-editable: set from the picked customer.
+  customerName: z.string(),
   businessCategory: z.string().min(1, 'Please select a category'),
   flavour: z.string().min(1, 'Flavour / config name is required'),
   isActive: z.boolean(),

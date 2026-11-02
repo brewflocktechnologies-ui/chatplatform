@@ -17,8 +17,8 @@ export default function CustomerListingPage() {
       customersQueryOptions({
         page: page - 1,
         size: pageLimit,
-        sort,
-      }),
+        sort
+      })
     )
     .catch(() => {});
 

@@ -4,8 +4,8 @@ import { FormSheet, FormSheetTrigger } from '@/components/forms/form-sheet';
 import { FormGrid } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
+import { useCreateUpdateMutations } from '@/hooks/use-create-update-mutations';
 import { invalidateEntity } from '@/lib/cache/invalidation';
 import { createCustomerMutation, updateCustomerMutation } from '../api/mutations';
 import { CustomerApiError } from '../api/errors';
@@ -29,26 +29,14 @@ export function CustomerFormSheet({
   const isEdit = !!customer;
   const queryClient = useQueryClient();
 
-  const createMutation = useMutation({
-    ...createCustomerMutation,
-    // Overriding onSuccess replaces the base invalidation — re-do it here.
-    onSuccess: () => {
-      invalidateEntity('customers', queryClient);
-      toast.success('Customer created');
-      onOpenChange(false);
-      form.reset();
-    },
-    onError: (error) => toast.error(errorMessage(error, "Couldn't create customer. Try again."))
-  });
-
-  const updateMutation = useMutation({
-    ...updateCustomerMutation,
-    onSuccess: () => {
-      invalidateEntity('customers', queryClient);
-      toast.success('Customer updated');
-      onOpenChange(false);
-    },
-    onError: (error) => toast.error(errorMessage(error, "Couldn't update customer. Try again."))
+  const { save, isPending } = useCreateUpdateMutations({
+    noun: 'customer',
+    create: createCustomerMutation,
+    update: updateCustomerMutation,
+    onSaved: () => invalidateEntity('customers', queryClient),
+    onOpenChange,
+    onCreated: () => form.reset(),
+    errorMessage
   });
 
   const a = customer?.billingAddress;
@@ -84,19 +72,9 @@ export function CustomerFormSheet({
           country: text(value.country)
         }
       };
-      try {
-        if (isEdit) {
-          await updateMutation.mutateAsync({ id: customer.id, values: payload });
-        } else {
-          await createMutation.mutateAsync(payload);
-        }
-      } catch {
-        // Already reported by the mutation's onError.
-      }
+      await save(customer?.id, payload);
     }
   });
-
-  const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
     <FormSheet

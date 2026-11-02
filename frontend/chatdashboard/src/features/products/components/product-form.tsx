@@ -5,7 +5,7 @@ import { LoadingButton } from '@/components/ui/loading-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldGroup } from '@/components/ui/field';
 import { useAppForm } from '@/lib/form';
-import { categoryOptions } from '@/features/products/constants/product-options';
+import { ProductFields } from './product-fields';
 import { productSchema, type ProductFormValues } from '@/features/products/schemas/product';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -100,35 +100,7 @@ export default function ProductForm({
             </form.AppField>
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <form.AppField name='name'>
-                {(field) => (
-                  <field.TextField label='Product Name' required placeholder='Enter product name' />
-                )}
-              </form.AppField>
-
-              <form.AppField name='category'>
-                {(field) => (
-                  <field.SelectField
-                    label='Category'
-                    required
-                    options={categoryOptions}
-                    placeholder='Select category'
-                  />
-                )}
-              </form.AppField>
-
-              <form.AppField name='price'>
-                {(field) => (
-                  <field.TextField
-                    label='Price'
-                    required
-                    type='number'
-                    min={0}
-                    step={0.01}
-                    placeholder='Enter price'
-                  />
-                )}
-              </form.AppField>
+              <ProductFields form={form} />
             </div>
 
             <form.AppField name='description'>
