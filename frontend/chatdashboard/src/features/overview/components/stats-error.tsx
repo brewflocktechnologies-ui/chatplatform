@@ -8,9 +8,8 @@ interface StatsErrorAlertProps {
   action: React.ReactNode;
 }
 
-// Presentational shell for overview stat error boundaries. Each error.tsx owns
-// its retry wiring (useTransition + router.refresh + reset) and passes the
-// button in via `action` so the recovery path stays visible in the route file.
+// Presentational shell for overview stat error boundaries. The retry wiring lives in
+// StatsErrorBoundary and is passed in via `action`.
 export function StatsErrorAlert({ message, action }: Readonly<StatsErrorAlertProps>) {
   return (
     <Alert variant='destructive'>

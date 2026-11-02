@@ -83,7 +83,7 @@ test.describe('POC Website', () => {
   test('a row opens a prefilled edit form that can be cancelled', async ({ page }) => {
     await settled(page);
     const menu = page.getByRole('button', { name: 'Open menu' }).first();
-    test.skip(!(await menu.isVisible()), 'billing service has no websites to edit here');
+    await expect(menu).toBeVisible();
 
     // The domain cell also shows the customer's email underneath; only the first line is the domain.
     const cell = (await page.getByRole('row').nth(1).getByRole('cell').first().innerText()).trim();
@@ -104,7 +104,7 @@ test.describe('POC Website', () => {
   test('sorting by Domain is reflected in the URL', async ({ page }) => {
     await settled(page);
     const header = page.getByRole('columnheader', { name: /Domain/ });
-    test.skip(!(await header.isVisible()), 'no table to sort in this environment');
+    await expect(header).toBeVisible();
     await header.getByRole('button').click();
     await page.getByRole('menuitemcheckbox', { name: 'Asc' }).click();
     await expect(page).toHaveURL(/sort=/);
