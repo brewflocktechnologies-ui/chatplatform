@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentType, FormEventHandler, ReactNode } from 'react';
+import type { ComponentType, ReactNode, SyntheticEvent } from 'react';
 import { Icons } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -90,7 +90,7 @@ interface NotesSectionProps {
   readonly notes: readonly ChatNote[];
   readonly value: string;
   readonly onValueChange: (value: string) => void;
-  readonly onSubmit: FormEventHandler<HTMLFormElement>;
+  readonly onSubmit: (event: SyntheticEvent<HTMLFormElement>) => void;
   readonly placeholder: string;
 }
 

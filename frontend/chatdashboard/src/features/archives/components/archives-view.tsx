@@ -7,7 +7,6 @@ import type { ArchivedChat } from '../types';
 import { ArchivesList } from './archives-list';
 import { ArchivesTranscript } from './archives-transcript';
 import { ArchivesDetails, type DetailsTab } from './archives-details';
-import { Icons } from '@/components/icons';
 
 
 export default function ArchivesView() {

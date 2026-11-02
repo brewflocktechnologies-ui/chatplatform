@@ -211,7 +211,8 @@ function sortRows(rows: Row[], sort: string | null) {
   return [...rows].sort((a, b) => {
     const x = pick(a, field) ?? '';
     const y = pick(b, field) ?? '';
-    return (x > y ? 1 : x < y ? -1 : 0) * sign;
+    if (x === y) return 0;
+    return (x > y ? 1 : -1) * sign;
   });
 }
 
@@ -245,8 +246,63 @@ const fail = (status: number, message: string): ApiResult<never> => ({
   message
 });
 
+type Method = 'GET' | 'POST' | 'PUT' | 'DELETE';
+
+function listRows<T>(table: Table, rest: string, query?: URLSearchParams): ApiResult<T> {
+  const rows = sortRows(table.rows, query?.get('sort') ?? null).filter(
+    (r) => rest !== 'active' || r.active
+  );
+  const size = Number(query?.get('size')) || 10;
+  const page = Number(query?.get('page')) || 0;
+  return ok({
+    content: rows.slice(page * size, page * size + size),
+    totalElements: rows.length,
+    totalPages: Math.max(1, Math.ceil(rows.length / size)),
+    number: page,
+    size
+  } as T);
+}
+
+function createRow<T>(name: string, table: Table, input: Row): ApiResult<T> {
+  const ids = table.rows.map((r) => Number(String(r.id).replace(/\D/g, '')) || 0);
+  const next = Math.max(0, ...ids) + 1;
+  const row = stamp(name, { ...input, id: table.numeric ? next : `mock-${next}` }, true);
+  if (name === 'customers')
+    Object.assign(row, { activePlan: null, creditCard: null, invoices: [] });
+  table.rows.push(row);
+  return ok(row as T);
+}
+
+function updateRow<T>(name: string, table: Table, index: number, input: Row): ApiResult<T> {
+  const current = table.rows[index];
+  // Customers merge (omitted fields keep their value); everything else is a full replace.
+  const merged: Row = { ...current, ...input };
+  if (name === 'customers') {
+    merged.billingAddress = { ...current.billingAddress, ...input.billingAddress };
+  }
+  if (name === 'configs') merged.version = (current.version ?? 0) + 1;
+  table.rows[index] = stamp(name, { ...merged, id: current.id }, false);
+  return ok(table.rows[index] as T);
+}
+
+function rowRequest<T>(
+  method: Method,
+  name: string,
+  table: Table,
+  index: number,
+  input: Row
+): ApiResult<T> {
+  if (method === 'GET') return ok(table.rows[index] as T);
+  if (method === 'DELETE') {
+    table.rows.splice(index, 1);
+    return ok(null as T);
+  }
+  if (method === 'PUT') return updateRow<T>(name, table, index, input);
+  return fail(405, 'Method not allowed');
+}
+
 export function mockBillingRequest<T>(
-  method: 'GET' | 'POST' | 'PUT' | 'DELETE',
+  method: Method,
   path: string,
   {
     query,
@@ -257,63 +313,20 @@ export function mockBillingRequest<T>(
   const route = ROUTES.find(([prefix]) => path === prefix || path.startsWith(`${prefix}/`));
   if (!route) return fail(404, notFoundMessage ?? `No mock for ${path}`);
 
-  const name = route[1];
+  const [prefix, name] = route;
   const table = db()[name];
-  const rest = path.slice(route[0].length).replace(/^\//, '');
-  const input = (body ?? {}) as Record<string, any>;
-  const missing = fail(404, notFoundMessage ?? 'Not found');
+  const rest = path.slice(prefix.length).replace(/^\//, '');
+  const input = (body ?? {}) as Row;
 
   // Collection: list, "active" plans, create.
   if (!rest || (name === 'plans' && rest === 'active')) {
-    if (method === 'GET') {
-      const rows = sortRows(table.rows, query?.get('sort') ?? null).filter(
-        (r) => rest !== 'active' || r.active
-      );
-      const size = Number(query?.get('size')) || 10;
-      const page = Number(query?.get('page')) || 0;
-      return ok({
-        content: rows.slice(page * size, page * size + size),
-        totalElements: rows.length,
-        totalPages: Math.max(1, Math.ceil(rows.length / size)),
-        number: page,
-        size
-      } as T);
-    }
-    if (method === 'POST') {
-      const ids = table.rows.map((r) => Number(String(r.id).replace(/\D/g, '')) || 0);
-      const next = Math.max(0, ...ids) + 1;
-      const row = stamp(name, { ...input, id: table.numeric ? next : `mock-${next}` }, true);
-      if (name === 'customers')
-        Object.assign(row, { activePlan: null, creditCard: null, invoices: [] });
-      table.rows.push(row);
-      return ok(row as T);
-    }
+    if (method === 'GET') return listRows<T>(table, rest, query);
+    if (method === 'POST') return createRow<T>(name, table, input);
     return fail(405, 'Method not allowed');
   }
 
   // Single row: read, update, delete.
   const index = table.rows.findIndex((r) => String(r.id) === decodeURIComponent(rest));
-  if (index < 0) return missing;
-  const current = table.rows[index];
-
-  if (method === 'GET') return ok(current as T);
-  if (method === 'DELETE') {
-    table.rows.splice(index, 1);
-    return ok(null as T);
-  }
-  if (method === 'PUT') {
-    // Customers merge (omitted fields keep their value); everything else is a full replace.
-    const merged: Row =
-      name === 'customers'
-        ? {
-            ...current,
-            ...input,
-            billingAddress: { ...current.billingAddress, ...input.billingAddress }
-          }
-        : { ...current, ...input };
-    if (name === 'configs') merged.version = (current.version ?? 0) + 1;
-    table.rows[index] = stamp(name, { ...merged, id: current.id }, false);
-    return ok(table.rows[index] as T);
-  }
-  return fail(405, 'Method not allowed');
+  if (index < 0) return fail(404, notFoundMessage ?? 'Not found');
+  return rowRequest<T>(method, name, table, index, input);
 }
