@@ -76,6 +76,19 @@ export function FormSheet({
   );
 }
 
+/** Title, description, form id and submit label of the usual "New X" / "Edit X" sheet. */
+export const entitySheetProps = (entity: string, isEdit: boolean) => {
+  const lower = entity.toLowerCase();
+  return {
+    title: `${isEdit ? 'Edit' : 'New'} ${entity}`,
+    description: isEdit
+      ? `Update the ${lower} details below.`
+      : `Fill in the details to create a new ${lower}.`,
+    formId: `${lower}-form-sheet`,
+    submitLabel: `${isEdit ? 'Update' : 'Create'} ${entity}`
+  };
+};
+
 interface FormSheetTriggerProps {
   /** Button text, e.g. "Add Company". */
   readonly label: string;

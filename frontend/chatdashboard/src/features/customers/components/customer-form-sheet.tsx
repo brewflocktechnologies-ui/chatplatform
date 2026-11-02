@@ -1,7 +1,8 @@
 'use client';
 
-import { FormSheet, FormSheetTrigger } from '@/components/forms/form-sheet';
+import { FormSheet, FormSheetTrigger, entitySheetProps } from '@/components/forms/form-sheet';
 import { FormGrid } from '@/components/forms/form-grid';
+import { LocationFields } from '@/components/forms/location-fields';
 import { useAppForm } from '@/lib/form';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -78,18 +79,11 @@ export function CustomerFormSheet({
 
   return (
     <FormSheet
+      {...entitySheetProps('Customer', isEdit)}
       open={open}
       onOpenChange={onOpenChange}
-      title={isEdit ? 'Edit Customer' : 'New Customer'}
-      description={
-        isEdit
-          ? 'Update the customer details below.'
-          : 'Fill in the details to create a new customer.'
-      }
-      formId='customer-form-sheet'
       onSubmit={() => form.handleSubmit()}
       isPending={isPending}
-      submitLabel={isEdit ? 'Update Customer' : 'Create Customer'}
     >
       <FormGrid>
         <form.AppField name='email'>
@@ -112,18 +106,7 @@ export function CustomerFormSheet({
         <form.AppField name='line2'>
           {(field) => <field.TextField label='Address Line 2' placeholder='Suite 12' />}
         </form.AppField>
-        <form.AppField name='city'>
-          {(field) => <field.TextField label='City' placeholder='Bengaluru' />}
-        </form.AppField>
-        <form.AppField name='state'>
-          {(field) => <field.TextField label='State' placeholder='Karnataka' />}
-        </form.AppField>
-        <form.AppField name='postalCode'>
-          {(field) => <field.TextField label='Postal Code' placeholder='560001' />}
-        </form.AppField>
-        <form.AppField name='country'>
-          {(field) => <field.TextField label='Country' placeholder='India' />}
-        </form.AppField>
+        <LocationFields form={form} />
       </FormGrid>
     </FormSheet>
   );

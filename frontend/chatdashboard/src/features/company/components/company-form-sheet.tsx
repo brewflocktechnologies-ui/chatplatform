@@ -1,7 +1,8 @@
 'use client';
 
-import { FormSheet, FormSheetTrigger } from '@/components/forms/form-sheet';
+import { FormSheet, FormSheetTrigger, entitySheetProps } from '@/components/forms/form-sheet';
 import { FormGrid, FormRow } from '@/components/forms/form-grid';
+import { LocationFields } from '@/components/forms/location-fields';
 import { useAppForm } from '@/lib/form';
 
 import { useQueryClient } from '@tanstack/react-query';
@@ -85,18 +86,11 @@ export function CompanyFormSheet({ company, open, onOpenChange }: Readonly<Compa
 
   return (
     <FormSheet
+      {...entitySheetProps('Company', isEdit)}
       open={open}
       onOpenChange={onOpenChange}
-      title={isEdit ? 'Edit Company' : 'New Company'}
-      description={
-        isEdit
-          ? 'Update the company details below.'
-          : 'Fill in the details to create a new company.'
-      }
-      formId='company-form-sheet'
       onSubmit={() => form.handleSubmit()}
       isPending={isPending}
-      submitLabel={isEdit ? 'Update Company' : 'Create Company'}
     >
       <FormGrid>
         <form.AppField name='name'>
@@ -126,18 +120,7 @@ export function CompanyFormSheet({ company, open, onOpenChange }: Readonly<Compa
             {(field) => <field.TextField label='Street Address' placeholder='45 Mount Road' />}
           </form.AppField>
         </FormRow>
-        <form.AppField name='city'>
-          {(field) => <field.TextField label='City' placeholder='Bengaluru' />}
-        </form.AppField>
-        <form.AppField name='state'>
-          {(field) => <field.TextField label='State' placeholder='Karnataka' />}
-        </form.AppField>
-        <form.AppField name='postalCode'>
-          {(field) => <field.TextField label='Postal Code' placeholder='560001' />}
-        </form.AppField>
-        <form.AppField name='country'>
-          {(field) => <field.TextField label='Country' placeholder='India' />}
-        </form.AppField>
+        <LocationFields form={form} />
       </FormGrid>
     </FormSheet>
   );
