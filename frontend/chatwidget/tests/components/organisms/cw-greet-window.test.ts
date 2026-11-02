@@ -191,3 +191,126 @@ describe('CwGreetWindow Organism Component', () => {
     await element.updateComplete;
   });
 });
+
+describe('CwGreetWindow layout and content', () => {
+  const mount = async (config: object | undefined, props: Partial<CwGreetWindow> = {}, phase?: 'enter' | 'open' | 'leave') => {
+    document.body.innerHTML = '';
+    const el = new CwGreetWindow();
+    el.config = config as never;
+    Object.assign(el, { visible: true, ...props });
+    document.body.appendChild(el);
+    await el.updateComplete;
+    if (phase) {
+      // Skip the animation frames: put the transition controller straight into the phase under test.
+      (el as any).transition._phase = phase;
+      el.requestUpdate();
+      await el.updateComplete;
+    }
+    return el;
+  };
+  const q = (el: CwGreetWindow, sel: string) => el.shadowRoot!.querySelector(sel) as HTMLElement | null;
+  const wrapper = (el: CwGreetWindow) => q(el, '.greet-wrapper')!.getAttribute('style')!;
+  const base = { enabled: true, dismissed: false, title: 'Hello' };
+
+  it('renders nothing without a config', async () => {
+    expect(q(await mount(undefined), '.greet-wrapper')).toBeNull();
+  });
+
+  it('animates in, open and out with the configured durations', async () => {
+    const config = { ...base, animationOpeningSec: 0.6, animationClosingSec: 0.2 };
+    const entering = wrapper(await mount(config, {}, 'enter'));
+    expect(entering).toContain('opacity: 0');
+    expect(entering).toContain('translateY(16px)');
+    expect(entering).toContain('opacity 0.6s ease, transform 0.6s ease');
+    expect(entering).toContain('transition-delay: 150ms');
+
+    const open = wrapper(await mount(config, {}, 'open'));
+    expect(open).toContain('opacity: 1');
+    expect(open).toContain('translateY(0)');
+    expect(open).toContain('transition-delay: 0ms');
+
+    const leaving = wrapper(await mount(config, {}, 'leave'));
+    expect(leaving).toContain('opacity: 0');
+    expect(leaving).toContain('opacity 0.2s ease, transform 0.2s ease');
+    expect(leaving).toContain('transition-delay: 0ms');
+  });
+
+  it('defaults the durations to 0.3s but treats zero as a real value', async () => {
+    expect(wrapper(await mount(base, {}, 'open'))).toContain('opacity 0.3s ease, transform 0.3s ease');
+    expect(wrapper(await mount({ ...base, animationOpeningSec: 0 }, {}, 'open'))).toContain('opacity 0s ease, transform 0s ease');
+    expect(wrapper(await mount({ ...base, animationClosingSec: 0 }, {}, 'leave'))).toContain('opacity 0s ease, transform 0s ease');
+  });
+
+  it('positions the window from its offsets, size and container mode', async () => {
+    const defaults = wrapper(await mount(base, {}, 'open'));
+    expect(defaults).toContain('bottom: 12px; right: 16px; width: 320px');
+    expect(defaults).toContain('max-height: calc(100% - 36px)');
+    expect(defaults).toContain('position: fixed');
+    expect(wrapper(await mount({ ...base, width: 400 }, { bottomPx: 30, rightPx: 40, maxHeightPx: '300px' }, 'open'))).toContain(
+      'bottom: 30px; right: 40px; width: 400px; max-width: calc(100% - 24px); max-height: 300px'
+    );
+    expect(wrapper(await mount(base, { bottomPx: 0, rightPx: 0 }, 'open'))).toContain('bottom: 0px; right: 0px');
+    expect(wrapper(await mount(base, { fixed: false }, 'open'))).toContain('position: absolute');
+  });
+
+  it('aligns the icon area left, right or centred', async () => {
+    const align = async (iconAlign?: string) =>
+      (await mount({ ...base, iconAlign }, {}, 'open')).shadowRoot!.querySelector('div[style*="margin-bottom: 16px"]')!.getAttribute('style');
+    expect(await align('left')).toContain('justify-content: flex-start');
+    expect(await align('right')).toContain('justify-content: flex-end');
+    expect(await align('center')).toContain('justify-content: center');
+    expect(await align(undefined)).toContain('justify-content: center');
+    expect(await align('sideways')).toContain('justify-content: center');
+    expect(await align('constructor')).toContain('justify-content: center');
+  });
+
+  it('shows the greeting image with sensible defaults, centred only when the icon is', async () => {
+    const img = q(await mount({ ...base, imageUrl: 'http://i/a.png' }, {}, 'open'), 'img')!;
+    expect(img.getAttribute('alt')).toBe('Greeting image');
+    expect(img.getAttribute('style')).toContain('height: 70px; width: auto');
+    expect(img.getAttribute('style')).toContain('padding: 0px');
+    expect(img.getAttribute('style')).toContain('margin: 0;');
+
+    const custom = q(
+      await mount({ ...base, imageUrl: 'http://i/a.png', imageAlt: 'Mascot', imageHeight: 90, imageWidth: '120', imagePadding: '4px', iconAlign: 'center' }, {}, 'open'),
+      'img'
+    )!;
+    expect(custom.getAttribute('alt')).toBe('Mascot');
+    expect(custom.getAttribute('style')).toContain('height: 90px; width: 120px');
+    expect(custom.getAttribute('style')).toContain('padding: 4px');
+    expect(custom.getAttribute('style')).toContain('margin: 0 auto');
+  });
+
+  it('falls back to a named icon when there is no image', async () => {
+    const el = await mount({ ...base, iconColor: 'red' }, {}, 'open');
+    const icon = q(el, 'cw-icon') as any;
+    expect([icon.name, icon.size]).toEqual(['Sparkles', 48]);
+    expect(q(el, 'img')).toBeNull();
+    expect(icon.parentElement!.getAttribute('style')).toContain('color: red');
+    const custom = q(await mount({ ...base, lucideIcon: 'Star', iconSize: 30 }, {}, 'open'), 'cw-icon') as any;
+    expect([custom.name, custom.size]).toEqual(['Star', 30]);
+  });
+
+  it('shows the title always, and the description only when there is one', async () => {
+    const plain = await mount({ enabled: true }, {}, 'open');
+    expect(q(plain, 'h3')!.textContent!.trim()).toBe('Hi there! 👋');
+    expect(q(plain, 'p')).toBeNull();
+    const full = await mount({ ...base, description: 'Ask us anything', textAlign: 'left', fontSize: 20, titleColor: 'navy', descriptionColor: 'gray' }, {}, 'open');
+    expect(q(full, 'p')!.textContent!.trim()).toBe('Ask us anything');
+    expect(q(full, 'p')!.getAttribute('style')).toContain('color: gray');
+    expect(q(full, 'h3')!.getAttribute('style')).toContain('font-size: 20px');
+    expect(q(full, 'h3')!.getAttribute('style')).toContain('color: navy');
+    expect(q(full, 'h3')!.parentElement!.getAttribute('style')).toContain('text-align: left');
+  });
+
+  it('shows the input box only when enabled, visible unless it asks to be hidden', async () => {
+    expect(q(await mount(base, {}, 'open'), 'cw-greet-input')).toBeNull();
+    expect(q(await mount({ ...base, inputBox: { enabled: false } }, {}, 'open'), 'cw-greet-input')).toBeNull();
+
+    const shown = q(await mount({ ...base, iconColor: 'teal', inputBox: { enabled: true } }, {}, 'open'), 'cw-greet-input') as any;
+    expect([shown.visible, shown.accentColor]).toEqual([true, 'teal']);
+    expect((q(await mount({ ...base, inputBox: { enabled: true, visible: false } }, {}, 'open'), 'cw-greet-input') as any).visible).toBe(false);
+    expect((q(await mount({ ...base, inputBox: { enabled: true } }, { visible: false }, 'open'), 'cw-greet-input') as any).visible).toBe(false);
+    expect((q(await mount({ ...base, inputBox: { enabled: true } }, {}, 'open'), 'cw-greet-input') as any).accentColor).toBe('var(--cw-accent, #0b5fff)');
+  });
+});

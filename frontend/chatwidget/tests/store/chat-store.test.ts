@@ -86,9 +86,9 @@ describe('chat-store', () => {
       cs.draft = '   ';
       const len = cs.messages.length;
       chatStore.send();
-      expect(cs.messages.length).toBe(len);
+      expect(cs.messages).toHaveLength(len);
       chatStore.send('  ');
-      expect(cs.messages.length).toBe(len);
+      expect(cs.messages).toHaveLength(len);
     });
 
     it('dismisses greetWindow on send if present', () => {
@@ -341,11 +341,13 @@ describe('chat-store', () => {
 
   describe('uploadImage & captureScreenshot', () => {
     it('handles uploadImage when no file is selected', () => {
+      const before = chatStore.get().messages.length;
       const emptyInput = { files: null } as unknown as HTMLInputElement;
       chatStore.uploadImage(emptyInput);
 
       const emptyInput2 = { files: [] } as unknown as HTMLInputElement;
       chatStore.uploadImage(emptyInput2);
+      expect(chatStore.get().messages).toHaveLength(before);
     });
 
     it('handles uploadImage async status flow and bot response', () => {
@@ -412,7 +414,7 @@ describe('chat-store', () => {
       const before = s.messages.length;
       chatStore.sendCroppedImage('');
       chatStore.sendCroppedImage('https://example.com/image.png');
-      expect(s.messages.length).toBe(before);
+      expect(s.messages).toHaveLength(before);
     });
 
     it('adds a proper attachment message with the full data URL as localUrl', () => {
@@ -422,7 +424,7 @@ describe('chat-store', () => {
 
       chatStore.sendCroppedImage(dataUrl);
 
-      expect(s.messages.length).toBe(before + 1);
+      expect(s.messages).toHaveLength(before + 1);
       const msg = s.messages[s.messages.length - 1];
       expect(msg.senderType).toBe('VISITOR');
       expect(msg.attachment).toBe(true);
@@ -946,14 +948,20 @@ describe('chat-store', () => {
     it('executes downloadTranscript revokeObjectURL timer', () => {
       vi.useFakeTimers();
       const originalCreate = document.createElement.bind(document);
+      let anchor: HTMLAnchorElement | undefined;
       vi.spyOn(document, 'createElement').mockImplementation((tag: string) => {
         const el = originalCreate(tag);
-        if (tag === 'a') vi.spyOn(el as HTMLAnchorElement, 'click').mockImplementation(() => {});
+        if (tag === 'a') {
+          anchor = el as HTMLAnchorElement;
+          vi.spyOn(anchor, 'click').mockImplementation(() => {});
+        }
         return el;
       });
 
       chatStore.downloadTranscript();
+      expect(anchor?.isConnected).toBe(true);
       vi.advanceTimersByTime(150);
+      expect(anchor?.isConnected).toBe(false);
       vi.useRealTimers();
     });
 
@@ -1069,7 +1077,7 @@ describe('chat-store', () => {
       const len = cs.messages.length;
       chatStore.send();
       chatStore.send('');
-      expect(cs.messages.length).toBe(len);
+      expect(cs.messages).toHaveLength(len);
     });
 
     it('falls back to Sarah for typing indicator and bot reply when agentName is empty', () => {
@@ -1354,6 +1362,7 @@ describe('chat-store', () => {
       cs.messages = cs.messages.filter((m) => m.key !== imgMsg.key);
 
       vi.advanceTimersByTime(5000);
+      expect(cs.messages.some((m) => m.key === imgMsg.key)).toBe(false);
       vi.useRealTimers();
     });
 

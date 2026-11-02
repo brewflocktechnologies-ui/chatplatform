@@ -30,9 +30,9 @@ export class CwChatBody extends LitElement {
   @property({ type: Object }) chatWindowConfig!: ChatWindowState;
   @property({ type: Number }) rev = 0;
 
-  @state() private offlineName = '';
-  @state() private offlineEmail = '';
-  @state() private offlineMessage = '';
+  @state() private readonly offlineName = '';
+  @state() private readonly offlineEmail = '';
+  @state() private readonly offlineMessage = '';
   @state() private cropperOpen = false;
   @state() private pendingImageSrc = '';
 
@@ -214,7 +214,7 @@ export class CwChatBody extends LitElement {
 
   private flag(key: string, def = true): boolean {
     const f = this.chatState?.flags || {};
-    return f[key] !== undefined ? f[key] : def;
+    return f[key] ?? def;
   }
 
   private groupStart(i: number, msgs: Message[]): boolean {
@@ -228,7 +228,7 @@ export class CwChatBody extends LitElement {
   private handleFileSelect(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
-    if (file && file.type.startsWith('image/')) {
+    if (file?.type.startsWith('image/')) {
       const reader = new FileReader();
       reader.onload = (evt) => {
         this.pendingImageSrc = evt.target?.result as string;
@@ -253,249 +253,275 @@ export class CwChatBody extends LitElement {
     composer?.focusInput?.();
   }
 
+  private renderWelcome(cw: ChatWindowState) {
+    return html`<cw-welcome-card .config="${cw.welcome}" .accentColor="${cw.accentColor}"></cw-welcome-card>`;
+  }
+
+  private renderBoot() {
+    return html`
+      <div class="center-note">
+        <div class="spinner"></div>
+        <p>Connecting…</p>
+      </div>
+    `;
+  }
+
+  private renderPrechat(cs: ChatState) {
+    return html`
+      <cw-chat-form
+        .schema="${PRECHAT_SCHEMA}"
+        .values="${{ name: cs.offlineName || '', email: cs.offlineEmail || '' }}"
+        @cw:form-submit="${(e: CustomEvent) => this.emit('cw:submit-prechat', e.detail.values)}"
+      ></cw-chat-form>
+    `;
+  }
+
+  private renderOffline(cs: ChatState) {
+    return html`
+      <cw-chat-form
+        .schema="${OFFLINE_SCHEMA}"
+        .values="${{ name: cs.offlineName || '', email: cs.offlineEmail || '', message: cs.offlineMessage || '' }}"
+        .submitting="${cs.offlineSending}"
+        @cw:form-submit="${(e: CustomEvent) => this.emit('cw:submit-offline', e.detail.values)}"
+      ></cw-chat-form>
+    `;
+  }
+
+  private renderPostchat() {
+    return html`
+      <cw-chat-form
+        .schema="${POSTCHAT_SCHEMA}"
+        @cw:form-submit="${(e: CustomEvent) => this.emit('cw:submit-postchat', e.detail.values)}"
+      ></cw-chat-form>
+    `;
+  }
+
+  private renderOfflineSent() {
+    return html`
+      <div class="queued">
+        <div class="ticket offline-done">
+          <div class="done-check">
+            <cw-icon .name="${'Check'}" .size="${30}"></cw-icon>
+          </div>
+          <h2>Message received</h2>
+          <p class="muted">
+            Thanks${this.offlineName ? `, ${this.offlineName}` : ''}! We've saved your message and will reply to <strong>${this.offlineEmail}</strong> as soon as an agent is back.
+          </p>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderQueued(cs: ChatState) {
+    return html`
+      <div class="queued">
+        <div class="ticket">
+          <div class="ticket-number">${cs.position}</div>
+          <div class="ticket-label">in line</div>
+          <p class="muted">An agent will be with you shortly.</p>
+        </div>
+      </div>
+    `;
+  }
+
+  private renderMessages(cs: ChatState, cw: ChatWindowState) {
+    const msgs = cs.messages || [];
+    return html`
+      <div class="messages-area" tabindex="0" role="log" aria-label="Message history" aria-live="polite" aria-relevant="additions" style="background: ${cw.bodyBg || 'var(--cw-bg, #f6f7fa)'}">
+        <input
+          type="file"
+          id="cw-file-input"
+          aria-label="Upload photo"
+          accept="image/png,image/jpeg,image/gif,image/webp"
+          style="display: none"
+          @change="${this.handleFileSelect}"
+        />
+        ${msgs.map((m, i) => {
+          const showDivider = i === 0;
+          const isGroupEnd = this.groupEnd(i, msgs);
+          const isGroupStart = this.groupStart(i, msgs);
+
+          return html`
+            ${showDivider ? html`<div class="day-divider">Today</div>` : ''}
+
+            <cw-message-bubble
+              .message="${m}"
+              .chatWindowConfig="${cw}"
+              .isGroupEnd="${isGroupEnd}"
+              .isGroupStart="${isGroupStart}"
+              .agentName="${cs.agentName}"
+            ></cw-message-bubble>
+          `;
+        })}
+
+        ${cs.typingName && cw.typingIndicator !== false
+          ? html`
+              <div class="bubble-row from-agent g-start g-end" style="margin-top: 4px">
+                <div class="bubble typing-bubble">
+                  <span class="sr-only">${cs.typingName} is typing</span>
+                  <span class="typing-dots"><cw-typing-dots></cw-typing-dots></span>
+                </div>
+              </div>
+            `
+          : ''
+        }
+      </div>
+    `;
+  }
+
+  private renderConsent(cs: ChatState, isActive: boolean) {
+    if (!isActive || cs.consentDismissed || !this.flag('widget.modernUi', true)) return '';
+    return html`
+      <div class="consent">
+        <p>By chatting here you agree this conversation may be processed and recorded to provide support.</p>
+        <button type="button" class="consent-x" aria-label="Dismiss" @click="${() => this.emit('cw:dismiss-consent')}">✕</button>
+      </div>
+    `;
+  }
+
+  /** The attach, menu and emoji popups, each shown only while its flag is on. */
+  private renderPopups(cs: ChatState) {
+    return html`
+      <!-- ATTACHMENT POPUP -->
+      ${cs.attachOpen
+        ? html`
+            <cw-attach-menu
+              @cw:trigger-file-select="${this.openFileSelector}"
+            ></cw-attach-menu>
+          `
+        : ''
+      }
+
+      <!-- MENU POPUP -->
+      ${cs.menuOpen
+        ? html`<cw-chat-menu .soundsOn="${cs.soundsOn}"></cw-chat-menu>`
+        : ''
+      }
+
+      <!-- EMOJI PICKER -->
+      ${cs.emojiOpen
+        ? html`<cw-emoji-picker></cw-emoji-picker>`
+        : ''
+      }
+    `;
+  }
+
+  private renderComposer(cs: ChatState, cw: ChatWindowState) {
+    const modernUi = cw.modernUi !== false && this.flag('widget.modernUi', true);
+    return html`
+      <cw-composer
+        .inputBg="${cw.inputBg || ''}"
+        .inputTextColor="${cw.inputTextColor || ''}"
+        .inputPlaceholderColor="${cw.inputPlaceholderColor || ''}"
+        .inputBorderColor="${cw.inputBorderColor || ''}"
+        .inputFocusBorderColor="${cw.inputFocusBorderColor || ''}"
+        .inputFocusShadow="${cw.inputFocusShadow || ''}"
+        .inputPadding="${cw.inputPadding || ''}"
+        .inputMargin="${cw.inputMargin || ''}"
+        .inputBorderRadius="${cw.inputBorderRadius}"
+        .textareaFontSize="${cw.textareaFontSize || ''}"
+        .attachButtonBg="${cw.attachButtonBg || ''}"
+        .attachButtonColor="${cw.attachButtonColor || ''}"
+        .emojiButtonColor="${cw.emojiButtonColor || ''}"
+        .sendButtonBgActive="${cw.sendButtonBgActive || ''}"
+        .sendButtonColorActive="${cw.sendButtonColorActive || ''}"
+        .sendButtonBgInactive="${cw.sendButtonBgInactive || ''}"
+        .sendButtonColorInactive="${cw.sendButtonColorInactive || ''}"
+        .sendIconType="${cw.sendIconType || ''}"
+        .accentColor="${cw.accentColor || ''}"
+        .draft="${cs.draft || ''}"
+        .attachmentsEnabled="${cw.attachmentsEnabled !== false && this.flag('attachments.enabled', true)}"
+        .modernUi="${modernUi}"
+        .uploading="${cs.uploading}"
+        .rev="${this.rev}"
+      ></cw-composer>
+
+      <cw-chat-footer
+        .modernUi="${modernUi}"
+        .poweredByText="${cw.poweredByText || ''}"
+        .poweredByLink="${cw.poweredByLink || ''}"
+        .poweredByColor="${cw.poweredByColor || ''}"
+        .footerBg="${cw.footerBg || cw.bodyBg || ''}"
+        .footerTextColor="${cw.footerTextColor || ''}"
+        .footerFontSize="${cw.footerFontSize}"
+        .footerPaddingBottom="${cw.footerPaddingBottom}"
+        .widgetBorderRadius="${cw.widgetBorderRadius}"
+      ></cw-chat-footer>
+    `;
+  }
+
+  private renderClosedNote() {
+    return html`
+      <div class="closed-note">
+        <p>Chat ended</p>
+        <button type="button" class="primary" @click="${() => this.emit('cw:start-new')}">Start new chat</button>
+      </div>
+    `;
+  }
+
+  /** The live conversation, or its read-only transcript once the chat has closed. */
+  private renderConversation(cs: ChatState, cw: ChatWindowState, isActive: boolean) {
+    return html`
+      <!-- ACTIVE CHAT / CLOSED MESSAGES -->
+      ${this.renderMessages(cs, cw)}
+
+      <!-- CONSENT BANNER -->
+      ${this.renderConsent(cs, isActive)}
+
+      ${this.renderPopups(cs)}
+
+      <!-- COMPOSER BAR (ACTIVE STATE) -->
+      ${isActive ? this.renderComposer(cs, cw) : ''}
+
+      <!-- CLOSED NOTE -->
+      ${isActive ? '' : this.renderClosedNote()}
+    `;
+  }
+
+  /** Exactly one screen is shown for each chat state; an unknown state shows nothing. */
+  private renderState(cs: ChatState, cw: ChatWindowState, isWelcome: boolean) {
+    if (isWelcome) return this.renderWelcome(cw);
+    switch (cs.state) {
+      case 'boot':
+        return this.renderBoot();
+      case 'prechat':
+        return this.renderPrechat(cs);
+      case 'offline':
+        return this.renderOffline(cs);
+      case 'offline-sent':
+        return this.renderOfflineSent();
+      case 'queued':
+        return this.renderQueued(cs);
+      case 'postchat':
+        return this.renderPostchat();
+      case 'closed':
+        return this.renderConversation(cs, cw, false);
+      case 'active':
+      case 'welcome': // only reached when the welcome screen is switched off
+        return this.renderConversation(cs, cw, true);
+      default:
+        return '';
+    }
+  }
+
   render() {
     const cs = this.chatState;
     const cw = this.chatWindowConfig;
 
     if (!cs || !cw) return html``;
 
-    const welcomeEnabled = cw.welcome?.enabled !== false;
-    const isWelcome = cs.state === 'welcome' && welcomeEnabled;
-    const isBoot = cs.state === 'boot';
-    const isPrechat = cs.state === 'prechat';
-    const isOffline = cs.state === 'offline';
-    const isOfflineSent = cs.state === 'offline-sent';
-    const isQueued = cs.state === 'queued';
-    const isActive = cs.state === 'active' || (cs.state === 'welcome' && !welcomeEnabled);
-    const isPostchat = cs.state === 'postchat';
-    const isClosed = cs.state === 'closed';
-
-    const msgs = cs.messages || [];
+    const isWelcome = cs.state === 'welcome' && cw.welcome?.enabled !== false;
+    const background = isWelcome
+      ? cw.welcome?.bgGradient || 'linear-gradient(135deg, var(--cw-accent, #0b5fff), #22d3ee)'
+      : cw.bodyBg || 'var(--cw-bg, #f6f7fa)';
+    const welcomeStyle = isWelcome ? 'height: 100%; max-height: 100%; overflow: hidden;' : '';
 
     return html`
       <div
         class="panel-body"
-        style="background: ${isWelcome ? cw.welcome?.bgGradient || 'linear-gradient(135deg, var(--cw-accent, #0b5fff), #22d3ee)' : cw.bodyBg || 'var(--cw-bg, #f6f7fa)'}; padding: ${isWelcome ? '0px' : ''}; ${isWelcome ? 'height: 100%; max-height: 100%; overflow: hidden;' : ''}"
+        style="background: ${background}; padding: ${isWelcome ? '0px' : ''}; ${welcomeStyle}"
       >
-        <!-- WELCOME SCREEN -->
-        ${isWelcome
-          ? html`<cw-welcome-card .config="${cw.welcome}" .accentColor="${cw.accentColor}"></cw-welcome-card>`
-          : ''
-        }
-
-        <!-- BOOT / CONNECTING -->
-        ${isBoot
-          ? html`
-              <div class="center-note">
-                <div class="spinner"></div>
-                <p>Connecting…</p>
-              </div>
-            `
-          : ''
-        }
-
-        <!-- PRECHAT FORM -->
-        ${isPrechat
-          ? html`
-              <cw-chat-form
-                .schema="${PRECHAT_SCHEMA}"
-                .values="${{ name: cs.offlineName || '', email: cs.offlineEmail || '' }}"
-                @cw:form-submit="${(e: CustomEvent) => this.emit('cw:submit-prechat', e.detail.values)}"
-              ></cw-chat-form>
-            `
-          : ''
-        }
-
-        <!-- OFFLINE FORM -->
-        ${isOffline
-          ? html`
-              <cw-chat-form
-                .schema="${OFFLINE_SCHEMA}"
-                .values="${{ name: cs.offlineName || '', email: cs.offlineEmail || '', message: cs.offlineMessage || '' }}"
-                .submitting="${cs.offlineSending}"
-                @cw:form-submit="${(e: CustomEvent) => this.emit('cw:submit-offline', e.detail.values)}"
-              ></cw-chat-form>
-            `
-          : ''
-        }
-
-        <!-- POSTCHAT FORM -->
-        ${isPostchat
-          ? html`
-              <cw-chat-form
-                .schema="${POSTCHAT_SCHEMA}"
-                @cw:form-submit="${(e: CustomEvent) => this.emit('cw:submit-postchat', e.detail.values)}"
-              ></cw-chat-form>
-            `
-          : ''
-        }
-
-        <!-- OFFLINE SENT CONFIRMATION -->
-        ${isOfflineSent
-          ? html`
-              <div class="queued">
-                <div class="ticket offline-done">
-                  <div class="done-check">
-                    <cw-icon .name="${'Check'}" .size="${30}"></cw-icon>
-                  </div>
-                  <h2>Message received</h2>
-                  <p class="muted">
-                    Thanks${this.offlineName ? `, ${this.offlineName}` : ''}! We've saved your message and will reply to <strong>${this.offlineEmail}</strong> as soon as an agent is back.
-                  </p>
-                </div>
-              </div>
-            `
-          : ''
-        }
-
-        <!-- QUEUED STATE -->
-        ${isQueued
-          ? html`
-              <div class="queued">
-                <div class="ticket">
-                  <div class="ticket-number">${cs.position}</div>
-                  <div class="ticket-label">in line</div>
-                  <p class="muted">An agent will be with you shortly.</p>
-                </div>
-              </div>
-            `
-          : ''
-        }
-
-        <!-- ACTIVE CHAT / CLOSED MESSAGES -->
-        ${isActive || isClosed
-          ? html`
-              <div class="messages-area" tabindex="0" role="log" aria-label="Message history" aria-live="polite" aria-relevant="additions" style="background: ${cw.bodyBg || 'var(--cw-bg, #f6f7fa)'}">
-                <input
-                  type="file"
-                  id="cw-file-input"
-                  aria-label="Upload photo"
-                  accept="image/png,image/jpeg,image/gif,image/webp"
-                  style="display: none"
-                  @change="${this.handleFileSelect}"
-                />
-                ${msgs.map((m, i) => {
-                  const showDivider = i === 0;
-                  const isGroupEnd = this.groupEnd(i, msgs);
-                  const isGroupStart = this.groupStart(i, msgs);
-
-                  return html`
-                    ${showDivider ? html`<div class="day-divider">Today</div>` : ''}
-
-                    <cw-message-bubble
-                      .message="${m}"
-                      .chatWindowConfig="${cw}"
-                      .isGroupEnd="${isGroupEnd}"
-                      .isGroupStart="${isGroupStart}"
-                      .agentName="${cs.agentName}"
-                    ></cw-message-bubble>
-                  `;
-                })}
-
-                ${cs.typingName && (cw.typingIndicator !== false)
-                  ? html`
-                      <div class="bubble-row from-agent g-start g-end" style="margin-top: 4px">
-                        <div class="bubble typing-bubble">
-                          <span class="sr-only">${cs.typingName} is typing</span>
-                          <span class="typing-dots"><cw-typing-dots></cw-typing-dots></span>
-                        </div>
-                      </div>
-                    `
-                  : ''
-                }
-              </div>
-
-              <!-- CONSENT BANNER -->
-              ${isActive && !cs.consentDismissed && this.flag('widget.modernUi', true)
-                ? html`
-                    <div class="consent">
-                      <p>By chatting here you agree this conversation may be processed and recorded to provide support.</p>
-                      <button type="button" class="consent-x" aria-label="Dismiss" @click="${() => this.emit('cw:dismiss-consent')}">✕</button>
-                    </div>
-                  `
-                : ''
-              }
-
-              <!-- ATTACHMENT POPUP -->
-              ${cs.attachOpen
-                ? html`
-                    <cw-attach-menu
-                      @cw:trigger-file-select="${this.openFileSelector}"
-                    ></cw-attach-menu>
-                  `
-                : ''
-              }
-
-              <!-- MENU POPUP -->
-              ${cs.menuOpen
-                ? html`<cw-chat-menu .soundsOn="${cs.soundsOn}"></cw-chat-menu>`
-                : ''
-              }
-
-              <!-- EMOJI PICKER -->
-              ${cs.emojiOpen
-                ? html`<cw-emoji-picker></cw-emoji-picker>`
-                : ''
-              }
-
-              <!-- COMPOSER BAR (ACTIVE STATE) -->
-              ${isActive
-                ? html`
-                    <cw-composer
-                      .inputBg="${cw.inputBg || ''}"
-                      .inputTextColor="${cw.inputTextColor || ''}"
-                      .inputPlaceholderColor="${cw.inputPlaceholderColor || ''}"
-                      .inputBorderColor="${cw.inputBorderColor || ''}"
-                      .inputFocusBorderColor="${cw.inputFocusBorderColor || ''}"
-                      .inputFocusShadow="${cw.inputFocusShadow || ''}"
-                      .inputPadding="${cw.inputPadding || ''}"
-                      .inputMargin="${cw.inputMargin || ''}"
-                      .inputBorderRadius="${cw.inputBorderRadius}"
-                      .textareaFontSize="${cw.textareaFontSize || ''}"
-                      .attachButtonBg="${cw.attachButtonBg || ''}"
-                      .attachButtonColor="${cw.attachButtonColor || ''}"
-                      .emojiButtonColor="${cw.emojiButtonColor || ''}"
-                      .sendButtonBgActive="${cw.sendButtonBgActive || ''}"
-                      .sendButtonColorActive="${cw.sendButtonColorActive || ''}"
-                      .sendButtonBgInactive="${cw.sendButtonBgInactive || ''}"
-                      .sendButtonColorInactive="${cw.sendButtonColorInactive || ''}"
-                      .sendIconType="${cw.sendIconType || ''}"
-                      .accentColor="${cw.accentColor || ''}"
-                      .draft="${cs.draft || ''}"
-                      .attachmentsEnabled="${cw.attachmentsEnabled !== false && this.flag('attachments.enabled', true)}"
-                      .modernUi="${cw.modernUi !== false && this.flag('widget.modernUi', true)}"
-                      .uploading="${cs.uploading}"
-                      .rev="${this.rev}"
-                    ></cw-composer>
-
-                    <cw-chat-footer
-                      .modernUi="${cw.modernUi !== false && this.flag('widget.modernUi', true)}"
-                      .poweredByText="${cw.poweredByText || ''}"
-                      .poweredByLink="${cw.poweredByLink || ''}"
-                      .poweredByColor="${cw.poweredByColor || ''}"
-                      .footerBg="${cw.footerBg || cw.bodyBg || ''}"
-                      .footerTextColor="${cw.footerTextColor || ''}"
-                      .footerFontSize="${cw.footerFontSize}"
-                      .footerPaddingBottom="${cw.footerPaddingBottom}"
-                      .widgetBorderRadius="${cw.widgetBorderRadius}"
-                    ></cw-chat-footer>
-                  `
-                : ''
-              }
-
-              <!-- CLOSED NOTE -->
-              ${isClosed
-                ? html`
-                    <div class="closed-note">
-                      <p>Chat ended</p>
-                      <button type="button" class="primary" @click="${() => this.emit('cw:start-new')}">Start new chat</button>
-                    </div>
-                  `
-                : ''
-              }
-            `
-          : ''
-        }
+        ${this.renderState(cs, cw, isWelcome)}
 
         <cw-image-cropper
           .open="${this.cropperOpen}"

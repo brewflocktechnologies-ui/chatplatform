@@ -175,3 +175,92 @@ describe('CwChatPanel Organism Component', () => {
     }
   });
 });
+
+describe('CwChatPanel animation timing and confirm dialog', () => {
+  const state = {
+    state: 'active',
+    messages: [],
+    panelOpen: true,
+    unreadCount: 0,
+    isExpanded: false,
+    isMobile: false,
+    clientName: 'Acme',
+    agentName: 'Sarah',
+    agentsOnline: true,
+    token: 't',
+    position: 1,
+    menuOpen: false,
+    attachOpen: false,
+    emojiOpen: false,
+    confirmBox: null,
+    reconnecting: false,
+    soundsOn: true,
+    flags: {}
+  };
+  const mount = async (config: object, over: object = {}, phase?: 'enter' | 'open' | 'leave') => {
+    document.body.innerHTML = '';
+    const el = new CwChatPanel();
+    el.chatWindowConfig = config as never;
+    el.chatState = { ...state, ...over } as never;
+    el.panelOpen = true;
+    document.body.appendChild(el);
+    await el.updateComplete;
+    if (phase) {
+      // Skip the animation frames: put the transition controller straight into the phase under test.
+      (el as any).transition._phase = phase;
+      el.requestUpdate();
+      await el.updateComplete;
+    }
+    return el;
+  };
+  const wrapperStyle = (el: CwChatPanel) => el.shadowRoot!.querySelector('.panel-wrapper')!.getAttribute('style')!;
+
+  it('opens in 0.3s and closes in 0.2s unless configured, and treats 0 as a real duration', async () => {
+    const defaults: any = await mount({});
+    expect([defaults.transition.enterMs(), defaults.transition.leaveMs()]).toEqual([300, 200]);
+    const custom: any = await mount({ animationOpeningSec: 0.5, animationClosingSec: 1 });
+    expect([custom.transition.enterMs(), custom.transition.leaveMs()]).toEqual([500, 1000]);
+    const instant: any = await mount({ animationOpeningSec: 0, animationClosingSec: 0 });
+    expect([instant.transition.enterMs(), instant.transition.leaveMs()]).toEqual([0, 0]);
+  });
+
+  it('uses the opening duration while entering or open and the closing one while leaving', async () => {
+    const config = { animationOpeningSec: 0.6, animationClosingSec: 0.1 };
+    expect(wrapperStyle(await mount(config, {}, 'enter'))).toContain('opacity 0.6s ease, transform 0.6s ease');
+    expect(wrapperStyle(await mount(config, {}, 'open'))).toContain('opacity 0.6s ease, transform 0.6s ease');
+    expect(wrapperStyle(await mount(config, {}, 'leave'))).toContain('opacity 0.1s ease, transform 0.1s ease');
+    expect(wrapperStyle(await mount({}, {}, 'open'))).toContain('opacity 0.3s ease');
+    expect(wrapperStyle(await mount({}, {}, 'leave'))).toContain('opacity 0.2s ease');
+    expect(wrapperStyle(await mount({ animationOpeningSec: 0 }, {}, 'open'))).toContain('opacity 0s ease');
+    expect(wrapperStyle(await mount({ animationClosingSec: 0 }, {}, 'leave'))).toContain('opacity 0s ease');
+  });
+
+  it('hides the panel while entering or leaving and shows it when open', async () => {
+    expect(wrapperStyle(await mount({}, {}, 'enter'))).toContain('opacity: 0');
+    expect(wrapperStyle(await mount({}, {}, 'leave'))).toContain('scale(0.5) translateY(32px)');
+    expect(wrapperStyle(await mount({}, {}, 'open'))).toContain('opacity: 1');
+    expect(wrapperStyle(await mount({}, {}, 'open'))).toContain('scale(1) translateY(0)');
+  });
+
+  it('sizes the panel normally and expanded, with the default position', async () => {
+    expect(wrapperStyle(await mount({}, {}, 'open'))).toContain('width: 350px; height: 550px');
+    expect(wrapperStyle(await mount({}, { isExpanded: true }, 'open'))).toContain('width: 480px');
+    expect(wrapperStyle(await mount({ widgetWidth: 300, expandedWidth: 600, widgetHeight: 400 }, { isExpanded: true }, 'open'))).toContain('width: 600px; height: 400px');
+    expect(wrapperStyle(await mount({}, {}, 'open'))).toContain('bottom: 12px; right: 16px');
+  });
+
+  it('shows the confirm dialog with its labels and a modal radius that may be zero', async () => {
+    const confirmBox = { message: 'End this chat?', confirmLabel: 'End', cancelLabel: 'Stay' };
+    const withRadius: any = (await mount({ modalBorderRadius: 0 }, { confirmBox })).shadowRoot!.querySelector('cw-confirm-dialog');
+    expect([withRadius.message, withRadius.confirmLabel, withRadius.cancelLabel, withRadius.modalBorderRadius]).toEqual(['End this chat?', 'End', 'Stay', 0]);
+    const defaults: any = (await mount({}, { confirmBox: { message: 'Sure?' } })).shadowRoot!.querySelector('cw-confirm-dialog');
+    expect([defaults.confirmLabel, defaults.cancelLabel, defaults.modalBorderRadius, defaults.modalCardBg]).toEqual(['Confirm', 'Cancel', 16, '#ffffff']);
+    expect((await mount({ modalBorderRadius: 24 }, { confirmBox })).shadowRoot!.querySelector<any>('cw-confirm-dialog').modalBorderRadius).toBe(24);
+    expect((await mount({})).shadowRoot!.querySelector('cw-confirm-dialog')).toBeNull();
+  });
+
+  it('shows the reconnecting banner only while reconnecting', async () => {
+    expect((await mount({}, { reconnecting: true })).shadowRoot!.querySelector('.reconnecting')!.textContent).toContain('Reconnecting');
+    expect((await mount({})).shadowRoot!.querySelector('.reconnecting')).toBeNull();
+  });
+});
