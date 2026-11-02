@@ -64,12 +64,14 @@ type GradientStop = { color: string; pos: number };
 /** The first truthy value, exactly like `a || b || c`: when none is truthy, the last one is returned. */
 function firstTruthy<T>(...values: [...Array<T | null | undefined>, T]): T {
   for (const value of values) if (value) return value as T;
-  return values[values.length - 1] as T;
+  return values.at(-1) as T;
 }
 
 /** The host attribute whenever it was provided at all (so 0, '' and false count), else the stored value. */
 function definedOr<T>(hostValue: T | undefined, stored: T): T {
-  return hostValue !== undefined ? hostValue : stored;
+  // A destructuring default applies only to `undefined` (unlike `??`, `null` is kept).
+  const [value = stored] = [hostValue];
+  return value;
 }
 
 /** The website theme, only when themed: an explicit `theme` argument (even null) wins over reading the page. */
