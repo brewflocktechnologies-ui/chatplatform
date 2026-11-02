@@ -1,23 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { FormSheet, FormSheetTrigger } from '@/components/forms/form-sheet';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
-import { LoadingButton } from '@/components/ui/loading-button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet';
-import { Icons } from '@/components/icons';
-
-const AddIcon = Icons.add;
+import { FormGrid, FormRow } from '@/components/forms/form-grid';
 
 import { useAppForm } from '@/lib/form';
 import { ApiError, unwrap } from '@/lib/billing/errors';
@@ -44,7 +31,11 @@ const CUSTOMER_SORT: CustomerSort = { field: 'email', dir: 'asc' };
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof ApiError ? error.message : fallback;
 
-export function PocWebsiteFormSheet({ website, open, onOpenChange }: Readonly<PocWebsiteFormSheetProps>) {
+export function PocWebsiteFormSheet({
+  website,
+  open,
+  onOpenChange
+}: Readonly<PocWebsiteFormSheetProps>) {
   const isEdit = !!website;
   const router = useRouter();
 
@@ -132,124 +123,92 @@ export function PocWebsiteFormSheet({ website, open, onOpenChange }: Readonly<Po
   });
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className={WIDE_FORM_MODAL}>
-        <SheetHeader>
-          <SheetTitle>{isEdit ? 'Edit Website' : 'New Website'}</SheetTitle>
-          <SheetDescription>
-            {isEdit
-              ? 'Update the website details below.'
-              : 'Fill in the details to register a new website.'}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className='flex-1 overflow-auto'>
-          <form
-            id='poc-website-form-sheet'
-            className='space-y-4 p-4 md:p-4'
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
+    <FormSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? 'Edit Website' : 'New Website'}
+      description={
+        isEdit
+          ? 'Update the website details below.'
+          : 'Fill in the details to register a new website.'
+      }
+      formId='poc-website-form-sheet'
+      onSubmit={() => form.handleSubmit()}
+      isPending={isPending}
+      submitLabel={isEdit ? 'Update Website' : 'Create Website'}
+    >
+      <FormGrid>
+        <form.AppField name='protocol'>
+          {(field) => <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />}
+        </form.AppField>
+        <form.AppField name='domain'>
+          {(field) => <field.TextField label='Domain' required placeholder='example.com' />}
+        </form.AppField>
+        <FormRow>
+          {/* Picking a customer sets both customerId and customerName. */}
+          <form.AppField
+            name='customerId'
+            listeners={{
+              onChange: ({ value }) => {
+                const match = customerOptions.find((o) => o.value === value);
+                if (match) form.setFieldValue('customerName', match.label);
+              }
             }}
           >
-            <FormGrid>
-              <form.AppField name='protocol'>
-                {(field) => (
-                  <field.SelectField label='Protocol' required options={PROTOCOL_OPTIONS} />
-                )}
-              </form.AppField>
-              <form.AppField name='domain'>
-                {(field) => (
-                  <field.TextField label='Domain' required placeholder='example.com' />
-                )}
-              </form.AppField>
-              <FormRow>
-                {/* Picking a customer sets both customerId and customerName. */}
-                <form.AppField
-                  name='customerId'
-                  listeners={{
-                    onChange: ({ value }) => {
-                      const match = customerOptions.find((o) => o.value === value);
-                      if (match) form.setFieldValue('customerName', match.label);
-                    }
-                  }}
-                >
-                  {(field) => (
-                    <field.ComboboxField
-                      label='Customer'
-                      required
-                      options={customerOptions}
-                      placeholder={customersLoading ? 'Loading customers...' : 'Select customer'}
-                      searchPlaceholder='Search customers...'
-                      emptyMessage={
-                        customersError ? "Couldn't load customers." : 'No customers found.'
-                      }
-                    />
-                  )}
-                </form.AppField>
-              </FormRow>
-              <form.AppField name='businessCategory'>
-                {(field) => (
-                  <field.SelectField
-                    label='Business Category'
-                    required
-                    options={CATEGORY_OPTIONS}
-                    placeholder='Select category'
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name='flavour'>
-                {(field) => (
-                  <field.TextField
-                    label='Flavour / Config Name'
-                    required
-                    placeholder='Orange'
-                    description='Widget config this website uses.'
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name='isActive'>
-                {(field) => (
-                  <field.SwitchField
-                    label='Active'
-                    description='Serve the chat widget on this website.'
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name='isVerified'>
-                {(field) => (
-                  <field.SwitchField
-                    label='Verified'
-                    description='Domain ownership has been verified.'
-                  />
-                )}
-              </form.AppField>
-            </FormGrid>
-          </form>
-        </div>
-
-        <SheetFooter>
-          <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <LoadingButton loading={isPending} type='submit' form='poc-website-form-sheet'>
-            {isEdit ? 'Update Website' : 'Create Website'}
-          </LoadingButton>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+            {(field) => (
+              <field.ComboboxField
+                label='Customer'
+                required
+                options={customerOptions}
+                placeholder={customersLoading ? 'Loading customers...' : 'Select customer'}
+                searchPlaceholder='Search customers...'
+                emptyMessage={customersError ? "Couldn't load customers." : 'No customers found.'}
+              />
+            )}
+          </form.AppField>
+        </FormRow>
+        <form.AppField name='businessCategory'>
+          {(field) => (
+            <field.SelectField
+              label='Business Category'
+              required
+              options={CATEGORY_OPTIONS}
+              placeholder='Select category'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='flavour'>
+          {(field) => (
+            <field.TextField
+              label='Flavour / Config Name'
+              required
+              placeholder='Orange'
+              description='Widget config this website uses.'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='isActive'>
+          {(field) => (
+            <field.SwitchField
+              label='Active'
+              description='Serve the chat widget on this website.'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='isVerified'>
+          {(field) => (
+            <field.SwitchField label='Verified' description='Domain ownership has been verified.' />
+          )}
+        </form.AppField>
+      </FormGrid>
+    </FormSheet>
   );
 }
 
 export function PocWebsiteFormSheetTrigger() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <Button onClick={() => setOpen(true)}>
-        <AddIcon className='mr-2 h-4 w-4' /> Add Website
-      </Button>
-      <PocWebsiteFormSheet open={open} onOpenChange={setOpen} />
-    </>
+    <FormSheetTrigger label='Add Website'>
+      {(open, setOpen) => <PocWebsiteFormSheet open={open} onOpenChange={setOpen} />}
+    </FormSheetTrigger>
   );
 }

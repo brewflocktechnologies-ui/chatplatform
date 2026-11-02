@@ -3,22 +3,12 @@
 import { Icons } from '@/components/icons';
 import PageContainer from '@/components/layout/page-container';
 import { Button } from '@/components/ui/button';
-import { NotificationCard } from '@/components/ui/notification-card';
+import { NotificationCards } from './notification-cards';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { useRouter } from 'next/navigation';
 import { useNotificationStore } from '../utils/store';
 
-const actionRoutes: Record<string, string> = {
-  view: '/dashboard/workspaces',
-  'view-product': '/dashboard/product',
-  billing: '/dashboard/billing',
-  open: '/dashboard/overview',
-  'open-chat': '/dashboard/chat'
-};
-
 export default function NotificationsPage() {
-  const { notifications, markAsRead, markAllAsRead, unreadCount } = useNotificationStore();
-  const router = useRouter();
+  const { notifications, markAllAsRead, unreadCount } = useNotificationStore();
   const count = unreadCount();
 
   const unreadNotifications = notifications.filter((n) => n.status === 'unread');
@@ -36,25 +26,7 @@ export default function NotificationsPage() {
 
     return (
       <div className='flex flex-col gap-2'>
-        {items.map((notification) => (
-          <NotificationCard
-            key={notification.id}
-            id={notification.id}
-            title={notification.title}
-            body={notification.body}
-            status={notification.status}
-            createdAt={notification.createdAt}
-            actions={notification.actions}
-            onMarkAsRead={markAsRead}
-            onAction={(notifId, actionId) => {
-              const route = actionRoutes[actionId];
-              if (route) {
-                markAsRead(notifId);
-                router.push(route);
-              }
-            }}
-          />
-        ))}
+        <NotificationCards items={items} />
       </div>
     );
   };

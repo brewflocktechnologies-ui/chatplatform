@@ -1,21 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { FormGrid, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
+import { FormSheet, FormSheetTrigger } from '@/components/forms/form-sheet';
+import { FormGrid } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
-import { LoadingButton } from '@/components/ui/loading-button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet';
-import { Icons } from '@/components/icons';
-
-const AddIcon = Icons.add;
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -34,7 +21,11 @@ interface CustomerFormSheetProps {
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof CustomerApiError ? error.message : fallback;
 
-export function CustomerFormSheet({ customer, open, onOpenChange }: Readonly<CustomerFormSheetProps>) {
+export function CustomerFormSheet({
+  customer,
+  open,
+  onOpenChange
+}: Readonly<CustomerFormSheetProps>) {
   const isEdit = !!customer;
   const queryClient = useQueryClient();
 
@@ -108,94 +99,62 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: Readonly<Cus
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className={WIDE_FORM_MODAL}>
-        <SheetHeader>
-          <SheetTitle>{isEdit ? 'Edit Customer' : 'New Customer'}</SheetTitle>
-          <SheetDescription>
-            {isEdit
-              ? 'Update the customer details below.'
-              : 'Fill in the details to create a new customer.'}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className='flex-1 overflow-auto'>
-          <form
-            id='customer-form-sheet'
-            className='space-y-4 p-4 md:p-4'
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-          >
-            <FormGrid>
-              <form.AppField name='email'>
-                {(field) => (
-                  <field.TextField
-                    label='Email'
-                    type='email'
-                    required
-                    placeholder='billing@acme.com'
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name='externalId'>
-                {(field) => (
-                  <field.TextField
-                    label='External ID'
-                    placeholder='cus_123'
-                    description='The customer id in your payment system.'
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name='line1'>
-                {(field) => (
-                  <field.TextField label='Address Line 1' placeholder='45 Mount Road' />
-                )}
-              </form.AppField>
-              <form.AppField name='line2'>
-                {(field) => (
-                  <field.TextField label='Address Line 2' placeholder='Suite 12' />
-                )}
-              </form.AppField>
-              <form.AppField name='city'>
-                {(field) => <field.TextField label='City' placeholder='Bengaluru' />}
-              </form.AppField>
-              <form.AppField name='state'>
-                {(field) => <field.TextField label='State' placeholder='Karnataka' />}
-              </form.AppField>
-              <form.AppField name='postalCode'>
-                {(field) => <field.TextField label='Postal Code' placeholder='560001' />}
-              </form.AppField>
-              <form.AppField name='country'>
-                {(field) => <field.TextField label='Country' placeholder='India' />}
-              </form.AppField>
-            </FormGrid>
-          </form>
-        </div>
-
-        <SheetFooter>
-          <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <LoadingButton loading={isPending} type='submit' form='customer-form-sheet'>
-            {isEdit ? 'Update Customer' : 'Create Customer'}
-          </LoadingButton>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <FormSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? 'Edit Customer' : 'New Customer'}
+      description={
+        isEdit
+          ? 'Update the customer details below.'
+          : 'Fill in the details to create a new customer.'
+      }
+      formId='customer-form-sheet'
+      onSubmit={() => form.handleSubmit()}
+      isPending={isPending}
+      submitLabel={isEdit ? 'Update Customer' : 'Create Customer'}
+    >
+      <FormGrid>
+        <form.AppField name='email'>
+          {(field) => (
+            <field.TextField label='Email' type='email' required placeholder='billing@acme.com' />
+          )}
+        </form.AppField>
+        <form.AppField name='externalId'>
+          {(field) => (
+            <field.TextField
+              label='External ID'
+              placeholder='cus_123'
+              description='The customer id in your payment system.'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='line1'>
+          {(field) => <field.TextField label='Address Line 1' placeholder='45 Mount Road' />}
+        </form.AppField>
+        <form.AppField name='line2'>
+          {(field) => <field.TextField label='Address Line 2' placeholder='Suite 12' />}
+        </form.AppField>
+        <form.AppField name='city'>
+          {(field) => <field.TextField label='City' placeholder='Bengaluru' />}
+        </form.AppField>
+        <form.AppField name='state'>
+          {(field) => <field.TextField label='State' placeholder='Karnataka' />}
+        </form.AppField>
+        <form.AppField name='postalCode'>
+          {(field) => <field.TextField label='Postal Code' placeholder='560001' />}
+        </form.AppField>
+        <form.AppField name='country'>
+          {(field) => <field.TextField label='Country' placeholder='India' />}
+        </form.AppField>
+      </FormGrid>
+    </FormSheet>
   );
 }
 
 export function CustomerFormSheetTrigger() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <Button onClick={() => setOpen(true)}>
-        <AddIcon className='mr-2 h-4 w-4' /> Add Customer
-      </Button>
-      <CustomerFormSheet open={open} onOpenChange={setOpen} />
-    </>
+    <FormSheetTrigger label='Add Customer'>
+      {(open, setOpen) => <CustomerFormSheet open={open} onOpenChange={setOpen} />}
+    </FormSheetTrigger>
   );
 }

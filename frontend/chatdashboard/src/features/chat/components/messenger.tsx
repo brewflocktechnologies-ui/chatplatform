@@ -1,5 +1,6 @@
 'use client';
 
+import { DetailsRail } from './details-rail';
 import { type SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 import { useChatStore } from '../utils/store';
@@ -10,15 +11,9 @@ import { ChatDetails } from './chat-details';
 import { chatDashboardSocket } from '../services/chat-socket-client';
 import { chatSocketUrl } from '@/config/api-endpoints';
 import { Icons } from '@/components/icons';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn, randomId } from '@/lib/utils';
 
 const ChatIcon = Icons.chat;
-const ChevronLeftIcon = Icons.chevronLeft;
-const UserIcon = Icons.user;
-const PostIcon = Icons.post;
-const GalleryVerticalEndIcon = Icons.galleryVerticalEnd;
 
 export function Messenger() {
   const {
@@ -224,86 +219,13 @@ export function Messenger() {
 
       {/* 4. Sleek Reopen Rail when details panel is collapsed */}
       {activeConversation && !isDetailsOpen && (
-        <div className='flex h-full w-10 flex-col items-center border-l border-border/60 bg-card/40 shrink-0'>
-          <div className='flex h-[56px] w-full items-center justify-center border-b border-border/60 shrink-0'>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    type='button'
-                    variant='ghost'
-                    size='icon-sm'
-                    onClick={() => setIsDetailsOpen(true)}
-                    className='h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer'
-                    aria-label='Open Details Panel'
-                  />
-                }
-              >
-                <ChevronLeftIcon className='h-4 w-4' />
-              </TooltipTrigger>
-              <TooltipContent side='left'>Open Details Panel</TooltipContent>
-            </Tooltip>
-          </div>
-
-          <div className='mt-3 flex flex-col gap-2'>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type='button'
-                    aria-label='Visitor Details'
-                    onClick={() => {
-                      setDetailsTab('info');
-                      setIsDetailsOpen(true);
-                    }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
-                  />
-                }
-              >
-                <UserIcon className='h-3.5 w-3.5' />
-              </TooltipTrigger>
-              <TooltipContent side='left'>Visitor Details</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type='button'
-                    aria-label='Notes & Canned Responses'
-                    onClick={() => {
-                      setDetailsTab('canned');
-                      setIsDetailsOpen(true);
-                    }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
-                  />
-                }
-              >
-                <PostIcon className='h-3.5 w-3.5' />
-              </TooltipTrigger>
-              <TooltipContent side='left'>Notes & Canned Responses</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type='button'
-                    aria-label='Apps & Integrations'
-                    onClick={() => {
-                      setDetailsTab('apps');
-                      setIsDetailsOpen(true);
-                    }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
-                  />
-                }
-              >
-                <GalleryVerticalEndIcon className='h-3.5 w-3.5' />
-              </TooltipTrigger>
-              <TooltipContent side='left'>Apps & Integrations</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
+        <DetailsRail
+          infoLabel='Visitor Details'
+          onOpen={(tab) => {
+            if (tab) setDetailsTab(tab);
+            setIsDetailsOpen(true);
+          }}
+        />
       )}
     </div>
   );

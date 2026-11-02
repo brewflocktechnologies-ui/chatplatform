@@ -4,7 +4,7 @@ import { useMemo } from 'react';
 import { DataTable } from '@/components/ui/table/data-table';
 import { DataTableToolbar } from '@/components/ui/table/data-table-toolbar';
 import { useDataTable } from '@/hooks/use-data-table';
-import { useQuery } from '@tanstack/react-query';
+import { useSearchablePagedQuery } from '@/hooks/use-searchable-paged-query';
 import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs';
 import { Icons } from '@/components/icons';
 import { getSortingStateParser } from '@/lib/parsers';
@@ -32,29 +32,16 @@ export function CustomersTable() {
   );
   const search = params.email?.trim() ?? '';
 
-  // Without a search the API pages and sorts for us (the URL is 1-based, the API 0-based).
-  // useQuery (not useSuspenseQuery): getCustomers is a server action, and invoking it
-  // during render when the filters change makes Next update the Router mid-render.
-  const paged = useQuery({
-    ...customersQueryOptions({ page: params.page - 1, size: params.perPage, sort }),
-    enabled: !search
+  // Without a search the API pages and sorts for us (the URL is 1-based, the API 0-based);
+  // a search loads everything once (the API can't search) and filters it here.
+  const { rows, pageCount, active, searchingAll } = useSearchablePagedQuery({
+    search,
+    page: params.page,
+    perPage: params.perPage,
+    pagedOptions: customersQueryOptions({ page: params.page - 1, size: params.perPage, sort }),
+    allOptions: allCustomersQueryOptions(sort),
+    matches: matchesSearch
   });
-  // The API can't search, so a search loads everything once and filters it here.
-  const all = useQuery({ ...allCustomersQueryOptions(sort), enabled: !!search });
-
-  const { rows, pageCount } = useMemo(() => {
-    if (!search) {
-      return { rows: paged.data?.content ?? [], pageCount: paged.data?.totalPages ?? 0 };
-    }
-    const matches = (all.data ?? []).filter((c) => matchesSearch(c, search));
-    const start = (params.page - 1) * params.perPage;
-    return {
-      rows: matches.slice(start, start + params.perPage),
-      pageCount: Math.ceil(matches.length / params.perPage)
-    };
-  }, [search, paged.data, all.data, params.page, params.perPage]);
-
-  const active = search ? all : paged;
 
   const { table } = useDataTable({
     data: rows,
@@ -77,7 +64,7 @@ export function CustomersTable() {
       isRefreshing={active.isFetching && !active.isPending}
     >
       <DataTableToolbar table={table} actions={<CustomerFormSheetTrigger />}>
-        {search && all.isFetching && !all.data && (
+        {searchingAll && (
           <output className='text-muted-foreground flex items-center gap-2 text-sm'>
             <SpinnerIcon className='h-4 w-4 animate-spin' />
             Searching all customers…

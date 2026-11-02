@@ -1,21 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
+import { FormSheet, FormSheetTrigger } from '@/components/forms/form-sheet';
+import { FormGrid, FormRow } from '@/components/forms/form-grid';
 import { useAppForm } from '@/lib/form';
-import { LoadingButton } from '@/components/ui/loading-button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet';
-import { Icons } from '@/components/icons';
-
-const AddIcon = Icons.add;
 
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
@@ -119,100 +106,69 @@ export function CompanyFormSheet({ company, open, onOpenChange }: Readonly<Compa
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className={WIDE_FORM_MODAL}>
-        <SheetHeader>
-          <SheetTitle>{isEdit ? 'Edit Company' : 'New Company'}</SheetTitle>
-          <SheetDescription>
-            {isEdit
-              ? 'Update the company details below.'
-              : 'Fill in the details to create a new company.'}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className='flex-1 overflow-auto'>
-          <form
-            id='company-form-sheet'
-            className='space-y-4 p-4 md:p-4'
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-          >
-            <FormGrid>
-              <form.AppField name='name'>
-                {(field) => <field.TextField label='Name' required placeholder='Acme Corp' />}
-              </form.AppField>
-              <form.AppField name='industry'>
-                {(field) => <field.TextField label='Industry' placeholder='Fintech' />}
-              </form.AppField>
-              <form.AppField name='contactEmail'>
-                {(field) => (
-                  <field.TextField
-                    label='Contact Email'
-                    type='email'
-                    placeholder='hello@acme.com'
-                  />
-                )}
-              </form.AppField>
-              <form.AppField name='contactPhone'>
-                {(field) => (
-                  <field.TextField label='Contact Phone' type='tel' placeholder='+91-9123456780' />
-                )}
-              </form.AppField>
-              <form.AppField name='website'>
-                {(field) => <field.TextField label='Website' placeholder='https://www.acme.io' />}
-              </form.AppField>
-              <form.AppField name='employeeCount'>
-                {(field) => (
-                  <field.TextField label='Employees' type='number' min={0} placeholder='220' />
-                )}
-              </form.AppField>
-              <FormRow>
-                <form.AppField name='streetAddress'>
-                  {(field) => (
-                    <field.TextField label='Street Address' placeholder='45 Mount Road' />
-                  )}
-                </form.AppField>
-              </FormRow>
-              <form.AppField name='city'>
-                {(field) => <field.TextField label='City' placeholder='Bengaluru' />}
-              </form.AppField>
-              <form.AppField name='state'>
-                {(field) => <field.TextField label='State' placeholder='Karnataka' />}
-              </form.AppField>
-              <form.AppField name='postalCode'>
-                {(field) => <field.TextField label='Postal Code' placeholder='560001' />}
-              </form.AppField>
-              <form.AppField name='country'>
-                {(field) => <field.TextField label='Country' placeholder='India' />}
-              </form.AppField>
-            </FormGrid>
-          </form>
-        </div>
-
-        <SheetFooter>
-          <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <LoadingButton loading={isPending} type='submit' form='company-form-sheet'>
-            {isEdit ? 'Update Company' : 'Create Company'}
-          </LoadingButton>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <FormSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? 'Edit Company' : 'New Company'}
+      description={
+        isEdit
+          ? 'Update the company details below.'
+          : 'Fill in the details to create a new company.'
+      }
+      formId='company-form-sheet'
+      onSubmit={() => form.handleSubmit()}
+      isPending={isPending}
+      submitLabel={isEdit ? 'Update Company' : 'Create Company'}
+    >
+      <FormGrid>
+        <form.AppField name='name'>
+          {(field) => <field.TextField label='Name' required placeholder='Acme Corp' />}
+        </form.AppField>
+        <form.AppField name='industry'>
+          {(field) => <field.TextField label='Industry' placeholder='Fintech' />}
+        </form.AppField>
+        <form.AppField name='contactEmail'>
+          {(field) => (
+            <field.TextField label='Contact Email' type='email' placeholder='hello@acme.com' />
+          )}
+        </form.AppField>
+        <form.AppField name='contactPhone'>
+          {(field) => (
+            <field.TextField label='Contact Phone' type='tel' placeholder='+91-9123456780' />
+          )}
+        </form.AppField>
+        <form.AppField name='website'>
+          {(field) => <field.TextField label='Website' placeholder='https://www.acme.io' />}
+        </form.AppField>
+        <form.AppField name='employeeCount'>
+          {(field) => <field.TextField label='Employees' type='number' min={0} placeholder='220' />}
+        </form.AppField>
+        <FormRow>
+          <form.AppField name='streetAddress'>
+            {(field) => <field.TextField label='Street Address' placeholder='45 Mount Road' />}
+          </form.AppField>
+        </FormRow>
+        <form.AppField name='city'>
+          {(field) => <field.TextField label='City' placeholder='Bengaluru' />}
+        </form.AppField>
+        <form.AppField name='state'>
+          {(field) => <field.TextField label='State' placeholder='Karnataka' />}
+        </form.AppField>
+        <form.AppField name='postalCode'>
+          {(field) => <field.TextField label='Postal Code' placeholder='560001' />}
+        </form.AppField>
+        <form.AppField name='country'>
+          {(field) => <field.TextField label='Country' placeholder='India' />}
+        </form.AppField>
+      </FormGrid>
+    </FormSheet>
   );
 }
 
 export function CompanyFormSheetTrigger() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <Button onClick={() => setOpen(true)}>
-        <AddIcon className='mr-2 h-4 w-4' /> Add Company
-      </Button>
-      <CompanyFormSheet open={open} onOpenChange={setOpen} />
-    </>
+    <FormSheetTrigger label='Add Company'>
+      {(open, setOpen) => <CompanyFormSheet open={open} onOpenChange={setOpen} />}
+    </FormSheetTrigger>
   );
 }

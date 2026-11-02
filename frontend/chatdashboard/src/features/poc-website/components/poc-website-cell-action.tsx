@@ -4,16 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertModal } from '@/components/modal/alert-modal';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuGroup,
-  DropdownMenuLabel,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
+import { RowActions } from '@/components/ui/table/row-actions';
 import { Icons } from '@/components/icons';
 import { ApiError, unwrap } from '@/lib/billing/errors';
 import { invalidateEntity } from '@/lib/cache/invalidation';
@@ -21,16 +12,11 @@ import { deletePocWebsite } from '../api/service';
 import type { PocWebsite } from '../api/types';
 import { PocWebsiteFormSheet } from './poc-website-form-sheet';
 
-const EllipsisIcon = Icons.ellipsis;
-const EditIcon = Icons.edit;
-const TrashIcon = Icons.trash;
-
 interface PocWebsiteCellActionProps {
   readonly data: PocWebsite;
 }
 
 export function PocWebsiteCellAction({ data }: Readonly<PocWebsiteCellActionProps>) {
-  const [deleteOpen, setDeleteOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const router = useRouter();
 
@@ -41,40 +27,18 @@ export function PocWebsiteCellAction({ data }: Readonly<PocWebsiteCellActionProp
       void invalidateEntity('pocWebsites');
       router.refresh();
       toast.success('Website deleted successfully');
-      setDeleteOpen(false);
     },
     onError: (error) =>
       toast.error(error instanceof ApiError ? error.message : 'Failed to delete website')
   });
 
   return (
-    <>
-      <AlertModal
-        isOpen={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={() => deleteMutation.mutate(data.id)}
-        loading={deleteMutation.isPending}
-      />
+    <RowActions
+      items={[{ label: 'Update', icon: Icons.edit, onSelect: () => setEditOpen(true) }]}
+      onDelete={(close) => deleteMutation.mutate(data.id, { onSuccess: close })}
+      isDeleting={deleteMutation.isPending}
+    >
       <PocWebsiteFormSheet website={data} open={editOpen} onOpenChange={setEditOpen} />
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
-          <span className='sr-only'>Open menu</span>
-          <EllipsisIcon className='h-4 w-4' />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align='end'>
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          </DropdownMenuGroup>
-          <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <EditIcon className='mr-2 h-4 w-4' /> Update
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-              <TrashIcon className='mr-2 h-4 w-4' /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+    </RowActions>
   );
 }
