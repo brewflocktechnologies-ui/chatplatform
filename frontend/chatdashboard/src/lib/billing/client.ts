@@ -8,6 +8,7 @@
  */
 
 import { origins } from '@/config/api-endpoints';
+import { isBillingMock, mockBillingRequest } from './mock';
 
 export type ApiResult<T> =
   | { ok: true; data: T }
@@ -75,14 +76,14 @@ export async function billingRequest<T>(
   path: string,
   { origin, query, body, notFoundMessage }: RequestOptions = {}
 ): Promise<ApiResult<T>> {
+  if (isBillingMock()) return mockBillingRequest<T>(method, path, { query, body, notFoundMessage });
+
   const qs = query?.size ? `?${query}` : '';
 
   let res: Response;
 
   try {
-    const baseOrigin = origin
-      ? trimTrailingSlashes(origin)
-      : origins.billing();
+    const baseOrigin = origin ? trimTrailingSlashes(origin) : origins.billing();
 
     res = await fetch(`${baseOrigin}${path}${qs}`, {
       method,
