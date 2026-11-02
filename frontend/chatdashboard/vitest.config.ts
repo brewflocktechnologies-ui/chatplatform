@@ -32,6 +32,7 @@ export default defineConfig({
         'src/app/**',
         'src/types/**',
         'src/constants/mock-api.ts',
+        'src/lib/billing/mock.ts',
         'src/features/chat/services/**',
         'src/features/widget-modifier/lib/**',
         'src/lib/mongodb.ts',
