@@ -164,6 +164,9 @@ export class CwWelcomeCard extends LitElement {
     const bgGradient = w.bgGradient || 'gradient(135deg, var(--cw-accent, #0b5fff), #22d3ee)';
     const padding = w.padding || '24px 20px 12px 20px';
     const isGlassy = w.cardLayout === 'glassy';
+    const glassyJustify =
+      w.cardAlign === 'center' || w.cardPosition === 'center' ? 'center' : 'space-between';
+    const glassyPadding = w.cardPadding ? `padding: ${w.cardPadding};` : '';
 
     return html`
       <div class="welcome-container" style="padding: ${padding}; color: ${headerTextColor}; background: ${bgGradient}">
@@ -189,11 +192,11 @@ export class CwWelcomeCard extends LitElement {
           <div class="layout-col">
             ${isGlassy
               ? html`
-                  <div style="display: flex; flex-direction: column; height: 100%; margin-bottom: 12px; justify-content: ${w.cardAlign === 'center' || w.cardPosition === 'center' ? 'center' : 'space-between'}">
+                  <div style="display: flex; flex-direction: column; height: 100%; margin-bottom: 12px; justify-content: ${glassyJustify}">
                     <cw-welcome-hero .config="${w}" .headerTextColor="${headerTextColor}" isGlassy logoOnly></cw-welcome-hero>
                     <div
                       class="glassy-container"
-                      style="background: ${w.cardBg || 'rgba(255, 255, 255, 0.12)'}; border: ${w.cardBorder || '1px solid rgba(255, 255, 255, 0.22)'}; border-radius: ${(w.cardBorderRadius || 24)}px; ${w.cardPadding ? `padding: ${w.cardPadding};` : ''} backdrop-filter: blur(${(w.cardBlur || 16)}px); -webkit-backdrop-filter: blur(${(w.cardBlur || 16)}px); box-shadow: ${w.cardShadow || '0 12px 40px 0 rgba(0, 0, 0, 0.15)'}; flex: 1; width: 100%; min-height: 0;"
+                      style="background: ${w.cardBg || 'rgba(255, 255, 255, 0.12)'}; border: ${w.cardBorder || '1px solid rgba(255, 255, 255, 0.22)'}; border-radius: ${(w.cardBorderRadius || 24)}px; ${glassyPadding} backdrop-filter: blur(${(w.cardBlur || 16)}px); -webkit-backdrop-filter: blur(${(w.cardBlur || 16)}px); box-shadow: ${w.cardShadow || '0 12px 40px 0 rgba(0, 0, 0, 0.15)'}; flex: 1; width: 100%; min-height: 0;"
                     >
                       <cw-welcome-hero .config="${w}" .headerTextColor="${headerTextColor}" isGlassy hideLogo></cw-welcome-hero>
                       <cw-welcome-cta .config="${w}" .accentColor="${this.accentColor}"></cw-welcome-cta>

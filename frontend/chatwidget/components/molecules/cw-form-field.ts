@@ -187,6 +187,7 @@ export class CwFormField extends LitElement {
     const f = this.field;
     const isError = !!this.error;
     const ctrlClass = `input-ctrl ${isError ? 'has-error' : ''}`;
+    const requiredMark = f.required ? html`<span class="req-asterisk">*</span>` : '';
 
     return html`
       <div class="field-container">
@@ -194,7 +195,7 @@ export class CwFormField extends LitElement {
           ? html`
               <label for="${f.name}">
                 <span>${f.label}</span>
-                ${f.required ? html`<span class="req-asterisk">*</span>` : ''}
+                ${requiredMark}
               </label>
             `
           : ''

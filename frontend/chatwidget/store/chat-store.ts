@@ -1147,6 +1147,15 @@ function applyWelcomeTheme(
   }
 }
 
+/**
+ * Deep copy through JSON, so only plain data survives: functions and `undefined` are dropped and
+ * dates become strings, which is what a config that gets exported or merged should contain.
+ * `structuredClone` would throw on a function value instead.
+ */
+function jsonClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value));
+}
+
 /** Re-derives the themed chat-window config; re-run whenever the host switches light/dark. */
 function applyChatTheme(cc: Record<string, any>, theme: Theme, rootAccentColor: string | undefined) {
   const isDark = isHostDark();
@@ -1155,7 +1164,7 @@ function applyChatTheme(cc: Record<string, any>, theme: Theme, rootAccentColor: 
     ...cc,
     ...activeInjectedChatWindowConfig
   };
-  const active = JSON.parse(JSON.stringify(effectiveChatConfig)) as Record<string, any>;
+  const active = jsonClone(effectiveChatConfig);
 
   const useWebTheme = cc.useWebsiteTheme ?? (rootAccentColor ? false : active.useWebsiteTheme);
 
@@ -1315,7 +1324,7 @@ export function setupGreetTimers() {
 
   const currentStore = getStore();
   const gw = currentStore?.greetWindow;
-  if (!gw || !gw.enabled) return;
+  if (!gw?.enabled) return;
 
   // Reset visibility so the timers can reveal them
   gw.visible = false;
@@ -1332,7 +1341,7 @@ export function setupGreetTimers() {
     }
   }, greetDelay * 1000);
 
-  if (gw.inputBox && gw.inputBox.enabled) {
+  if (gw.inputBox?.enabled) {
     const inputDelay = Number.parseFloat(String(gw.inputBox.openingTimeAfterInitialLoadSec ?? 4));
     _inputTimer = setTimeout(() => {
       const s = getStore();
@@ -1522,12 +1531,12 @@ export function exportFullStoreConfig(): Record<string, any> {
   return {
     clientId: store.chat.clientName || 'default',
     clientName: store.chat.clientName || 'Default Widget',
-    features: JSON.parse(JSON.stringify(store.features)),
-    messages: JSON.parse(JSON.stringify(store.chat.messages)),
-    greetWindow: JSON.parse(JSON.stringify(store.greetWindow)),
-    bubble: JSON.parse(JSON.stringify(store.bubble)),
-    chatWindow: JSON.parse(JSON.stringify(store.chatWindow)),
-    chatbar: JSON.parse(JSON.stringify(store.chatbar))
+    features: jsonClone(store.features),
+    messages: jsonClone(store.chat.messages),
+    greetWindow: jsonClone(store.greetWindow),
+    bubble: jsonClone(store.bubble),
+    chatWindow: jsonClone(store.chatWindow),
+    chatbar: jsonClone(store.chatbar)
   };
 }
 

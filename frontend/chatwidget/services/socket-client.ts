@@ -45,7 +45,7 @@ export function getOrCreateVisitorIdentity(): { visitorName: string; conversatio
     let visitorName = sessionStorage.getItem('cw_visitor_name');
     let conversationId = sessionStorage.getItem('cw_conversation_id');
 
-    if (!visitorName || !visitorName.startsWith('Guest #')) {
+    if (!visitorName?.startsWith('Guest #')) {
       visitorName = generateRandomGuestName();
       sessionStorage.setItem('cw_visitor_name', visitorName);
     }
@@ -190,7 +190,7 @@ export class ChatWidgetSocketClient {
 
   /** Every visitor and agent of a tenant shares one channel; conversationId + role route it. */
   private publish(data: Record<string, unknown>): Promise<unknown> | undefined {
-    if (!this.sub || this.sub.state !== SubscriptionState.Subscribed) return undefined;
+    if (this.sub?.state !== SubscriptionState.Subscribed) return undefined;
     return this.sub
       .publish({
         ...data,
@@ -224,7 +224,7 @@ export class ChatWidgetSocketClient {
   private handlePublication(data: any) {
     // Centrifugo echoes our own publications back, and other visitors share the
     // tenant channel: only agent traffic for this conversation is relevant.
-    if (!data || data.role !== 'agent' || data.conversationId !== this.conversationId) return;
+    if (data?.role !== 'agent' || data.conversationId !== this.conversationId) return;
 
     switch (data.type) {
       case 'chat_message':
