@@ -109,9 +109,9 @@ function createAccentGradient(hex) {
   if (c.length === 3) c = c.split('').map(x => x + x).join('');
   if (c.length !== 6) return `linear-gradient(135deg, ${hex}, ${hex})`;
 
-  let r = parseInt(c.substring(0, 2), 16) / 255;
-  let g = parseInt(c.substring(2, 4), 16) / 255;
-  let b = parseInt(c.substring(4, 6), 16) / 255;
+  let r = Number.parseInt(c.substring(0, 2), 16) / 255;
+  let g = Number.parseInt(c.substring(2, 4), 16) / 255;
+  let b = Number.parseInt(c.substring(4, 6), 16) / 255;
 
   let max = Math.max(r, g, b), min = Math.min(r, g, b);
   let h = 0, s = 0, l = (max + min) / 2;
@@ -242,9 +242,9 @@ function updateNotifCounter(inputEl, counterId) {
 function adjustNotifStepper(inputId, delta) {
   const input = document.getElementById(inputId);
   if (input) {
-    let current = parseInt(input.value) || 0;
-    const min = parseInt(input.getAttribute('min')) || 0;
-    const max = parseInt(input.getAttribute('max')) || 999;
+    let current = Number.parseInt(input.value) || 0;
+    const min = Number.parseInt(input.getAttribute('min')) || 0;
+    const max = Number.parseInt(input.getAttribute('max')) || 999;
     current = Math.max(min, Math.min(max, current + delta));
     input.value = current;
     input.dispatchEvent(new Event('change', { bubbles: true }));
@@ -398,8 +398,8 @@ function parsePaddingString(str) {
   }
   // Remove px/em/% units and get numeric components
   const parts = str.trim().split(/\s+/).map(p => {
-    const val = parseFloat(p);
-    return isNaN(val) ? 0 : val;
+    const val = Number.parseFloat(p);
+    return Number.isNaN(val) ? 0 : val;
   });
   if (parts.length === 1) {
     return { top: parts[0], right: parts[0], bottom: parts[0], left: parts[0] };
@@ -431,23 +431,23 @@ function parseCardBg(bgStr) {
   }
   const rgbaMatch = clean.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/);
   if (rgbaMatch) {
-    const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
-    const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
-    const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
-    const opacity = parseFloat(rgbaMatch[4]);
+    const r = Number.parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
+    const g = Number.parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
+    const b = Number.parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
+    const opacity = Number.parseFloat(rgbaMatch[4]);
     return { color: `#${r}${g}${b}`, opacity };
   }
   const rgbMatch = clean.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
   if (rgbMatch) {
-    const r = parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
-    const g = parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
-    const b = parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
+    const r = Number.parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
+    const g = Number.parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
+    const b = Number.parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
     return { color: `#${r}${g}${b}`, opacity: 1 };
   }
   if (clean.startsWith('#')) {
     if (clean.length === 9) {
-      const opacity = parseInt(clean.substring(7, 9), 16) / 255;
-      return { color: clean.substring(0, 7), opacity: parseFloat(opacity.toFixed(2)) };
+      const opacity = Number.parseInt(clean.substring(7, 9), 16) / 255;
+      return { color: clean.substring(0, 7), opacity: Number.parseFloat(opacity.toFixed(2)) };
     }
     return { color: clean, opacity: 1 };
   }
@@ -455,9 +455,9 @@ function parseCardBg(bgStr) {
 }
 
 function formatCardBg(hexColor, opacity) {
-  const r = parseInt(hexColor.slice(1, 3), 16);
-  const g = parseInt(hexColor.slice(3, 5), 16);
-  const b = parseInt(hexColor.slice(5, 7), 16);
+  const r = Number.parseInt(hexColor.slice(1, 3), 16);
+  const g = Number.parseInt(hexColor.slice(3, 5), 16);
+  const b = Number.parseInt(hexColor.slice(5, 7), 16);
   return `rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
 
@@ -472,19 +472,19 @@ function parseShadowColor(shadowStr) {
   // Look for rgba(...) first
   const rgbaMatch = clean.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/);
   if (rgbaMatch) {
-    const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
-    const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
-    const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
-    const opacity = parseFloat(rgbaMatch[4]);
+    const r = Number.parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
+    const g = Number.parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
+    const b = Number.parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
+    const opacity = Number.parseFloat(rgbaMatch[4]);
     return { color: `#${r}${g}${b}`, opacity };
   }
 
   // Look for rgb(...)
   const rgbMatch = clean.match(/rgb\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
   if (rgbMatch) {
-    const r = parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
-    const g = parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
-    const b = parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
+    const r = Number.parseInt(rgbMatch[1]).toString(16).padStart(2, '0');
+    const g = Number.parseInt(rgbMatch[2]).toString(16).padStart(2, '0');
+    const b = Number.parseInt(rgbMatch[3]).toString(16).padStart(2, '0');
     return { color: `#${r}${g}${b}`, opacity: 1.0 };
   }
 
@@ -498,9 +498,9 @@ function parseShadowColor(shadowStr) {
 }
 
 function updateShadowColor(shadowStr, newHexColor, newOpacity) {
-  const r = parseInt(newHexColor.slice(1, 3), 16);
-  const g = parseInt(newHexColor.slice(3, 5), 16);
-  const b = parseInt(newHexColor.slice(5, 7), 16);
+  const r = Number.parseInt(newHexColor.slice(1, 3), 16);
+  const g = Number.parseInt(newHexColor.slice(3, 5), 16);
+  const b = Number.parseInt(newHexColor.slice(5, 7), 16);
   const newRgba = `rgba(${r}, ${g}, ${b}, ${newOpacity})`;
 
   if (!shadowStr || typeof shadowStr !== 'string') {
@@ -549,9 +549,9 @@ function parseBgGradient(bgStr) {
   const clean = bgStr.trim();
   if (clean.includes('linear-gradient')) {
     result.type = 'linear';
-    const angleMatch = clean.match(/(\d+)deg/);
+    const angleMatch = clean.match(/(\d{1,4})deg/);
     if (angleMatch) {
-      result.angle = parseInt(angleMatch[1]);
+      result.angle = Number.parseInt(angleMatch[1]);
     }
     const colors = extractColors(clean);
     if (colors.length >= 2) {
@@ -611,7 +611,7 @@ function setupWelcomeBgPickerListeners() {
 
   const updateWelcomeBg = () => {
     const type = typeSelect.value;
-    const angle = parseInt(angleInput.value || 135);
+    const angle = Number.parseInt(angleInput.value || 135);
     const color1 = type === 'solid' ? solidText.value : startText.value;
     const color2 = type === 'solid' ? solidText.value : endText.value;
 
@@ -688,7 +688,7 @@ function parseCardBorder(borderStr) {
   }
   const clean = borderStr.trim();
   const widthMatch = clean.match(/^(\d+)px/);
-  const width = widthMatch ? parseInt(widthMatch[1]) : 1;
+  const width = widthMatch ? Number.parseInt(widthMatch[1]) : 1;
 
   const styles = ['solid', 'dashed', 'dotted', 'none', 'double'];
   let style = 'solid';
@@ -703,11 +703,11 @@ function parseCardBorder(borderStr) {
   let opacity = 0.22;
   const rgbaMatch = clean.match(/rgba\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*([\d.]+)\s*\)/);
   if (rgbaMatch) {
-    const r = parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
-    const g = parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
-    const b = parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
+    const r = Number.parseInt(rgbaMatch[1]).toString(16).padStart(2, '0');
+    const g = Number.parseInt(rgbaMatch[2]).toString(16).padStart(2, '0');
+    const b = Number.parseInt(rgbaMatch[3]).toString(16).padStart(2, '0');
     color = `#${r}${g}${b}`;
-    opacity = parseFloat(rgbaMatch[4]);
+    opacity = Number.parseFloat(rgbaMatch[4]);
   } else {
     const hexMatch = clean.match(/#[0-9a-fA-F]+/);
     if (hexMatch) {
@@ -721,9 +721,9 @@ function parseCardBorder(borderStr) {
 
 function formatCardBorder(width, style, hexColor, opacity) {
   if (style === 'none') return 'none';
-  const r = parseInt(hexColor.slice(1, 3), 16);
-  const g = parseInt(hexColor.slice(3, 5), 16);
-  const b = parseInt(hexColor.slice(5, 7), 16);
+  const r = Number.parseInt(hexColor.slice(1, 3), 16);
+  const g = Number.parseInt(hexColor.slice(3, 5), 16);
+  const b = Number.parseInt(hexColor.slice(5, 7), 16);
   return `${width || 1}px ${style || 'solid'} rgba(${r}, ${g}, ${b}, ${opacity})`;
 }
 
@@ -1606,8 +1606,8 @@ function syncConfigToVisualForm(config) {
       if (textInput) textInput.value = val;
     } else if (input.type === 'number') {
       if (val !== undefined && val !== null) {
-        const num = parseFloat(val);
-        input.value = isNaN(num) ? '' : num;
+        const num = Number.parseFloat(val);
+        input.value = Number.isNaN(num) ? '' : num;
       } else {
         input.value = '';
       }
@@ -2055,11 +2055,11 @@ function setupFormEventListeners() {
         if (input.value === '') {
           val = undefined;
         } else {
-          const num = parseFloat(input.value);
+          const num = Number.parseFloat(input.value);
           val = input.dataset.unit ? (num + input.dataset.unit) : num;
         }
       } else if (input.type === 'range') {
-        val = parseFloat(input.value);
+        val = Number.parseFloat(input.value);
         // Update slider value labels
         const valSpan = input.parentElement.querySelector('.range-val');
         if (valSpan) valSpan.textContent = val + (input.dataset.unit || '');
@@ -2172,10 +2172,10 @@ function setupFormEventListeners() {
     const path = grid.dataset.paddingPath;
     const inputs = grid.querySelectorAll('input');
     const handlePadInput = () => {
-      const top = parseFloat(grid.querySelector('[data-pad="top"]')?.value || 0);
-      const right = parseFloat(grid.querySelector('[data-pad="right"]')?.value || 0);
-      const bottom = parseFloat(grid.querySelector('[data-pad="bottom"]')?.value || 0);
-      const left = parseFloat(grid.querySelector('[data-pad="left"]')?.value || 0);
+      const top = Number.parseFloat(grid.querySelector('[data-pad="top"]')?.value || 0);
+      const right = Number.parseFloat(grid.querySelector('[data-pad="right"]')?.value || 0);
+      const bottom = Number.parseFloat(grid.querySelector('[data-pad="bottom"]')?.value || 0);
+      const left = Number.parseFloat(grid.querySelector('[data-pad="left"]')?.value || 0);
       const formatted = formatPaddingString(top, right, bottom, left);
 
       setValueByPath(window.cutomizationConfig, path, formatted);
@@ -2208,7 +2208,7 @@ function setupFormEventListeners() {
     if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
       welcomeCardBgPick.value = hex;
     }
-    const opacity = parseFloat(welcomeCardBgOpacity.value);
+    const opacity = Number.parseFloat(welcomeCardBgOpacity.value);
     if (welcomeCardBgOpacityLabel) {
       welcomeCardBgOpacityLabel.textContent = Math.round(opacity * 100) + '%';
     }
@@ -2250,12 +2250,12 @@ function setupFormEventListeners() {
     if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
       welcomeBorderPick.value = hex;
     }
-    const opacity = parseFloat(welcomeBorderOpacity.value);
+    const opacity = Number.parseFloat(welcomeBorderOpacity.value);
     if (welcomeBorderOpacityLabel) {
       welcomeBorderOpacityLabel.textContent = Math.round(opacity * 100) + '%';
     }
     const borderVal = formatCardBorder(
-      parseInt(welcomeBorderWidth.value || 0),
+      Number.parseInt(welcomeBorderWidth.value || 0),
       welcomeBorderStyle.value,
       welcomeBorderPick.value,
       opacity
@@ -2295,7 +2295,7 @@ function setupFormEventListeners() {
       if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
         pickInput.value = hex;
       }
-      const opacity = parseFloat(opacityInput.value);
+      const opacity = Number.parseFloat(opacityInput.value);
       if (opacityLabel) {
         opacityLabel.textContent = Math.round(opacity * 100) + '%';
       }
@@ -2635,8 +2635,8 @@ function retriggerGreetCard() {
   const config = window.cutomizationConfig || {};
 
   // Parse configured appearance delay and input reveal delay in seconds
-  const greetDelaySec = Math.max(0, parseFloat(config.greetWindow?.openingTimeAfterInitialLoadSec ?? 2));
-  const inputDelaySec = Math.max(0, parseFloat(config.greetWindow?.inputBox?.openingTimeAfterInitialLoadSec ?? 4));
+  const greetDelaySec = Math.max(0, Number.parseFloat(config.greetWindow?.openingTimeAfterInitialLoadSec ?? 2));
+  const inputDelaySec = Math.max(0, Number.parseFloat(config.greetWindow?.inputBox?.openingTimeAfterInitialLoadSec ?? 4));
 
   // 1. Lit Web Component widget re-triggering
   if (window.ChatWidgetLit && window.ChatWidgetLit.greetWindowStore) {
