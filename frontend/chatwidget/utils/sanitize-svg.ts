@@ -32,6 +32,39 @@ const ALLOWED_SVG_TAGS = new Set([
 ]);
 
 const FORBIDDEN_ATTR_PREFIXES = ['on', 'form'];
+const URI_ATTRS = new Set(['href', 'xlink:href', 'src', 'action']);
+const UNSAFE_URI_PREFIXES = ['javascript:', 'data:text/html', 'vbscript:'];
+
+// Event handlers (onclick, onload, ...), form attributes, and script/html execution URIs.
+function isForbiddenAttr(name: string, value: string): boolean {
+  if (FORBIDDEN_ATTR_PREFIXES.some((p) => name.startsWith(p))) return true;
+  return URI_ATTRS.has(name) && UNSAFE_URI_PREFIXES.some((p) => value.startsWith(p));
+}
+
+function stripForbiddenAttrs(el: Element) {
+  for (const attr of Array.from(el.attributes)) {
+    if (isForbiddenAttr(attr.name.toLowerCase(), attr.value.trim().toLowerCase())) {
+      el.removeAttribute(attr.name);
+    }
+  }
+}
+
+/** The `<svg>` root of the markup, or null when it isn't SVG. */
+function parseSvgRoot(markup: string): Element | null {
+  const parser = new DOMParser();
+  let doc = parser.parseFromString(markup, 'image/svg+xml');
+
+  // If XML parsing produced a parsererror, attempt HTML body wrapping fallback
+  if (doc.querySelector('parsererror')) {
+    const htmlDoc = parser.parseFromString(`<body>${markup}</body>`, 'text/html');
+    const svgEl = htmlDoc.body.querySelector('svg');
+    if (!svgEl) return null;
+    doc = parser.parseFromString(svgEl.outerHTML, 'image/svg+xml');
+  }
+
+  const root = doc.querySelector('svg') || doc.documentElement;
+  return root?.tagName.toLowerCase() === 'svg' ? root : null;
+}
 
 export function sanitizeSvg(rawSvg: string): string {
   if (!rawSvg || typeof rawSvg !== 'string') return '';
@@ -40,54 +73,16 @@ export function sanitizeSvg(rawSvg: string): string {
   if (!trimmed) return '';
 
   try {
-    const parser = new DOMParser();
-    let doc = parser.parseFromString(trimmed, 'image/svg+xml');
+    const root = parseSvgRoot(trimmed);
+    if (!root) return '';
 
-    // If XML parsing produced a parsererror, attempt HTML body wrapping fallback
-    if (doc.querySelector('parsererror')) {
-      const htmlDoc = parser.parseFromString(`<body>${trimmed}</body>`, 'text/html');
-      const svgEl = htmlDoc.body.querySelector('svg');
-      if (!svgEl) return '';
-      doc = parser.parseFromString(svgEl.outerHTML, 'image/svg+xml');
-    }
-
-    const root = doc.querySelector('svg') || doc.documentElement;
-    if (!root || root.tagName.toLowerCase() !== 'svg') {
-      return '';
-    }
-
-    const allElements = Array.from(root.querySelectorAll('*'));
-    allElements.unshift(root); // include root <svg>
-
-    for (const el of allElements) {
-      const tagName = el.tagName.toLowerCase();
-
+    // The root <svg> is included in the walk.
+    for (const el of [root, ...root.querySelectorAll('*')]) {
       // Disallow non-SVG tags (e.g. script, foreignObject, iframe, HTML tags)
-      if (!ALLOWED_SVG_TAGS.has(tagName)) {
+      if (ALLOWED_SVG_TAGS.has(el.tagName.toLowerCase())) {
+        stripForbiddenAttrs(el);
+      } else {
         el.remove();
-        continue;
-      }
-
-      // Sanitize all attributes
-      const attrs = Array.from(el.attributes);
-      for (const attr of attrs) {
-        const name = attr.name.toLowerCase();
-        const value = attr.value.trim().toLowerCase();
-
-        // 1. Remove event handlers (onclick, onload, etc.) and form attributes
-        if (FORBIDDEN_ATTR_PREFIXES.some((p) => name.startsWith(p))) {
-          el.removeAttribute(attr.name);
-          continue;
-        }
-
-        // 2. Remove script/html execution URIs in href, xlink:href, src, etc.
-        if (
-          (name === 'href' || name === 'xlink:href' || name === 'src' || name === 'action') &&
-          (value.startsWith('javascript:') || value.startsWith('data:text/html') || value.startsWith('vbscript:'))
-        ) {
-          el.removeAttribute(attr.name);
-          continue;
-        }
       }
     }
 

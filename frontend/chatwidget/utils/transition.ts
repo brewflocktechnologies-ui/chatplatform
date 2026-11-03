@@ -27,7 +27,7 @@ export interface EnterLeaveOptions {
 }
 
 export class EnterLeaveController implements ReactiveController {
-  private host: ReactiveControllerHost;
+  private readonly host: ReactiveControllerHost;
   private _target = false;
   private _phase: EnterLeavePhase = 'none';
   private _timeout?: number;
@@ -89,7 +89,9 @@ export class EnterLeaveController implements ReactiveController {
     }
   }
 
-  hostConnected() {}
+  hostConnected() {
+    // Nothing to set up: the controller only reacts to open/close requests.
+  }
 
   hostDisconnected() {
     if (this._timeout !== undefined) {

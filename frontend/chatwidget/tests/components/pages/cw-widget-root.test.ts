@@ -521,6 +521,8 @@ describe('CwWidgetRoot Page Component', () => {
     element.enableGreetWindow = undefined;
     element.greetOpeningDelaySec = undefined;
     await element.updateComplete;
+    expect(element.enableGreetWindow).toBeUndefined();
+    expect(element.greetOpeningDelaySec).toBeUndefined();
   });
 
   it('handles collectFocusables when shadowRoot is null', () => {
@@ -577,6 +579,9 @@ describe('CwWidgetRoot Page Component', () => {
     (chatbarStore as any).get = () => undefined;
     (element as any).checkCardToBarCollapse();
     (chatbarStore as any).get = origChatbarGet;
+
+    // The card collapsed to a bar once the visitor had sent a message.
+    expect((element as any).activeTriggerOverride).toBe('chatbar');
   });
 
   it('handles keydown Enter when panelOpen is true', async () => {
@@ -592,9 +597,10 @@ describe('CwWidgetRoot Page Component', () => {
     (greetWindowStore as any).get = () => undefined;
 
     element.enableGreetWindow = true;
-    await element.updateComplete;
+    await expect(element.updateComplete).resolves.toBe(true);
 
     (greetWindowStore as any).get = origGet;
+    expect(greetWindowStore.get).toBe(origGet);
   });
 
   it('handles checkCardToBarCollapse when chatStore returns undefined', async () => {
@@ -606,6 +612,8 @@ describe('CwWidgetRoot Page Component', () => {
     (element as any).checkCardToBarCollapse();
 
     (chatStore as any).get = origGet;
+    // Without a chat store there is no visitor message, so the card stays a card.
+    expect((element as any).activeTriggerOverride).toBe('chatcard');
   });
 
   it('handles getDebugInfo when window.getComputedStyle is undefined', async () => {
@@ -651,6 +659,8 @@ describe('CwWidgetRoot Page Component', () => {
     (element as any).prechatEnabled = undefined;
     (element as any).postchatEnabled = undefined;
     await element.updateComplete;
+    expect(element.prechatEnabled).toBeUndefined();
+    expect(element.postchatEnabled).toBeUndefined();
   });
 
   it('handles cw:submit-prechat and cw:submit-postchat without detail payloads', async () => {
@@ -658,7 +668,7 @@ describe('CwWidgetRoot Page Component', () => {
     await element.updateComplete;
 
     element.dispatchEvent(new CustomEvent('cw:submit-postchat'));
-    await element.updateComplete;
+    await expect(element.updateComplete).resolves.toBe(true);
   });
 
   it('resolves chatcard and chatbar triggers via chatbar config when triggerType is unset', async () => {
@@ -678,6 +688,7 @@ describe('CwWidgetRoot Page Component', () => {
     await element.updateComplete;
     window.dispatchEvent(new CustomEvent('close-contact-widget'));
     await element.updateComplete;
+    expect(element.panelOpen).toBe(false);
 
     chatbarStore.get().enabled = false;
   });

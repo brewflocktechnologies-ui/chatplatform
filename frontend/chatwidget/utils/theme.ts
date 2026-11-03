@@ -28,7 +28,7 @@ export function getParentTheme(): { primary: string; secondary: string } {
     document.querySelector<HTMLScriptElement>('script[src*="index.js"]') ||
     document.querySelector<HTMLScriptElement>('script[src*="chat-widget.js"]') ||
     document.querySelector<HTMLScriptElement>('script[src*="widget.js"]');
-  const dataAccent = scriptTag ? scriptTag.getAttribute('data-accent') : null;
+  const dataAccent = scriptTag?.dataset.accent ?? null;
 
   if (!primary && dataAccent) primary = dataAccent;
   if (!primary) primary = '#0b5fff';
@@ -48,16 +48,12 @@ export function getWidgetBaseUrl(): string {
     document.querySelector<HTMLScriptElement>('script[src*="index.js"]') ||
     document.querySelector<HTMLScriptElement>('script[src*="widget.js"]');
 
-  if (scriptTag && scriptTag.src) {
-    try {
-      const scriptUrl = new URL(scriptTag.src, window.location.href);
-      if (scriptUrl.pathname.includes('/dist/')) {
-        return new URL('../', scriptUrl).href;
-      }
-      return new URL('./', scriptUrl).href;
-    } catch (_) {
-      /* ignore */
+  if (scriptTag?.src && URL.canParse(scriptTag.src, window.location.href)) {
+    const scriptUrl = new URL(scriptTag.src, window.location.href);
+    if (scriptUrl.pathname.includes('/dist/')) {
+      return new URL('../', scriptUrl).href;
     }
+    return new URL('./', scriptUrl).href;
   }
 
   if (window.location.pathname.includes('/chatwidget_components_lit/')) {

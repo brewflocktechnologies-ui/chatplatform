@@ -67,9 +67,11 @@ describe('CwChatbar Organism Component', () => {
     const wrapper = element.shadowRoot?.querySelector('.chatbar-wrapper') as HTMLElement;
     wrapper.dispatchEvent(new Event('mouseenter'));
     await element.updateComplete;
+    expect(element.hovered).toBe(true);
 
     wrapper.dispatchEvent(new Event('mouseleave'));
     await element.updateComplete;
+    expect(element.hovered).toBe(false);
   });
 
   it('renders image and customSvg in bar layout with unread badge', async () => {

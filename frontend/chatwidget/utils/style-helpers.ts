@@ -86,13 +86,13 @@ export function getBoxShadow(config: {
   boxShadowBlur?: number;
   boxShadowOpacity?: number;
 }): string {
-  const opacity = config.boxShadowOpacity !== undefined ? config.boxShadowOpacity : 0.25;
+  const opacity = config.boxShadowOpacity ?? 0.25;
   if (opacity <= 0) return 'none';
 
-  const offsetX = config.boxShadowOffsetX !== undefined ? config.boxShadowOffsetX : 0;
-  const offsetY = config.boxShadowOffsetY !== undefined ? config.boxShadowOffsetY : 8;
-  const blur = config.boxShadowBlur !== undefined ? config.boxShadowBlur : 20;
-  const spread = config.boxShadowSpread !== undefined ? config.boxShadowSpread : 0;
+  const offsetX = config.boxShadowOffsetX ?? 0;
+  const offsetY = config.boxShadowOffsetY ?? 8;
+  const blur = config.boxShadowBlur ?? 20;
+  const spread = config.boxShadowSpread ?? 0;
 
   return `${offsetX}px ${offsetY}px ${blur}px ${spread}px rgba(0,0,0,${opacity})`;
 }
@@ -100,7 +100,7 @@ export function getBoxShadow(config: {
 export function getInnerShadow(config: {
   innerShadow?: { enabled?: boolean; blur?: number; opacity?: number };
 }): string {
-  if (!config.innerShadow || !config.innerShadow.enabled) return '';
+  if (!config.innerShadow?.enabled) return '';
   return `inset 0 6px ${config.innerShadow.blur ?? 12}px rgba(0,0,0,${config.innerShadow.opacity ?? 0.25})`;
 }
 

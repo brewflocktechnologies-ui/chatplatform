@@ -26,6 +26,18 @@ function resolveAccentColor(data: any): string | undefined {
   return data.accentColor || data.chatWindow?.accentColor || data.chat?.accentColor || undefined;
 }
 
+/** Splits a client JSON document into the per-component configs. */
+function toClientConfigs(data: any): ClientConfigs {
+  return {
+    accentColor: resolveAccentColor(data),
+    bubbleConfig: data.bubble || {},
+    chatConfig: data.chatWindow || data.chat || {},
+    chatbarConfig: data.chatbar || {},
+    greetWindowConfig: data.greetWindow || {},
+    featuresConfig: data.features || {},
+  };
+}
+
 /**
  * Reads the client ID from window.ZOTLY_CLIENT_ID or from the widget
  * script tag's data-client-id attribute / URL query param.
@@ -41,17 +53,27 @@ export function getClientId(): string {
     document.querySelector<HTMLScriptElement>('script[src*="widget.js"]');
 
   if (scriptTag) {
-    const dataId = scriptTag.getAttribute('data-client-id');
+    const dataId = scriptTag.dataset.clientId;
     if (dataId) return dataId;
-    try {
+    if (URL.canParse(scriptTag.src, window.location.href)) {
       const url = new URL(scriptTag.src, window.location.href);
       const paramId = url.searchParams.get('client_id') || url.searchParams.get('clientId');
       if (paramId) return paramId;
-    } catch (_) {
-      /* ignore */
     }
   }
   return 'default';
+}
+
+/** The editor's preview config from localStorage, or null when absent or unreadable. */
+function readPreviewConfig(): ClientConfigs | null {
+  const temp = localStorage.getItem('zotly_temp_preview_config');
+  if (!temp) return null;
+  try {
+    return toClientConfigs(JSON.parse(temp));
+  } catch (err) {
+    console.warn('Failed to parse temporary preview configuration:', err);
+    return null;
+  }
 }
 
 /**
@@ -61,22 +83,8 @@ export function getClientId(): string {
 export async function fetchClientConfig(clientId: string): Promise<ClientConfigs> {
   // Editor preview mode: read from localStorage
   if (window.location.search.includes('test=true')) {
-    const temp = localStorage.getItem('zotly_temp_preview_config');
-    if (temp) {
-      try {
-        const data = JSON.parse(temp);
-        return {
-          accentColor: resolveAccentColor(data),
-          bubbleConfig: data.bubble || {},
-          chatConfig: data.chatWindow || data.chat || {},
-          chatbarConfig: data.chatbar || {},
-          greetWindowConfig: data.greetWindow || {},
-          featuresConfig: data.features || {},
-        };
-      } catch (err) {
-        console.warn('Failed to parse temporary preview configuration:', err);
-      }
-    }
+    const preview = readPreviewConfig();
+    if (preview) return preview;
   }
 
   const baseUrl = getWidgetBaseUrl();
@@ -99,18 +107,11 @@ export async function fetchClientConfig(clientId: string): Promise<ClientConfigs
       if (res.ok) {
         const data = await res.json();
         if (data && typeof data === 'object') {
-          return {
-            accentColor: resolveAccentColor(data),
-            bubbleConfig: data.bubble || {},
-            chatConfig: data.chatWindow || data.chat || {},
-            chatbarConfig: data.chatbar || {},
-            greetWindowConfig: data.greetWindow || {},
-            featuresConfig: data.features || {},
-          };
+          return toClientConfigs(data);
         }
       }
-    } catch (_) {
-      /* try next candidate URL */
+    } catch (err) {
+      console.debug(`Config candidate ${url} unavailable:`, err);
     }
   }
 
