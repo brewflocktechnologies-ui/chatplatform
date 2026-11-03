@@ -17,10 +17,9 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "sonar": "sonar-scanner-npm",
-    "test:e2e": "playwright test --project=chromium",
-    "test:e2e:all": "playwright test",
-    "test:e2e:update": "playwright test --project=chromium --update-snapshots",
-    "test:e2e:ui": "playwright test --ui --project=chromium",
+    "e2e": "playwright test",
+    "e2e:update": "playwright test --project=chromium --update-snapshots",
+    "e2e:ui": "playwright test --ui --project=chromium",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
   },

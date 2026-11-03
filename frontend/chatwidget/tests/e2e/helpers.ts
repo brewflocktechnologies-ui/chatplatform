@@ -41,6 +41,12 @@ export function loadClientConfig(id: string): Record<string, unknown> {
 export async function bootWidget(page: Page, options: BootOptions = {}): Promise<void> {
   const client = options.client ?? 'amber';
 
+  // Keep the widget off any chat server running on the dev machine (Centrifugo on :8000): the
+  // journey tests exercise the offline fallback, which only replies when no socket connects.
+  await page.addInitScript(() => {
+    (window as any).CHAT_WIDGET_WS_URL = 'ws://127.0.0.1:1/connection/websocket';
+  });
+
   if (options.config !== undefined || options.configBody !== undefined || options.configStatus !== undefined) {
     await page.route(`**/public/clients/${client}.json`, async (route) => {
       if (options.configDelayMs) {
