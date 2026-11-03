@@ -34,6 +34,8 @@ const CDN = {
 };
 
 function runInFrameClassic(doc, code) {
+  // The frame can be torn down (unmounted) before its load event is handled
+  if (typeof doc?.createElement !== 'function') return;
   const s = doc.createElement('script');
   s.textContent = code;
   doc.head.appendChild(s);
@@ -114,8 +116,16 @@ export async function mount(el, options = {}) {
   };
 
   iframe.onload = () => {
-    const doc = iframe.contentDocument;
-    const win = iframe.contentWindow;
+    let doc;
+    let win;
+    try {
+      doc = iframe.contentDocument;
+      win = iframe.contentWindow;
+    } catch (e) {
+      // Cross-origin frame: nothing we can initialise
+      console.debug('[CW] frame not accessible on load:', e);
+      return;
+    }
     if (!doc || !win || win.__CW_INITIALIZED__) return;
     win.__CW_INITIALIZED__ = true;
     win.__CUSTOMIZATION_ASSET_BASE__ = `${REMOTE_ORIGIN}/`;

@@ -288,6 +288,35 @@ function handleNotifIconUpload(fileInput) {
   }
 }
 
+function applyNotifCardStyle(notifCard, enabled, style) {
+  if (!notifCard) return;
+  notifCard.style.opacity = enabled ? '1' : '0.3';
+  notifCard.className = style === 'box1' ? 'notif-preview-card box-1' : 'notif-preview-card box-2';
+}
+
+function applyNotifOverlayPosition(overlay, position) {
+  if (!overlay) return;
+  const centered = position === 'center';
+  overlay.style.justifyContent = centered ? 'center' : 'flex-start';
+  overlay.style.paddingTop = centered ? '30px' : '60px';
+}
+
+function applyNotifIcon(imgIcon, svgIcon) {
+  if (!imgIcon || !svgIcon) return;
+  if (window.customNotifUploadedIcon) {
+    imgIcon.src = window.customNotifUploadedIcon;
+    imgIcon.style.display = 'block';
+    imgIcon.style.width = '48px';
+    imgIcon.style.height = '48px';
+    imgIcon.style.borderRadius = '12px';
+    imgIcon.style.objectFit = 'cover';
+    svgIcon.style.display = 'none';
+  } else {
+    imgIcon.style.display = 'none';
+    svgIcon.style.display = 'block';
+  }
+}
+
 function triggerNotifPreviewUpdate() {
   const notifTabActive = document.querySelector('.nav-tab[data-tab="tab-notifications"]')?.classList.contains('active');
   if (!notifTabActive) return;
@@ -314,42 +343,9 @@ function triggerNotifPreviewUpdate() {
   if (approveBtn) approveBtn.textContent = approveText;
   if (cancelBtn) cancelBtn.textContent = cancelText;
 
-  if (notifCard) {
-    if (!enabled) {
-      notifCard.style.opacity = '0.3';
-    } else {
-      notifCard.style.opacity = '1';
-    }
-
-    if (style === 'box1') {
-      notifCard.className = 'notif-preview-card box-1';
-    } else {
-      notifCard.className = 'notif-preview-card box-2';
-    }
-  }
-
-  if (overlay) {
-    if (position === 'center') {
-      overlay.style.justifyContent = 'center';
-      overlay.style.paddingTop = '30px';
-    } else {
-      overlay.style.justifyContent = 'flex-start';
-      overlay.style.paddingTop = '60px';
-    }
-  }
-
-  if (window.customNotifUploadedIcon && imgIcon && svgIcon) {
-    imgIcon.src = window.customNotifUploadedIcon;
-    imgIcon.style.display = 'block';
-    imgIcon.style.width = '48px';
-    imgIcon.style.height = '48px';
-    imgIcon.style.borderRadius = '12px';
-    imgIcon.style.objectFit = 'cover';
-    svgIcon.style.display = 'none';
-  } else if (imgIcon && svgIcon) {
-    imgIcon.style.display = 'none';
-    svgIcon.style.display = 'block';
-  }
+  applyNotifCardStyle(notifCard, enabled, style);
+  applyNotifOverlayPosition(overlay, position);
+  applyNotifIcon(imgIcon, svgIcon);
 }
 
 // Fill the Messages-tab textareas from the config messages array
@@ -597,6 +593,26 @@ function formatBgGradient(type, angle, color1, color2) {
   return color1;
 }
 
+// Which welcome-background controls are shown for each background type (radial is the fallback)
+const WELCOME_BG_VISIBILITY = {
+  solid: { angle: 'none', solid: 'block', grad: 'none' },
+  linear: { angle: 'block', solid: 'none', grad: 'flex' },
+  radial: { angle: 'none', solid: 'none', grad: 'flex' }
+};
+
+function setWelcomeBgVisibility(type) {
+  const show = WELCOME_BG_VISIBILITY[type] || WELCOME_BG_VISIBILITY.radial;
+  const groups = [
+    ['welcome-bg-angle-group', show.angle],
+    ['welcome-bg-solid-group', show.solid],
+    ['welcome-bg-gradient-colors', show.grad]
+  ];
+  for (const [id, display] of groups) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = display;
+  }
+}
+
 // Setup welcome screen background gradient panel listeners
 function setupWelcomeBgPickerListeners() {
   const typeSelect = document.getElementById('welcome-bg-type');
@@ -628,28 +644,7 @@ function setupWelcomeBgPickerListeners() {
     hiddenInput.dispatchEvent(new Event('change'));
   };
 
-  // Toggle visibility helper
-  const updateVisibility = () => {
-    const type = typeSelect.value;
-    const angleGroup = document.getElementById('welcome-bg-angle-group');
-    const solidGroup = document.getElementById('welcome-bg-solid-group');
-    const gradGroup = document.getElementById('welcome-bg-gradient-colors');
-
-    if (type === 'solid') {
-      if (angleGroup) angleGroup.style.display = 'none';
-      if (solidGroup) solidGroup.style.display = 'block';
-      if (gradGroup) gradGroup.style.display = 'none';
-    } else if (type === 'linear') {
-      if (angleGroup) angleGroup.style.display = 'block';
-      if (solidGroup) solidGroup.style.display = 'none';
-      if (gradGroup) gradGroup.style.display = 'flex';
-    } else {
-      // Radial
-      if (angleGroup) angleGroup.style.display = 'none';
-      if (solidGroup) solidGroup.style.display = 'none';
-      if (gradGroup) gradGroup.style.display = 'flex';
-    }
-  };
+  const updateVisibility = () => setWelcomeBgVisibility(typeSelect.value);
 
   document.getElementById('feature-voice-master')?.addEventListener('change', updateFeatureNestedState);
   document.getElementById('feature-video-master')?.addEventListener('change', updateFeatureNestedState);
@@ -1400,10 +1395,7 @@ function ensureLitPointerEvents(widgetRoot) {
 }
 
 // Bootstrap modular widget manually using Lit Web Component
-async function bootstrapWidgetPreview() {
-  const viewportWrapper = document.getElementById('preview-viewport-wrapper');
-  const targetContainer = viewportWrapper || document.body;
-
+function mountPreviewWidgetRoot(targetContainer) {
   // Remove any auto-mounted widget root elements attached directly to document.body
   document.querySelectorAll('body > cw-widget-root').forEach(el => el.remove());
 
@@ -1424,24 +1416,54 @@ async function bootstrapWidgetPreview() {
   if (widgetRoot) {
     widgetRoot.style.display = (isFormsActive || isNotifActive) ? 'none' : 'block';
   }
+  return widgetRoot;
+}
 
-  // Also support fallback Alpine Widget if window.ZotlyChatWindowHTML exists
-  if (window.ZotlyChatWindowHTML) {
-    let widgetContainer = document.getElementById('zotly-widget-embed');
-    if (!widgetContainer) {
-      widgetContainer = document.createElement('div');
-      widgetContainer.id = 'zotly-widget-embed';
-      widgetContainer.setAttribute('x-data', '{ openContactWidget: false }');
-      widgetContainer.setAttribute('@toggle-contact-widget.window', 'openContactWidget = !openContactWidget; $store.chat.panelOpen = openContactWidget; if (openContactWidget) { $store.chat.unreadCount = 0; }');
-      widgetContainer.setAttribute('@close-contact-widget.window', 'openContactWidget = false; $store.chat.panelOpen = false;');
-      widgetContainer.innerHTML = window.ZotlyChatWindowHTML + window.ZotlyWelcomeHTML + window.ZotlyBubbleHTML + window.ZotlyChatbarHTML;
-      targetContainer.appendChild(widgetContainer);
-    }
-    if (window.Alpine && window.ZotlyInitStores) {
-      await window.ZotlyInitStores();
-      window.Alpine.initTree(widgetContainer);
-    }
+// Fallback Alpine widget, used if window.ZotlyChatWindowHTML exists
+async function mountAlpineFallbackWidget(targetContainer) {
+  if (!window.ZotlyChatWindowHTML) return;
+  let widgetContainer = document.getElementById('zotly-widget-embed');
+  if (!widgetContainer) {
+    widgetContainer = document.createElement('div');
+    widgetContainer.id = 'zotly-widget-embed';
+    widgetContainer.setAttribute('x-data', '{ openContactWidget: false }');
+    widgetContainer.setAttribute('@toggle-contact-widget.window', 'openContactWidget = !openContactWidget; $store.chat.panelOpen = openContactWidget; if (openContactWidget) { $store.chat.unreadCount = 0; }');
+    widgetContainer.setAttribute('@close-contact-widget.window', 'openContactWidget = false; $store.chat.panelOpen = false;');
+    widgetContainer.innerHTML = window.ZotlyChatWindowHTML + window.ZotlyWelcomeHTML + window.ZotlyBubbleHTML + window.ZotlyChatbarHTML;
+    targetContainer.appendChild(widgetContainer);
   }
+  if (window.Alpine && window.ZotlyInitStores) {
+    await window.ZotlyInitStores();
+    window.Alpine.initTree(widgetContainer);
+  }
+}
+
+// Open the chat window panel (Lit store, Lit root and Alpine fallback)
+function openPreviewChatPanel(widgetRoot) {
+  const cs = window.ChatWidgetLit?.chatStore?.get();
+  if (cs) {
+    cs.panelOpen = true;
+    cs.state = 'active';
+  }
+  if (widgetRoot) {
+    widgetRoot.panelOpen = true;
+  }
+  if (window.Alpine && Alpine.store('chat')) {
+    const widgetContainer = document.getElementById('zotly-widget-embed');
+    if (widgetContainer?._x_dataStack?.[0]) {
+      widgetContainer._x_dataStack[0].openContactWidget = true;
+    }
+    Alpine.store('chat').panelOpen = true;
+    Alpine.store('chat').state = 'active';
+  }
+}
+
+async function bootstrapWidgetPreview() {
+  const viewportWrapper = document.getElementById('preview-viewport-wrapper');
+  const targetContainer = viewportWrapper || document.body;
+
+  const widgetRoot = mountPreviewWidgetRoot(targetContainer);
+  await mountAlpineFallbackWidget(targetContainer);
 
   // Update stores with active customization config
   updateAlpineStores(window.cutomizationConfig);
@@ -1449,24 +1471,7 @@ async function bootstrapWidgetPreview() {
   // Auto open chat window active panel if starting on Messages or Features tab
   const activeTabName = document.querySelector('.nav-tab.active')?.dataset.tab;
   if (activeTabName === 'tab-messages' || activeTabName === 'tab-features') {
-    if (window.ChatWidgetLit?.chatStore) {
-      const cs = window.ChatWidgetLit.chatStore.get();
-      if (cs) {
-        cs.panelOpen = true;
-        cs.state = 'active';
-      }
-    }
-    if (widgetRoot) {
-      widgetRoot.panelOpen = true;
-    }
-    if (window.Alpine && Alpine.store('chat')) {
-      const widgetContainer = document.getElementById('zotly-widget-embed');
-      if (widgetContainer?._x_dataStack?.[0]) {
-        widgetContainer._x_dataStack[0].openContactWidget = true;
-      }
-      Alpine.store('chat').panelOpen = true;
-      Alpine.store('chat').state = 'active';
-    }
+    openPreviewChatPanel(widgetRoot);
   }
 
   // Ensure the chat-window preview shows only the selected greeting message,
@@ -1536,6 +1541,48 @@ async function loadDefaultConfig() {
 }
 
 // Populate visual controls from active config object
+// Write one config value into its data-path form control
+function syncInputFromConfig(input, config) {
+  const path = input.dataset.path;
+  const val = getValueByPath(config, path);
+
+  if (val === undefined) {
+    // Set empty/default
+    if (input.type === 'checkbox') {
+      input.checked = false;
+    } else {
+      input.value = '';
+    }
+    return;
+  }
+
+  // Special presentation for welcome avatars list
+  if (path === 'chatWindow.welcome.avatars' && Array.isArray(val)) {
+    input.value = val.join(', ');
+    return;
+  }
+
+  if (input.type === 'checkbox') {
+    input.checked = !!val;
+  } else if (input.type === 'color') {
+    // Sync both color input and text input inside wrapper
+    input.value = val;
+    const textInput = input.parentElement.querySelector('.color-picker-text');
+    if (textInput) textInput.value = val;
+  } else if (input.type === 'number') {
+    const num = val === null ? Number.NaN : Number.parseFloat(val);
+    input.value = Number.isNaN(num) ? '' : num;
+  } else {
+    input.value = val;
+
+    // Update range labels if present
+    if (input.type === 'range') {
+      const valSpan = input.parentElement.querySelector('.range-val');
+      if (valSpan) valSpan.textContent = val + (input.dataset.unit || '');
+    }
+  }
+}
+
 function syncConfigToVisualForm(config) {
   if (!config) return;
 
@@ -1582,50 +1629,7 @@ function syncConfigToVisualForm(config) {
     };
   }
 
-  document.querySelectorAll('[data-path]').forEach(input => {
-    const path = input.dataset.path;
-    let val = getValueByPath(config, path);
-
-    if (val === undefined) {
-      // Set empty/default
-      if (input.type === 'checkbox') {
-        input.checked = false;
-      } else {
-        input.value = '';
-      }
-      return;
-    }
-
-    // Special presentation for welcome avatars list
-    if (path === 'chatWindow.welcome.avatars' && Array.isArray(val)) {
-      input.value = val.join(', ');
-      return;
-    }
-
-    if (input.type === 'checkbox') {
-      input.checked = !!val;
-    } else if (input.type === 'color') {
-      // Sync both color input and text input inside wrapper
-      input.value = val;
-      const textInput = input.parentElement.querySelector('.color-picker-text');
-      if (textInput) textInput.value = val;
-    } else if (input.type === 'number') {
-      if (val !== undefined && val !== null) {
-        const num = Number.parseFloat(val);
-        input.value = Number.isNaN(num) ? '' : num;
-      } else {
-        input.value = '';
-      }
-    } else {
-      input.value = val;
-
-      // Update range labels if present
-      if (input.type === 'range') {
-        const valSpan = input.parentElement.querySelector('.range-val');
-        if (valSpan) valSpan.textContent = val + (input.dataset.unit || '');
-      }
-    }
-  });
+  document.querySelectorAll('[data-path]').forEach(input => syncInputFromConfig(input, config));
 
   // Sync notification character counters & style radio options
   const notifHeadline = document.getElementById('notif-headline-input');
@@ -1883,17 +1887,139 @@ function disablePlainControl(el, disabled) {
   if (el) el.disabled = disabled;
 }
 
+function findByPath(path) {
+  return {
+    pick: document.querySelector('input[type="color"][data-path="' + path + '"]'),
+    text: document.querySelector('input.color-picker-text[data-path="' + path + '"]')
+  };
+}
+
+function syncBubbleThemeControls(toggle) {
+  const on = toggle.checked;
+  const banner = '#bubble-theme-banner';
+  applyControlState(document.getElementById('bubble-bg-color-pick'), document.getElementById('bubble-bg-color'), document.getElementById('bubble-bg-color-hint'), on, banner);
+  applyControlState(document.getElementById('bubble-grad-start-pick'), document.getElementById('bubble-grad-start-text'), null, on, banner);
+  applyControlState(document.getElementById('bubble-grad-end-pick'), document.getElementById('bubble-grad-end-text'), null, on, banner);
+  const ringPair = findByPath('bubble.outlineRing.color');
+  applyControlState(ringPair.pick, ringPair.text, null, on, banner);
+  disablePlainControl(document.querySelector('select[data-path="bubble.gradientType"]'), on);
+  disablePlainControl(document.querySelector('input[data-path="bubble.gradientAngle"]'), on);
+}
+
+function syncChatbarThemeControls(toggle) {
+  const on = toggle.checked;
+  const banner = '#chatbar-theme-banner';
+  applyControlState(document.getElementById('chatbar-bg-color-pick'), document.getElementById('chatbar-bg-color'), document.getElementById('chatbar-bg-color-hint'), on, banner);
+  applyControlState(document.getElementById('chatbar-grad-start-pick'), document.getElementById('chatbar-grad-start-text'), null, on, banner);
+  applyControlState(document.getElementById('chatbar-grad-end-pick'), document.getElementById('chatbar-grad-end-text'), null, on, banner);
+  disablePlainControl(document.querySelector('input[data-path="chatbar.gradientEnabled"]'), on);
+  disablePlainControl(document.querySelector('select[data-path="chatbar.gradientType"]'), on);
+  disablePlainControl(document.querySelector('input[data-path="chatbar.gradientAngle"]'), on);
+}
+
+// Apply the theme-sync lock to one greet-window colour control (pick, text and optional hint)
+function applyGreetThemeTarget(t, on, banner) {
+  if (!t.pick && !t.text) return;
+  if (t.pick) t.pick.disabled = on;
+  if (t.text) t.text.disabled = on;
+  const wrapper = t.pick?.parentElement || t.text?.parentElement;
+  if (wrapper) {
+    wrapper.style.opacity = on ? '0.5' : '1';
+    wrapper.style.cursor = on ? 'pointer' : 'default';
+    wrapper.title = on ? 'Click to go to Theme Synchronization toggle' : '';
+    wrapper.onclick = on ? (e) => { e.stopPropagation(); scrollToThemeSyncToggle(banner); } : null;
+  }
+  if (t.hint) {
+    t.hint.style.display = on ? 'inline-flex' : 'none';
+    if (on) {
+      t.hint.style.cursor = 'pointer';
+      t.hint.title = 'Click to go to Theme Synchronization toggle';
+      t.hint.onclick = (e) => { e.stopPropagation(); scrollToThemeSyncToggle(banner); };
+    } else {
+      t.hint.style.cursor = '';
+      t.hint.title = '';
+      t.hint.onclick = null;
+    }
+  }
+}
+
+function syncGreetThemeControls(toggle) {
+  const on = toggle.checked;
+  const banner = '#greet-theme-banner';
+  const greetTargets = [
+    { pick: document.getElementById('greet-icon-color-pick'), text: document.getElementById('greet-icon-color'), hint: document.getElementById('greet-icon-color-hint') },
+    { pick: document.getElementById('greet-ib-btn-pick'), text: document.getElementById('greet-ib-btn'), hint: document.getElementById('greet-ib-btn-hint') },
+    { pick: document.getElementById('greet-ib-btnicon-pick'), text: document.getElementById('greet-ib-btnicon'), hint: document.getElementById('greet-ib-btnicon-hint') }
+  ];
+  greetTargets.forEach(t => applyGreetThemeTarget(t, on, banner));
+}
+
+function syncChatWindowThemeControls(toggle, isDark) {
+  const on = toggle.checked;
+  const banner = '#config-theme-banner';
+  applyControlState(document.getElementById('config-accent-color-pick'), document.getElementById('config-accent-color'), document.getElementById('config-accent-color-hint'), on, banner);
+
+  // Overridden regardless of preview theme (light-mode values are forced)
+  const alwaysOverriddenPaths = [
+    'chatWindow.visitorBubbleBg', 'chatWindow.visitorBubbleColor',
+    'chatWindow.headerBg', 'chatWindow.headerTextColor',
+    'chatWindow.headerAvatarBg', 'chatWindow.headerAvatarColor',
+    'chatWindow.agentAvatarBg', 'chatWindow.agentAvatarColor',
+    'chatWindow.inputFocusBorderColor', 'chatWindow.sendButtonBgActive',
+    'chatWindow.poweredByColor', 'chatWindow.endChatConfirmBg',
+    'chatWindow.endChatConfirmTextColor'
+  ];
+  alwaysOverriddenPaths.forEach(path => {
+    const pair = findByPath(path);
+    applyControlState(pair.pick, pair.text, null, on, banner);
+  });
+
+  // Overridden only while the preview host is in dark mode
+  const darkOnlyOverriddenPaths = [
+    'chatWindow.bodyBg', 'chatWindow.inputBg',
+    'chatWindow.agentBubbleBg', 'chatWindow.agentBubbleColor', 'chatWindow.agentBubbleBorderColor',
+    'chatWindow.footerBg', 'chatWindow.footerTextColor',
+    'chatWindow.inputTextColor', 'chatWindow.inputBorderColor',
+    'chatWindow.attachButtonBg', 'chatWindow.attachButtonColor',
+    'chatWindow.emojiButtonColor', 'chatWindow.modalCardBg', 'chatWindow.modalMessageColor',
+    'chatWindow.endChatCancelBg', 'chatWindow.endChatCancelTextColor', 'chatWindow.endChatCancelBorderColor'
+  ];
+  const darkOn = on && isDark;
+  darkOnlyOverriddenPaths.forEach(path => {
+    const pair = findByPath(path);
+    applyControlState(pair.pick, pair.text, null, darkOn, banner);
+  });
+}
+
+function syncWelcomeThemeControls(toggle) {
+  const on = toggle.checked;
+  const banner = '#welcome-theme-banner';
+
+  // The whole background editor (type/angle/colors) feeds welcome.bgGradient which is forced by theme sync
+  const bgEditorIds = [
+    'welcome-bg-type', 'welcome-bg-angle',
+    'welcome-bg-solid-pick', 'welcome-bg-solid-text',
+    'welcome-bg-grad-start-pick', 'welcome-bg-grad-start-text',
+    'welcome-bg-grad-end-pick', 'welcome-bg-grad-end-text'
+  ];
+  const hiddenBg = document.getElementById('welcome-bg-gradient-hidden');
+  const editorCard = hiddenBg ? hiddenBg.closest('.gradient-editor-card') : null;
+  if (editorCard) {
+    editorCard.style.opacity = on ? '0.45' : '1';
+    editorCard.style.pointerEvents = on ? 'none' : '';
+  }
+  bgEditorIds.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.disabled = on;
+  });
+
+  const iconPair = findByPath('chatWindow.welcome.buttonIconColor');
+  applyControlState(iconPair.pick, iconPair.text, null, on, banner);
+}
+
 function updateColorPickerStates() {
   const previewPanel = document.querySelector('.preview-panel');
   const isDark = document.documentElement.classList.contains('dark') || previewPanel?.classList.contains('dark-mode');
-
-  function findByPath(path) {
-    return {
-      pick: document.querySelector('input[type="color"][data-path="' + path + '"]'),
-      text: document.querySelector('input.color-picker-text[data-path="' + path + '"]')
-    };
-  }
-
 
   // ---------- Global Theme & Accent Sync ----------
   const globalUseTheme = document.getElementById('global-use-theme');
@@ -1902,133 +2028,19 @@ function updateColorPickerStates() {
   applyControlState(document.getElementById('global-accent-color-pick'), document.getElementById('global-accent-color'), document.getElementById('global-accent-color-hint'), isGlobalOn, globalBanner);
 
   const bubbleUseTheme = document.getElementById('bubble-use-theme');
-  if (bubbleUseTheme) {
-    const on = bubbleUseTheme.checked;
-    const banner = '#bubble-theme-banner';
-    applyControlState(document.getElementById('bubble-bg-color-pick'), document.getElementById('bubble-bg-color'), document.getElementById('bubble-bg-color-hint'), on, banner);
-    applyControlState(document.getElementById('bubble-grad-start-pick'), document.getElementById('bubble-grad-start-text'), null, on, banner);
-    applyControlState(document.getElementById('bubble-grad-end-pick'), document.getElementById('bubble-grad-end-text'), null, on, banner);
-    const ringPair = findByPath('bubble.outlineRing.color');
-    applyControlState(ringPair.pick, ringPair.text, null, on, banner);
-    disablePlainControl(document.querySelector('select[data-path="bubble.gradientType"]'), on);
-    disablePlainControl(document.querySelector('input[data-path="bubble.gradientAngle"]'), on);
-  }
+  if (bubbleUseTheme) syncBubbleThemeControls(bubbleUseTheme);
 
-  // ---------- Chatbar theme sync ----------
   const chatbarUseTheme = document.getElementById('chatbar-use-theme');
-  if (chatbarUseTheme) {
-    const on = chatbarUseTheme.checked;
-    const banner = '#chatbar-theme-banner';
-    applyControlState(document.getElementById('chatbar-bg-color-pick'), document.getElementById('chatbar-bg-color'), document.getElementById('chatbar-bg-color-hint'), on, banner);
-    applyControlState(document.getElementById('chatbar-grad-start-pick'), document.getElementById('chatbar-grad-start-text'), null, on, banner);
-    applyControlState(document.getElementById('chatbar-grad-end-pick'), document.getElementById('chatbar-grad-end-text'), null, on, banner);
-    disablePlainControl(document.querySelector('input[data-path="chatbar.gradientEnabled"]'), on);
-    disablePlainControl(document.querySelector('select[data-path="chatbar.gradientType"]'), on);
-    disablePlainControl(document.querySelector('input[data-path="chatbar.gradientAngle"]'), on);
-  }
+  if (chatbarUseTheme) syncChatbarThemeControls(chatbarUseTheme);
 
-  // ---------- Greet window theme sync (Icon Color, Submit Button, Button Icon) ----------
   const greetUseTheme = document.getElementById('greet-use-theme');
-  if (greetUseTheme) {
-    const on = greetUseTheme.checked;
-    const banner = '#greet-theme-banner';
-    const greetTargets = [
-      { pick: document.getElementById('greet-icon-color-pick'), text: document.getElementById('greet-icon-color'), hint: document.getElementById('greet-icon-color-hint') },
-      { pick: document.getElementById('greet-ib-btn-pick'), text: document.getElementById('greet-ib-btn'), hint: document.getElementById('greet-ib-btn-hint') },
-      { pick: document.getElementById('greet-ib-btnicon-pick'), text: document.getElementById('greet-ib-btnicon'), hint: document.getElementById('greet-ib-btnicon-hint') }
-    ];
-    greetTargets.forEach(t => {
-      if (!t.pick && !t.text) return;
-      if (t.pick) t.pick.disabled = on;
-      if (t.text) t.text.disabled = on;
-      const wrapper = t.pick?.parentElement || t.text?.parentElement;
-      if (wrapper) {
-        wrapper.style.opacity = on ? '0.5' : '1';
-        wrapper.style.cursor = on ? 'pointer' : 'default';
-        wrapper.title = on ? 'Click to go to Theme Synchronization toggle' : '';
-        wrapper.onclick = on ? (e) => { e.stopPropagation(); scrollToThemeSyncToggle(banner); } : null;
-      }
-      if (t.hint) {
-        t.hint.style.display = on ? 'inline-flex' : 'none';
-        if (on) {
-          t.hint.style.cursor = 'pointer';
-          t.hint.title = 'Click to go to Theme Synchronization toggle';
-          t.hint.onclick = (e) => { e.stopPropagation(); scrollToThemeSyncToggle(banner); };
-        } else {
-          t.hint.style.cursor = '';
-          t.hint.title = '';
-          t.hint.onclick = null;
-        }
-      }
-    });
-  }
+  if (greetUseTheme) syncGreetThemeControls(greetUseTheme);
 
-  // ---------- Chat Window theme sync ----------
   const chatUseTheme = document.getElementById('config-use-theme');
-  if (chatUseTheme) {
-    const on = chatUseTheme.checked;
-    const banner = '#config-theme-banner';
-    applyControlState(document.getElementById('config-accent-color-pick'), document.getElementById('config-accent-color'), document.getElementById('config-accent-color-hint'), on, banner);
+  if (chatUseTheme) syncChatWindowThemeControls(chatUseTheme, isDark);
 
-    // Overridden regardless of preview theme (light-mode values are forced)
-    const alwaysOverriddenPaths = [
-      'chatWindow.visitorBubbleBg', 'chatWindow.visitorBubbleColor',
-      'chatWindow.headerBg', 'chatWindow.headerTextColor',
-      'chatWindow.headerAvatarBg', 'chatWindow.headerAvatarColor',
-      'chatWindow.agentAvatarBg', 'chatWindow.agentAvatarColor',
-      'chatWindow.inputFocusBorderColor', 'chatWindow.sendButtonBgActive',
-      'chatWindow.poweredByColor', 'chatWindow.endChatConfirmBg',
-      'chatWindow.endChatConfirmTextColor'
-    ];
-    alwaysOverriddenPaths.forEach(path => {
-      const pair = findByPath(path);
-      applyControlState(pair.pick, pair.text, null, on, banner);
-    });
-
-    // Overridden only while the preview host is in dark mode
-    const darkOnlyOverriddenPaths = [
-      'chatWindow.bodyBg', 'chatWindow.inputBg',
-      'chatWindow.agentBubbleBg', 'chatWindow.agentBubbleColor', 'chatWindow.agentBubbleBorderColor',
-      'chatWindow.footerBg', 'chatWindow.footerTextColor',
-      'chatWindow.inputTextColor', 'chatWindow.inputBorderColor',
-      'chatWindow.attachButtonBg', 'chatWindow.attachButtonColor',
-      'chatWindow.emojiButtonColor', 'chatWindow.modalCardBg', 'chatWindow.modalMessageColor',
-      'chatWindow.endChatCancelBg', 'chatWindow.endChatCancelTextColor', 'chatWindow.endChatCancelBorderColor'
-    ];
-    const darkOn = on && isDark;
-    darkOnlyOverriddenPaths.forEach(path => {
-      const pair = findByPath(path);
-      applyControlState(pair.pick, pair.text, null, darkOn, banner);
-    });
-  }
-
-  // ---------- Welcome Dashboard theme sync (bg gradient editor + button icon color) ----------
   const welcomeUseTheme = document.getElementById('welcome-use-theme');
-  if (welcomeUseTheme) {
-    const on = welcomeUseTheme.checked;
-    const banner = '#welcome-theme-banner';
-
-    // The whole background editor (type/angle/colors) feeds welcome.bgGradient which is forced by theme sync
-    const bgEditorIds = [
-      'welcome-bg-type', 'welcome-bg-angle',
-      'welcome-bg-solid-pick', 'welcome-bg-solid-text',
-      'welcome-bg-grad-start-pick', 'welcome-bg-grad-start-text',
-      'welcome-bg-grad-end-pick', 'welcome-bg-grad-end-text'
-    ];
-    const hiddenBg = document.getElementById('welcome-bg-gradient-hidden');
-    const editorCard = hiddenBg ? hiddenBg.closest('.gradient-editor-card') : null;
-    if (editorCard) {
-      editorCard.style.opacity = on ? '0.45' : '1';
-      editorCard.style.pointerEvents = on ? 'none' : '';
-    }
-    bgEditorIds.forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.disabled = on;
-    });
-
-    const iconPair = findByPath('chatWindow.welcome.buttonIconColor');
-    applyControlState(iconPair.pick, iconPair.text, null, on, banner);
-  }
+  if (welcomeUseTheme) syncWelcomeThemeControls(welcomeUseTheme);
 }
 
 // Form Event Listeners (Sync form input edits back to config and Alpine)
@@ -2811,6 +2823,48 @@ function setupHostPageThemeControls() {
   }
 }
 
+const BREADCRUMB_SECTIONS = '.accordion-section, .features-card, .section-card, .form-section-card';
+
+function titleText(root, selector) {
+  return root.querySelector(selector)?.textContent?.trim();
+}
+
+function isNearPanelTop(el, panelTop, maxTop, minBottom) {
+  const rect = el.getBoundingClientRect();
+  return rect.top - panelTop <= maxTop && rect.bottom - panelTop > minBottom;
+}
+
+// Main/sub breadcrumb titles contributed by one visible section ({} when it has none)
+function breadcrumbForSection(sec, panelTop) {
+  if (sec.classList.contains('accordion-section')) {
+    const mainTitle = titleText(sec, '.accordion-title');
+    const result = { main: mainTitle ? mainTitle.replace(/^[^\w\s]+/, '').trim() : undefined }; // Strip emoji
+    // Check for sub section card inside accordion
+    sec.querySelectorAll('.form-section-card').forEach(sub => {
+      if (!isNearPanelTop(sub, panelTop, 180, 50)) return;
+      const subTitle = titleText(sub, '.form-section-title');
+      if (subTitle) result.sub = subTitle;
+    });
+    return result;
+  }
+  if (sec.classList.contains('features-card')) {
+    return { main: titleText(sec, '.features-card-title'), sub: titleText(sec, '.feature-name') };
+  }
+  if (sec.classList.contains('section-card')) {
+    return { main: titleText(sec, '.section-card-header') };
+  }
+  return {};
+}
+
+function applyBreadcrumbTitles(mainTitleEl, subTitleEl, currentMain, currentSub) {
+  if (!currentMain) return;
+  if (mainTitleEl.textContent !== currentMain) mainTitleEl.textContent = currentMain;
+  if (currentSub && subTitleEl.textContent !== currentSub) subTitleEl.textContent = currentSub;
+  subTitleEl.style.display = currentSub ? 'inline' : 'none';
+  const sep = document.querySelector('.indicator-separator');
+  if (sep) sep.style.display = currentSub ? 'inline' : 'none';
+}
+
 // Live Sticky Header Breadcrumb Tracker on Settings Panel Scroll
 function initStickyBreadcrumbTracker() {
   const panel = document.getElementById('settings-panel');
@@ -2827,64 +2881,24 @@ function initStickyBreadcrumbTracker() {
     if (!activeTab) return;
 
     // Get all sections and cards in active tab
-    const sections = activeTab.querySelectorAll('.accordion-section, .features-card, .section-card, .form-section-card');
+    const sections = activeTab.querySelectorAll(BREADCRUMB_SECTIONS);
     if (!sections.length) return;
 
-    const panelRect = panel.getBoundingClientRect();
+    const panelTop = panel.getBoundingClientRect().top;
     let currentMain = '';
     let currentSub = '';
 
     sections.forEach(sec => {
-      const rect = sec.getBoundingClientRect();
       // Check if section top is near top of panel
-      if (rect.top - panelRect.top <= 140 && rect.bottom - panelRect.top > 40) {
-        if (sec.classList.contains('accordion-section')) {
-          const mainTitle = sec.querySelector('.accordion-title')?.textContent?.trim();
-          if (mainTitle) currentMain = mainTitle.replace(/^[^\w\s]+/, '').trim(); // Strip emoji
-
-          // Check for sub section card inside accordion
-          const subCards = sec.querySelectorAll('.form-section-card');
-          subCards.forEach(sub => {
-            const subRect = sub.getBoundingClientRect();
-            if (subRect.top - panelRect.top <= 180 && subRect.bottom - panelRect.top > 50) {
-              const subTitle = sub.querySelector('.form-section-title')?.textContent?.trim();
-              if (subTitle) currentSub = subTitle;
-            }
-          });
-        } else if (sec.classList.contains('features-card')) {
-          const mainTitle = sec.querySelector('.features-card-title')?.textContent?.trim();
-          if (mainTitle) currentMain = mainTitle;
-          const subTitle = sec.querySelector('.feature-name')?.textContent?.trim();
-          if (subTitle) currentSub = subTitle;
-        } else if (sec.classList.contains('section-card')) {
-          const mainTitle = sec.querySelector('.section-card-header')?.textContent?.trim();
-          if (mainTitle) currentMain = mainTitle;
-        }
-      }
+      if (!isNearPanelTop(sec, panelTop, 140, 40)) return;
+      const titles = breadcrumbForSection(sec, panelTop);
+      if (titles.main) currentMain = titles.main;
+      if (titles.sub) currentSub = titles.sub;
     });
 
-    const indicator = document.getElementById('sticky-appearance-breadcrumb');
-    if (indicator) {
-      if (panel.scrollTop > 30) {
-        indicator.classList.add('is-scrolled');
-      } else {
-        indicator.classList.remove('is-scrolled');
-      }
-    }
+    document.getElementById('sticky-appearance-breadcrumb')?.classList.toggle('is-scrolled', panel.scrollTop > 30);
 
-    if (currentMain) {
-      if (mainTitleEl.textContent !== currentMain) mainTitleEl.textContent = currentMain;
-      if (currentSub) {
-        if (subTitleEl.textContent !== currentSub) subTitleEl.textContent = currentSub;
-        subTitleEl.style.display = 'inline';
-        const sep = document.querySelector('.indicator-separator');
-        if (sep) sep.style.display = 'inline';
-      } else {
-        subTitleEl.style.display = 'none';
-        const sep = document.querySelector('.indicator-separator');
-        if (sep) sep.style.display = 'none';
-      }
-    }
+    applyBreadcrumbTitles(mainTitleEl, subTitleEl, currentMain, currentSub);
   }
 
   panel.addEventListener('scroll', () => {
@@ -2949,6 +2963,13 @@ function updateGreetMediaFieldsVisibility() {
 }
 
 // Enable/Disable Accordion sections dynamically based on toggles
+// Enable/disable an accordion section; a disabled section can also be force-closed
+function setAccordionEnabled(el, enabled, closeWhenDisabled = true) {
+  if (!el) return;
+  el.classList.toggle('disabled', !enabled);
+  if (!enabled && closeWhenDisabled) el.classList.remove('active');
+}
+
 function updateDisabledAccordionStates() {
   const config = window.cutomizationConfig;
   if (!config) return;
@@ -2957,76 +2978,27 @@ function updateDisabledAccordionStates() {
   updateGreetMediaFieldsVisibility();
 
   // 1. Greet Card Popup (Section 2) -> Enabled if greetWindow.enabled is true
-  const greetEnabled = !!getValueByPath(config, 'greetWindow.enabled');
-  const greetSection = document.getElementById('accordion-greet-card');
-  if (greetSection) {
-    if (greetEnabled) {
-      greetSection.classList.remove('disabled');
-    } else {
-      greetSection.classList.add('disabled');
-      greetSection.classList.remove('active'); // Close if active
-    }
-  }
+  setAccordionEnabled(document.getElementById('accordion-greet-card'), !!getValueByPath(config, 'greetWindow.enabled'));
 
   // 2. Greet Card Quick Input Box (sub-section inside Section 2) -> Enabled if greetWindow.inputBox.enabled is true
-  const greetInputEnabled = !!getValueByPath(config, 'greetWindow.inputBox.enabled');
-  const greetInputSub = document.getElementById('sub-section-greet-input');
-  if (greetInputSub) {
-    if (greetInputEnabled) {
-      greetInputSub.classList.remove('disabled');
-    } else {
-      greetInputSub.classList.add('disabled');
-    }
-  }
+  setAccordionEnabled(document.getElementById('sub-section-greet-input'), !!getValueByPath(config, 'greetWindow.inputBox.enabled'), false);
 
   // 3. Chatbar Trigger (Section 4) vs Bubble Trigger (Section 3)
   // - If chatbar.enabled is true: Chatbar trigger is enabled, Bubble trigger is disabled.
   // - If chatbar.enabled is false: Bubble trigger is enabled, Chatbar trigger is disabled.
   const chatbarEnabled = !!getValueByPath(config, 'chatbar.enabled');
-  const chatbarSection = document.getElementById('accordion-chatbar-trigger');
-  const bubbleSection = document.getElementById('accordion-bubble-trigger');
-
-  if (chatbarSection) {
-    if (chatbarEnabled) {
-      chatbarSection.classList.remove('disabled');
-    } else {
-      chatbarSection.classList.add('disabled');
-      chatbarSection.classList.remove('active');
-    }
-  }
-
-  if (bubbleSection) {
-    if (!chatbarEnabled) {
-      bubbleSection.classList.remove('disabled');
-    } else {
-      bubbleSection.classList.add('disabled');
-      bubbleSection.classList.remove('active');
-    }
-  }
+  setAccordionEnabled(document.getElementById('accordion-chatbar-trigger'), chatbarEnabled);
+  setAccordionEnabled(document.getElementById('accordion-bubble-trigger'), !chatbarEnabled);
 
   // 4. Welcome Dashboard (Section 6) -> Enabled if chatWindow.welcome.enabled is true
-  const welcomeEnabled = !!getValueByPath(config, 'chatWindow.welcome.enabled');
-  const welcomeSection = document.getElementById('accordion-welcome-dashboard');
-  if (welcomeSection) {
-    if (welcomeEnabled) {
-      welcomeSection.classList.remove('disabled');
-    } else {
-      welcomeSection.classList.add('disabled');
-      welcomeSection.classList.remove('active');
-    }
-  }
+  setAccordionEnabled(document.getElementById('accordion-welcome-dashboard'), !!getValueByPath(config, 'chatWindow.welcome.enabled'));
 
   // 5. Dynamic Launcher Offsets toggling
   const bubbleOffsets = document.getElementById('layout-bubble-offsets');
   const chatbarOffsets = document.getElementById('layout-chatbar-offsets');
   if (bubbleOffsets && chatbarOffsets) {
-    if (chatbarEnabled) {
-      chatbarOffsets.style.display = 'block';
-      bubbleOffsets.style.display = 'none';
-    } else {
-      bubbleOffsets.style.display = 'block';
-      chatbarOffsets.style.display = 'none';
-    }
+    chatbarOffsets.style.display = chatbarEnabled ? 'block' : 'none';
+    bubbleOffsets.style.display = chatbarEnabled ? 'none' : 'block';
   }
 }
 
@@ -3064,34 +3036,41 @@ function updateFeatureNestedState() {
   }
 }
 
-// Global initialization for imported forms component
-async function loadAndInitFormsComponent() {
-  const formsContainer = document.getElementById('tab-forms');
-  if (!formsContainer) return;
+function isFormsTabActive() {
+  return document.querySelector('.nav-tab[data-tab="tab-forms"]')?.classList.contains('active');
+}
 
-  // Try to dynamically fetch forms.html if data-include is present
+// Try to dynamically fetch forms.html if data-include is present
+async function loadFormsInclude(formsContainer) {
   const includeFile = formsContainer.dataset.include;
-  if (includeFile) {
-    try {
-      const response = await fetch(includeFile);
-      if (response.ok) {
-        formsContainer.innerHTML = await response.text();
-      }
-    } catch (err) {
-      // Expected offline/standalone fallback — the embedded template is used.
-      console.debug('[CW] forms include not loaded:', err);
+  if (!includeFile) return;
+  try {
+    const response = await fetch(includeFile);
+    if (response.ok) {
+      formsContainer.innerHTML = await response.text();
     }
+  } catch (err) {
+    // Expected offline/standalone fallback — the embedded template is used.
+    console.debug('[CW] forms include not loaded:', err);
   }
+}
 
-  const isFormsTabActive = () => {
-    return document.querySelector('.nav-tab[data-tab="tab-forms"]')?.classList.contains('active');
+// Bind a "n/65" character counter to an input and refresh the ticket preview as it changes
+function bindCharCounter(input, counter, onChange) {
+  if (!input || !counter) return;
+  const update = () => {
+    counter.textContent = `${input.value.length}/65`;
+    onChange();
   };
+  input.addEventListener('input', update);
+  input.addEventListener('focus', onChange);
+  update();
+}
 
-  // Bind character counters & live preview
+// Bind character counters & live preview
+function bindTicketFormCounters() {
   const headingInput = document.getElementById('ticket-form-heading-input');
-  const headingCounter = document.getElementById('heading-char-count');
   const subheadingInput = document.getElementById('ticket-form-subheading-input');
-  const subheadingCounter = document.getElementById('subheading-char-count');
 
   const triggerTicketPreview = () => {
     if (isFormsTabActive() && window.FormsPreview) {
@@ -3099,144 +3078,120 @@ async function loadAndInitFormsComponent() {
     }
   };
 
-  if (headingInput && headingCounter) {
-    const updateHeadingCount = () => {
-      headingCounter.textContent = `${headingInput.value.length}/65`;
-      triggerTicketPreview();
-    };
-    headingInput.addEventListener('input', updateHeadingCount);
-    headingInput.addEventListener('focus', triggerTicketPreview);
-    updateHeadingCount();
+  bindCharCounter(headingInput, document.getElementById('heading-char-count'), triggerTicketPreview);
+  bindCharCounter(subheadingInput, document.getElementById('subheading-char-count'), triggerTicketPreview);
+}
+
+// Trigger Pre-Chat / Post-Chat form live preview on Lit Web Component
+function showFormInLivePreview(formType) {
+  const widgetEmbed = document.getElementById('zotly-widget-embed') || document.querySelector('cw-widget-root');
+  if (widgetEmbed) {
+    widgetEmbed.style.display = 'block';
   }
 
-  if (subheadingInput && subheadingCounter) {
-    const updateSubheadingCount = () => {
-      subheadingCounter.textContent = `${subheadingInput.value.length}/65`;
-      triggerTicketPreview();
-    };
-    subheadingInput.addEventListener('input', updateSubheadingCount);
-    subheadingInput.addEventListener('focus', triggerTicketPreview);
-    updateSubheadingCount();
+  const rootEl = document.querySelector('cw-widget-root');
+  if (window.ChatWidgetLit?.chatStore) {
+    const cs = window.ChatWidgetLit.chatStore.get();
+    if (cs) {
+      cs.panelOpen = true;
+      if (formType === 'postchat') {
+        cs.state = 'postchat';
+        if (rootEl) rootEl.postchatEnabled = true;
+      } else {
+        cs.state = 'prechat';
+        if (rootEl) rootEl.prechatEnabled = true;
+      }
+    }
+    if (rootEl) {
+      rootEl.panelOpen = true;
+      if (typeof rootEl.requestUpdate === 'function') rootEl.requestUpdate();
+    }
   }
 
-  // Helper to trigger Pre-Chat / Post-Chat form live preview on Lit Web Component
-  window.showFormInLivePreview = function (formType) {
-    const widgetEmbed = document.getElementById('zotly-widget-embed') || document.querySelector('cw-widget-root');
-    if (widgetEmbed) {
-      widgetEmbed.style.display = 'block';
+  if (window.Alpine && Alpine.store('chat')) {
+    const widgetContainer = document.getElementById('zotly-widget-embed');
+    if (widgetContainer?._x_dataStack?.[0]) {
+      widgetContainer._x_dataStack[0].openContactWidget = true;
     }
+    Alpine.store('chat').panelOpen = true;
+    Alpine.store('chat').state = (formType === 'postchat') ? 'postchat' : 'prechat';
+  }
+}
 
-    const rootEl = document.querySelector('cw-widget-root');
-    if (window.ChatWidgetLit?.chatStore) {
-      const cs = window.ChatWidgetLit.chatStore.get();
-      if (cs) {
-        cs.panelOpen = true;
-        if (formType === 'postchat') {
-          cs.state = 'postchat';
-          if (rootEl) rootEl.postchatEnabled = true;
-        } else {
-          cs.state = 'prechat';
-          if (rootEl) rootEl.prechatEnabled = true;
-        }
-      }
-      if (rootEl) {
-        rootEl.panelOpen = true;
-        if (typeof rootEl.requestUpdate === 'function') rootEl.requestUpdate();
-      }
-    }
-
-    if (window.Alpine && Alpine.store('chat')) {
-      const widgetContainer = document.getElementById('zotly-widget-embed');
-      if (widgetContainer?._x_dataStack?.[0]) {
-        widgetContainer._x_dataStack[0].openContactWidget = true;
-      }
-      Alpine.store('chat').panelOpen = true;
-      Alpine.store('chat').state = (formType === 'postchat') ? 'postchat' : 'prechat';
-    }
-  };
-
-  // Post chat form toggle select visibility & preview trigger
-  const postchatToggle = document.getElementById('postchat-form-toggle');
+// Post chat form toggle select visibility & preview trigger
+function bindPostchatToggle(postchatToggle) {
   const postchatSelectContainer = document.getElementById('postchat-select-container');
-  if (postchatToggle && postchatSelectContainer) {
-    postchatToggle.addEventListener('change', () => {
-      postchatSelectContainer.style.display = postchatToggle.checked ? 'block' : 'none';
-      if (window.cutomizationConfig) {
-        window.cutomizationConfig.postchatEnabled = postchatToggle.checked;
-      }
-      if (isFormsTabActive()) {
-        if (postchatToggle.checked) {
-          window.showFormInLivePreview('postchat');
-        } else if (prechatToggle?.checked) {
-          window.showFormInLivePreview('prechat');
-        } else {
-          window.showFormInLivePreview('prechat');
-        }
-      }
-    });
-  }
+  if (!postchatToggle || !postchatSelectContainer) return;
+  postchatToggle.addEventListener('change', () => {
+    postchatSelectContainer.style.display = postchatToggle.checked ? 'block' : 'none';
+    if (window.cutomizationConfig) {
+      window.cutomizationConfig.postchatEnabled = postchatToggle.checked;
+    }
+    if (isFormsTabActive()) {
+      window.showFormInLivePreview(postchatToggle.checked ? 'postchat' : 'prechat');
+    }
+  });
+}
 
-  // Pre chat form toggle select visibility & preview trigger
-  const prechatToggle = document.getElementById('prechat-form-toggle');
+// Pre chat form toggle select visibility & preview trigger
+function bindPrechatToggle(prechatToggle, postchatToggle) {
   const prechatSelectContainer = document.getElementById('prechat-select-container');
-  if (prechatToggle && prechatSelectContainer) {
-    prechatToggle.addEventListener('change', () => {
-      prechatSelectContainer.style.opacity = prechatToggle.checked ? '1' : '0.5';
-      prechatSelectContainer.style.pointerEvents = prechatToggle.checked ? 'auto' : 'none';
-      if (window.cutomizationConfig) {
-        window.cutomizationConfig.prechatEnabled = prechatToggle.checked;
-      }
-      if (isFormsTabActive()) {
-        if (prechatToggle.checked) {
-          window.showFormInLivePreview('prechat');
-        } else if (postchatToggle?.checked) {
-          window.showFormInLivePreview('postchat');
-        } else {
-          window.showFormInLivePreview('prechat');
-        }
-      }
-    });
-  }
+  if (!prechatToggle || !prechatSelectContainer) return;
+  prechatToggle.addEventListener('change', () => {
+    prechatSelectContainer.style.opacity = prechatToggle.checked ? '1' : '0.5';
+    prechatSelectContainer.style.pointerEvents = prechatToggle.checked ? 'auto' : 'none';
+    if (window.cutomizationConfig) {
+      window.cutomizationConfig.prechatEnabled = prechatToggle.checked;
+    }
+    if (isFormsTabActive()) {
+      const showPostchat = !prechatToggle.checked && postchatToggle?.checked;
+      window.showFormInLivePreview(showPostchat ? 'postchat' : 'prechat');
+    }
+  });
+}
+
+// Form builder modal logic
+function bindFormBuilderModal() {
+  const modal = document.getElementById('modal-form-builder');
+  if (!modal) return;
+  const closeModal = () => { modal.style.display = 'none'; };
+  document.getElementById('btn-open-form-builder')?.addEventListener('click', () => { modal.style.display = 'flex'; });
+  document.getElementById('btn-close-form-builder')?.addEventListener('click', closeModal);
+  document.getElementById('btn-cancel-form-builder')?.addEventListener('click', closeModal);
+  document.getElementById('btn-save-custom-form')?.addEventListener('click', () => {
+    const formName = document.getElementById('new-form-name')?.value || 'Custom Form';
+    const prechatSelect = document.getElementById('prechat-form-select');
+    if (prechatSelect) {
+      const opt = document.createElement('option');
+      opt.value = `custom-${Date.now()}`;
+      opt.textContent = formName;
+      opt.selected = true;
+      prechatSelect.appendChild(opt);
+    }
+    closeModal();
+    alert(`Form "${formName}" created and assigned to Pre-chat selection!`);
+  });
+}
+
+// Global initialization for imported forms component
+async function loadAndInitFormsComponent() {
+  const formsContainer = document.getElementById('tab-forms');
+  if (!formsContainer) return;
+
+  await loadFormsInclude(formsContainer);
+  bindTicketFormCounters();
+  window.showFormInLivePreview = showFormInLivePreview;
+
+  const postchatToggle = document.getElementById('postchat-form-toggle');
+  bindPostchatToggle(postchatToggle);
+  bindPrechatToggle(document.getElementById('prechat-form-toggle'), postchatToggle);
 
   // Initial render if forms tab is active on page load
   if (isFormsTabActive()) {
-    const widgetEmbed = document.getElementById('zotly-widget-embed') || document.querySelector('cw-widget-root');
-    if (widgetEmbed) widgetEmbed.style.display = 'block';
-    if (postchatToggle?.checked) {
-      window.showFormInLivePreview('postchat');
-    } else {
-      window.showFormInLivePreview('prechat');
-    }
+    window.showFormInLivePreview(postchatToggle?.checked ? 'postchat' : 'prechat');
   }
 
-  // Form builder modal logic
-  const modal = document.getElementById('modal-form-builder');
-  const btnOpen = document.getElementById('btn-open-form-builder');
-  const btnClose = document.getElementById('btn-close-form-builder');
-  const btnCancel = document.getElementById('btn-cancel-form-builder');
-  const btnSave = document.getElementById('btn-save-custom-form');
-
-  if (modal) {
-    const closeModal = () => { modal.style.display = 'none'; };
-    if (btnOpen) btnOpen.addEventListener('click', () => { modal.style.display = 'flex'; });
-    if (btnClose) btnClose.addEventListener('click', closeModal);
-    if (btnCancel) btnCancel.addEventListener('click', closeModal);
-    if (btnSave) {
-      btnSave.addEventListener('click', () => {
-        const formName = document.getElementById('new-form-name')?.value || 'Custom Form';
-        const prechatSelect = document.getElementById('prechat-form-select');
-        if (prechatSelect) {
-          const opt = document.createElement('option');
-          opt.value = `custom-${Date.now()}`;
-          opt.textContent = formName;
-          opt.selected = true;
-          prechatSelect.appendChild(opt);
-        }
-        closeModal();
-        alert(`Form "${formName}" created and assigned to Pre-chat selection!`);
-      });
-    }
-  }
+  bindFormBuilderModal();
 }
 
 // Auto-run initialization based on DOM ready state
