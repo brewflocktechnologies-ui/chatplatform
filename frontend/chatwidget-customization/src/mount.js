@@ -92,7 +92,7 @@ export async function mount(el, options = {}) {
     try {
       const doc = iframe.contentDocument;
       const win = iframe.contentWindow;
-      if (doc && doc.documentElement) {
+      if (doc?.documentElement) {
         if (isDark) {
           doc.documentElement.classList.add('dark');
           doc.body.classList.add('dark', 'dark-mode');
@@ -101,7 +101,7 @@ export async function mount(el, options = {}) {
           doc.body.classList.remove('dark', 'dark-mode');
         }
       }
-      if (win && win.ChatWidgetLit && win.ChatWidgetLit.chatStore) {
+      if (win?.ChatWidgetLit?.chatStore) {
         win.ChatWidgetLit.chatStore.get().darkMode = isDark;
       }
       if (win && typeof win.updateAlpineStores === 'function' && win.cutomizationConfig) {
@@ -109,6 +109,7 @@ export async function mount(el, options = {}) {
       }
     } catch (e) {
       /* cross-origin catch safety */
+      console.debug('[CW] dark-mode sync skipped:', e);
     }
   };
 
@@ -120,14 +121,15 @@ export async function mount(el, options = {}) {
     win.__CUSTOMIZATION_ASSET_BASE__ = `${REMOTE_ORIGIN}/`;
     win.__CW_OPTIONS__ = options;
 
-    if (options && options.cdnConfig) {
+    if (options?.cdnConfig) {
       win.cutomizationConfig = options.cdnConfig;
     }
 
     try {
-      win.lucide && win.lucide.createIcons();
+      win.lucide?.createIcons();
     } catch (e) {
       /* non-fatal */
+      console.debug('[CW] lucide icons not created:', e);
     }
 
     // Apply dark mode to iframe document as soon as loaded

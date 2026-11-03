@@ -744,7 +744,7 @@ async function initCustomizationApp() {
 
     const header = section.querySelector('.accordion-header');
     const content = section.querySelector('.accordion-content');
-    if (!header || !content || content.parentNode !== header.parentNode) return;
+    if (!header?.parentNode || content?.parentNode !== header.parentNode) return;
 
     header.style.cursor = 'pointer';
 

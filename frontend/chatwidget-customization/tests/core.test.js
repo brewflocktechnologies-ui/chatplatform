@@ -46,8 +46,8 @@ describe('CWCore.unwrapCdnConfig', () => {
   });
 
   it('passes through null/undefined/primitives', () => {
-    expect(core().unwrapCdnConfig(null)).toBe(null);
-    expect(core().unwrapCdnConfig(undefined)).toBe(undefined);
+    expect(core().unwrapCdnConfig(null)).toBeNull();
+    expect(core().unwrapCdnConfig(undefined)).toBeUndefined();
     expect(core().unwrapCdnConfig('str')).toBe('str');
   });
 
