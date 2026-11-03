@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
+  legibleOn,
   cssLength,
   hexToRgba,
   getBorderRadius,
@@ -161,5 +162,32 @@ describe('cssLength', () => {
   it('falls back only when nothing is set', () => {
     expect(cssLength(undefined, '9999px')).toBe('9999px');
     expect(cssLength(null, '9999px')).toBe('9999px');
+  });
+});
+
+describe('legibleOn', () => {
+  it('keeps the preferred colour when it is readable on the background', () => {
+    expect(legibleOn('#f4f4f5', '#18181b')).toBe('#18181b');
+    expect(legibleOn('#0b5fff', '#ffffff')).toBe('#ffffff');
+  });
+
+  it('switches to white on a dark background when the preferred colour is unreadable', () => {
+    expect(legibleOn('#0b5fff', '#18181b')).toBe('#ffffff');
+    expect(legibleOn('#000', '#171c26')).toBe('#ffffff');
+  });
+
+  it('switches to near-black on a light background when the preferred colour is unreadable', () => {
+    expect(legibleOn('#ffffff', '#eeeeee')).toBe('#18181b');
+  });
+
+  it('picks a readable colour when none is preferred', () => {
+    expect(legibleOn('#0b5fff', undefined)).toBe('#ffffff');
+    expect(legibleOn('#fde68a', undefined)).toBe('#18181b');
+  });
+
+  it('leaves the preferred colour alone when the background is not a hex colour', () => {
+    expect(legibleOn('rgb(0, 0, 0)', '#18181b')).toBe('#18181b');
+    expect(legibleOn(undefined, '#18181b')).toBe('#18181b');
+    expect(legibleOn('var(--x)', undefined)).toBeUndefined();
   });
 });

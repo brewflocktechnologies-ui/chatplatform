@@ -7,6 +7,7 @@ import type {
 } from '../store/types.js';
 import { CHATBAR_BAR_PRESET, CHATBAR_CARD_PRESET } from './chatbar-presets.js';
 import { getParentTheme } from '../utils/theme.js';
+import { legibleOn } from '../utils/style-helpers.js';
 
 export function createAccentGradient(hex: string): string {
   if (!hex || typeof hex !== 'string' || !hex.startsWith('#')) {
@@ -336,6 +337,9 @@ export function computeEffectiveChatWindowConfig(
   const accentedColor = (hostValue: string | undefined, stored: string | undefined) =>
     firstTruthy(hostValue, primaryColor, themedOr(stored), effectiveAccent);
 
+  // A themed header can land on a colour the configured text can't be read on.
+  const headerBg = accentedColor(host.headerBg, cws.headerBg);
+
   return {
     ...cws,
     useWebsiteTheme: useTheme,
@@ -346,8 +350,8 @@ export function computeEffectiveChatWindowConfig(
     expandedWidth: firstTruthy(host.expandedWidth, cws.expandedWidth),
     widgetBorderRadius: firstTruthy(host.widgetBorderRadius, cws.widgetBorderRadius),
     accentColor: effectiveAccent,
-    headerBg: accentedColor(host.headerBg, cws.headerBg),
-    headerTextColor: firstTruthy(host.headerTextColor, cws.headerTextColor),
+    headerBg,
+    headerTextColor: firstTruthy(host.headerTextColor, legibleOn(headerBg, cws.headerTextColor)),
     headerBorderColor: firstTruthy(host.headerBorderColor, cws.headerBorderColor),
     headerAvatarBg: firstTruthy(host.headerAvatarBg, cws.headerAvatarBg),
     headerAvatarColor: firstTruthy(host.headerAvatarColor, cws.headerAvatarColor),

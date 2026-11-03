@@ -52,6 +52,8 @@ test.describe('Visual regression', () => {
     await test.expect(page.locator('cw-welcome-card')).toBeVisible();
 
     await test.expect(page.locator('.zotly-widget-panel-wrapper')).toHaveScreenshot('welcome-open.png', {
+      // The "Reconnecting…" pill shows only while the socket is connecting, so it is timing-dependent.
+      mask: [page.locator('.reconnecting')],
       // Small tolerance: backdrop-filter/gradient pixels can vary per run.
       maxDiffPixelRatio: 0.02,
     });

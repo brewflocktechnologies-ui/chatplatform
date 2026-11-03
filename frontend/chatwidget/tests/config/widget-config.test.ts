@@ -105,4 +105,29 @@ describe('config/widget-config.ts', () => {
     expect(res.videoCallEnabled).toBe(false);
     expect(res.prechatEnabled).toBe(true);
   });
+
+  it('keeps the header text readable when the website theme replaces the header background', () => {
+    const themed = computeEffectiveChatWindowConfig(
+      { useWebsiteTheme: true },
+      { headerBg: '#f4f4f5', headerTextColor: '#18181b' } as any,
+      12,
+      { primary: '#0b5fff', secondary: '#0b5fff' }
+    );
+    expect(themed.headerBg).toBe('#0b5fff');
+    expect(themed.headerTextColor).toBe('#ffffff');
+
+    const unthemed = computeEffectiveChatWindowConfig(
+      { useWebsiteTheme: false },
+      { headerBg: '#f4f4f5', headerTextColor: '#18181b' } as any
+    );
+    expect(unthemed.headerTextColor).toBe('#18181b');
+
+    const explicit = computeEffectiveChatWindowConfig(
+      { useWebsiteTheme: true, headerTextColor: '#18181b' },
+      { headerBg: '#f4f4f5' } as any,
+      12,
+      { primary: '#0b5fff', secondary: '#0b5fff' }
+    );
+    expect(explicit.headerTextColor).toBe('#18181b');
+  });
 });

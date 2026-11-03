@@ -27,7 +27,7 @@ test.describe('Widget bootstrap & real client configs', () => {
 
   const clients: Array<{ id: string; trigger: 'bubble' | 'chatbar'; header: string; welcome: boolean; barText?: string }> = [
     { id: 'amber', trigger: 'bubble', header: 'Vortex Studio Support', welcome: true },
-    { id: 'default', trigger: 'bubble', header: 'Vortex Studio Support', welcome: true },
+    { id: 'default', trigger: 'bubble', header: 'Zotly Support', welcome: true },
     { id: 'google', trigger: 'bubble', header: 'Google Cloud Support', welcome: true },
     { id: 'emerald', trigger: 'chatbar', header: 'EcoSphere Support', welcome: true, barText: 'Chat with us' },
     { id: 'phonepe', trigger: 'chatbar', header: 'PhonePe Support', welcome: false },

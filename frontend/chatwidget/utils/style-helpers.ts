@@ -217,3 +217,36 @@ export function formatTime(isoString: string | undefined): string {
   }
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
+
+const READABLE_LIGHT = '#ffffff';
+const READABLE_DARK = '#18181b';
+const MIN_TEXT_CONTRAST = 4.5;
+
+function relativeLuminance(hex: string): number | null {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const digits = m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1];
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const channel = Number.parseInt(digits.slice(i, i + 2), 16) / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(a: number, b: number): number {
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+/**
+ * The text colour to use on `background`: `preferred` when it is readable there, otherwise white or
+ * near-black, whichever reads better. Colours that aren't hex are left alone.
+ */
+export function legibleOn(background: string | undefined, preferred: string | undefined) {
+  const bg = background ? relativeLuminance(background) : null;
+  if (bg === null) return preferred;
+  const fg = preferred ? relativeLuminance(preferred) : null;
+  if (fg !== null && contrastRatio(bg, fg) >= MIN_TEXT_CONTRAST) return preferred;
+  const light = relativeLuminance(READABLE_LIGHT) as number;
+  const dark = relativeLuminance(READABLE_DARK) as number;
+  return contrastRatio(bg, light) >= contrastRatio(bg, dark) ? READABLE_LIGHT : READABLE_DARK;
+}
