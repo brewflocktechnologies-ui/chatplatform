@@ -732,58 +732,60 @@ window.cutomizationConfig = {};
 
 
 // Main Initialization
-async function initCustomizationApp() {
-  // 1. Setup collapsible accordions dynamically
-  document.querySelectorAll('.accordion-section').forEach((section, idx) => {
-    if (section.querySelector('.accordion-collapse-wrapper')) return;
-
-    const header = section.querySelector('.accordion-header');
-    const content = section.querySelector('.accordion-content');
-    if (!header?.parentNode || content?.parentNode !== header.parentNode) return;
-
-    header.style.cursor = 'pointer';
-
-    // Create wrapper
-    const wrapper = document.createElement('div');
-    wrapper.className = 'accordion-collapse-wrapper';
-
-    const innerWrapper = document.createElement('div');
-    innerWrapper.style.minHeight = '0';
-
-    // Insert wrapper and move content inside
-    header.parentNode.insertBefore(wrapper, content);
-    wrapper.appendChild(innerWrapper);
-    innerWrapper.appendChild(content);
-
-    // Add chevron
-    const chevron = document.createElement('span');
-    chevron.className = 'accordion-chevron-wrapper';
-    chevron.innerHTML = `
+function buildAccordionChevron() {
+  const chevron = document.createElement('span');
+  chevron.className = 'accordion-chevron-wrapper';
+  chevron.innerHTML = `
       <svg class="accordion-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="transition: transform 0.25s ease;">
         <polyline points="6 9 12 15 18 9"></polyline>
       </svg>
     `;
-    header.appendChild(chevron);
+  return chevron;
+}
 
-    // Expand first section by default
-    if (idx === 0) {
-      section.classList.add('active');
-    }
+function setupAccordionSection(section, idx) {
+  if (section.querySelector('.accordion-collapse-wrapper')) return;
 
-    header.addEventListener('click', (e) => {
-      // Prevent toggle if clicking on forms or other interactive nodes inside header
-      if (e.target.closest('input, select, button, label')) return;
+  const header = section.querySelector('.accordion-header');
+  const content = section.querySelector('.accordion-content');
+  if (!header?.parentNode || content?.parentNode !== header.parentNode) return;
 
-      const isActive = section.classList.contains('active');
-      if (isActive) {
-        section.classList.remove('active');
-      } else {
-        section.classList.add('active');
-      }
-    });
+  header.style.cursor = 'pointer';
+
+  // Create wrapper
+  const wrapper = document.createElement('div');
+  wrapper.className = 'accordion-collapse-wrapper';
+
+  const innerWrapper = document.createElement('div');
+  innerWrapper.style.minHeight = '0';
+
+  // Insert wrapper and move content inside
+  header.parentNode.insertBefore(wrapper, content);
+  wrapper.appendChild(innerWrapper);
+  innerWrapper.appendChild(content);
+
+  // Add chevron
+  header.appendChild(buildAccordionChevron());
+
+  // Expand first section by default
+  if (idx === 0) {
+    section.classList.add('active');
+  }
+
+  header.addEventListener('click', (e) => {
+    // Prevent toggle if clicking on forms or other interactive nodes inside header
+    if (e.target.closest('input, select, button, label')) return;
+    section.classList.toggle('active');
   });
+}
 
-  // Setup Sub-Section Accordion toggles for Greet Form Cards
+// Setup collapsible accordions dynamically
+function setupAccordionSections() {
+  document.querySelectorAll('.accordion-section').forEach(setupAccordionSection);
+}
+
+// Setup Sub-Section Accordion toggles for Greet Form Cards
+function setupSubSectionToggles() {
   document.querySelectorAll('.form-section-card').forEach(card => {
     const header = card.querySelector('.form-section-header');
     if (!header) return;
@@ -793,70 +795,66 @@ async function initCustomizationApp() {
       card.classList.toggle('active');
     });
   });
+}
 
-  // Setup Accordion toggles & interactive tools for Message Tab Cards
-  document.querySelectorAll('.msg-accordion-card').forEach(card => {
-    const header = card.querySelector('.msg-accordion-header');
-    if (!header) return;
+// Insert text at the textarea cursor and notify listeners
+function insertTextAtCursor(textarea, text) {
+  const start = textarea.selectionStart || textarea.value.length;
+  const end = textarea.selectionEnd || textarea.value.length;
+  textarea.value = textarea.value.substring(0, start) + text + textarea.value.substring(end);
+  textarea.selectionStart = textarea.selectionEnd = start + text.length;
+  textarea.focus();
+  textarea.dispatchEvent(new Event('input', { bubbles: true }));
+}
 
-    header.addEventListener('click', (e) => {
-      if (e.target.closest('input, textarea, button, label, .msg-tool-btn')) return;
-      card.classList.toggle('active');
-    });
+function setupMessageCardCounter(card, textarea) {
+  const counterEl = card.querySelector('.msg-char-counter .current-count');
+  if (!textarea || !counterEl) return;
+  const updateCount = () => {
+    counterEl.textContent = textarea.value.length;
+  };
+  textarea.addEventListener('input', updateCount);
+  updateCount();
+}
 
-    const textarea = card.querySelector('.msg-textarea');
-    const counterEl = card.querySelector('.msg-char-counter .current-count');
+function bindMessageToolButton(card, selector, textarea, action) {
+  const btn = card.querySelector(selector);
+  if (!btn || !textarea) return;
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    action();
+  });
+}
 
-    if (textarea && counterEl) {
-      const updateCount = () => {
-        counterEl.textContent = textarea.value.length;
-      };
-      textarea.addEventListener('input', updateCount);
-      updateCount();
-    }
+const MSG_EMOJIS = ['😊', '👋', '💬', '⏳', '✨', '👍'];
 
-    // Emoji button handler
-    const emojiBtn = card.querySelector('.msg-tool-emoji');
-    if (emojiBtn && textarea) {
-      emojiBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const emojis = ['😊', '👋', '💬', '⏳', '✨', '👍'];
-        const randomEmoji = emojis[Math.floor(Math.random() * emojis.length)];
-        const start = textarea.selectionStart || textarea.value.length;
-        const end = textarea.selectionEnd || textarea.value.length;
-        textarea.value = textarea.value.substring(0, start) + randomEmoji + textarea.value.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + randomEmoji.length;
-        textarea.focus();
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-    }
+function setupMessageAccordionCard(card) {
+  const header = card.querySelector('.msg-accordion-header');
+  if (!header) return;
 
-    // Variable tag handler
-    const varBtn = card.querySelector('.msg-tool-variable');
-    if (varBtn && textarea) {
-      varBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        const variableTag = '{agent_name}';
-        const start = textarea.selectionStart || textarea.value.length;
-        const end = textarea.selectionEnd || textarea.value.length;
-        textarea.value = textarea.value.substring(0, start) + variableTag + textarea.value.substring(end);
-        textarea.selectionStart = textarea.selectionEnd = start + variableTag.length;
-        textarea.focus();
-        textarea.dispatchEvent(new Event('input', { bubbles: true }));
-      });
-    }
-
-    // Formatting / Type button handler
-    const typeBtn = card.querySelector('.msg-tool-type');
-    if (typeBtn && textarea) {
-      typeBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        textarea.focus();
-      });
-    }
+  header.addEventListener('click', (e) => {
+    if (e.target.closest('input, textarea, button, label, .msg-tool-btn')) return;
+    card.classList.toggle('active');
   });
 
-  // 2. Setup Sidebar Toggle FAB
+  const textarea = card.querySelector('.msg-textarea');
+  setupMessageCardCounter(card, textarea);
+
+  // Emoji, variable tag and formatting / type button handlers
+  bindMessageToolButton(card, '.msg-tool-emoji', textarea, () => {
+    insertTextAtCursor(textarea, MSG_EMOJIS[Math.floor(Math.random() * MSG_EMOJIS.length)]);
+  });
+  bindMessageToolButton(card, '.msg-tool-variable', textarea, () => insertTextAtCursor(textarea, '{agent_name}'));
+  bindMessageToolButton(card, '.msg-tool-type', textarea, () => textarea.focus());
+}
+
+// Setup Accordion toggles & interactive tools for Message Tab Cards
+function setupMessageAccordionCards() {
+  document.querySelectorAll('.msg-accordion-card').forEach(setupMessageAccordionCard);
+}
+
+// Setup Sidebar Toggle FAB
+function setupSidebarToggle() {
   const layout = document.querySelector('.customization-layout');
   const toggleBtn = document.getElementById('sidebar-toggle-btn');
   if (toggleBtn && layout) {
@@ -872,8 +870,10 @@ async function initCustomizationApp() {
       }
     });
   }
+}
 
-  // Viewport Toggles (Desktop vs Mobile)
+// Viewport Toggles (Desktop vs Mobile)
+function setupViewportToggles() {
   const previewArea = document.querySelector('.preview-panel');
   const desktopBtn = document.getElementById('viewport-desktop-btn');
   const mobileBtn = document.getElementById('viewport-mobile-btn');
@@ -903,11 +903,10 @@ async function initCustomizationApp() {
       updateAlpineStores(window.cutomizationConfig);
     });
   }
+}
 
-  // 3. Setup Welcome background gradient picker event listeners
-  setupWelcomeBgPickerListeners();
-
-  // Setup tab switches
+// Setup visual / JSON editor tab switches
+function setupEditorTabSwitch() {
   const tabFormBtn = document.getElementById('tab-form-btn');
   const tabJsonBtn = document.getElementById('tab-json-btn');
   const visualEditorSection = document.getElementById('visual-editor-section');
@@ -928,74 +927,9 @@ async function initCustomizationApp() {
       visualEditorSection.style.display = 'none';
     });
   }
+}
 
-  // Load customization config if not already initialized from mount options
-  if (!window.cutomizationConfig || Array.isArray(window.cutomizationConfig) || Object.keys(window.cutomizationConfig).length === 0) {
-    await loadDefaultConfig();
-  } else {
-    syncConfigToVisualForm(window.cutomizationConfig);
-  }
-
-  // Boot the chat widget preview
-  await bootstrapWidgetPreview();
-
-  // Watch for visual form input changes
-  setupFormEventListeners();
-
-  // Messages-tab preview dropdown (switch which message shows in the chat window)
-  setupMessagePreviewControls();
-
-  // Watch for raw JSON changes
-  setupJsonEditorEventListeners();
-
-  // Setup auxiliary buttons
-  document.getElementById('btn-format-json')?.addEventListener('click', formatRawJson);
-
-  // Host Page Theme controls
-  setupHostPageThemeControls();
-
-  // Initialize Sticky Section Breadcrumb Tracker
-  initStickyBreadcrumbTracker();
-
-  // Variable to cache the original host website mockup HTML
-  let originalHostWebsiteHTML = '';
-
-  // --- TOP TAB NAVIGATION ---
-  document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-      document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
-      tab.classList.add('active');
-      const targetTab = document.getElementById(tab.dataset.tab);
-      if (targetTab) targetTab.classList.add('active');
-
-      const widgetEmbed = document.getElementById('zotly-widget-embed') || document.querySelector('cw-widget-root');
-      const previewContent = document.getElementById('preview-scrollable-content');
-
-      // Store original host page content if not already cached
-      if (previewContent && !originalHostWebsiteHTML && !previewContent.querySelector('.phone-preview-card-container')) {
-        originalHostWebsiteHTML = previewContent.innerHTML;
-      }
-
-      if (tab.dataset.tab === 'tab-forms') {
-        // Show chat widget overlay on Forms tab and render the real pre-chat/post-chat form state
-        if (widgetEmbed) {
-          widgetEmbed.style.display = 'block';
-        }
-        const postchatToggle = document.getElementById('postchat-form-toggle');
-        if (postchatToggle?.checked) {
-          showFormInLivePreview('postchat');
-        } else {
-          showFormInLivePreview('prechat');
-        }
-      } else if (tab.dataset.tab === 'tab-notifications') {
-        // Hide chat widget overlay on Notifications tab
-        if (widgetEmbed) {
-          widgetEmbed.style.display = 'none';
-        }
-        // Render Notification prompt preview inside preview area
-        if (previewContent) {
-          previewContent.innerHTML = `
+const NOTIF_PREVIEW_HTML = `
             <div class="notif-preview-overlay" id="notif-preview-overlay">
               <div class="notif-preview-card box-2" id="notif-preview-card">
                 <div class="notif-preview-icon-wrapper">
@@ -1019,76 +953,138 @@ async function initCustomizationApp() {
               </div>
             </div>
           `;
-          triggerNotifPreviewUpdate();
-        }
+
+function showFormsTabPreview(widgetEmbed) {
+  // Show chat widget overlay on Forms tab and render the real pre-chat/post-chat form state
+  if (widgetEmbed) {
+    widgetEmbed.style.display = 'block';
+  }
+  const postchatToggle = document.getElementById('postchat-form-toggle');
+  showFormInLivePreview(postchatToggle?.checked ? 'postchat' : 'prechat');
+}
+
+function showNotificationsTabPreview(widgetEmbed, previewContent) {
+  // Hide chat widget overlay on Notifications tab
+  if (widgetEmbed) {
+    widgetEmbed.style.display = 'none';
+  }
+  // Render Notification prompt preview inside preview area
+  if (previewContent) {
+    previewContent.innerHTML = NOTIF_PREVIEW_HTML;
+    triggerNotifPreviewUpdate();
+  }
+}
+
+function showDefaultTabPreview(widgetEmbed, previewContent, originalHostHtml) {
+  // Show chat widget overlay on all other tabs
+  if (widgetEmbed) {
+    widgetEmbed.style.display = 'block';
+  }
+  // Restore normal host website content on all other tabs
+  if (previewContent && originalHostHtml) {
+    previewContent.innerHTML = originalHostHtml;
+  }
+}
+
+function setPanelOpenForAlpine(open, state) {
+  if (!(window.Alpine && Alpine.store('chat'))) return;
+  const widgetContainer = document.getElementById('zotly-widget-embed');
+  if (widgetContainer?._x_dataStack?.[0]) {
+    widgetContainer._x_dataStack[0].openContactWidget = open;
+  }
+  Alpine.store('chat').panelOpen = open;
+  if (state) Alpine.store('chat').state = state;
+}
+
+// Display chat window (active chat view) at first ONLY on Messages and Features tabs
+function openChatPanelForTab(tabName) {
+  if (window.ChatWidgetLit?.chatStore) {
+    const cs = window.ChatWidgetLit.chatStore.get();
+    if (cs) {
+      cs.panelOpen = true;
+      cs.state = 'active';
+    }
+    const rootEl = document.querySelector('cw-widget-root');
+    if (rootEl) rootEl.panelOpen = true;
+  }
+  setPanelOpenForAlpine(true, 'active');
+  if (tabName === 'tab-messages') {
+    applyMessagePreview(window.activeMessagePreviewKey || 'welcome');
+  }
+}
+
+// Normal tabs (Appearance, Layout, Snippet, Share): work as normal with bubble/chatbar
+function closeChatPanelForNormalTab() {
+  if (window.ChatWidgetLit?.chatStore) {
+    const cs = window.ChatWidgetLit.chatStore.get();
+    if (cs) cs.panelOpen = false;
+    const rootEl = document.querySelector('cw-widget-root');
+    if (rootEl) rootEl.panelOpen = false;
+  }
+  setPanelOpenForAlpine(false);
+  const cfg = window.cutomizationConfig;
+  if (window.Alpine && Alpine.store('bubble') && cfg?.bubble) {
+    Alpine.store('bubble').hideOnOpen = cfg.bubble.hideOnOpen !== false;
+  }
+  if (window.Alpine && Alpine.store('chatbar') && cfg?.chatbar) {
+    Alpine.store('chatbar').hideOnOpen = cfg.chatbar.hideOnOpen !== false;
+  }
+}
+
+function syncChatPanelForTab(tabName) {
+  if (tabName === 'tab-messages' || tabName === 'tab-features') {
+    openChatPanelForTab(tabName);
+  } else if (tabName !== 'tab-forms' && tabName !== 'tab-notifications') {
+    closeChatPanelForNormalTab();
+  }
+}
+
+function activateNavTab(tab) {
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+  tab.classList.add('active');
+  const targetTab = document.getElementById(tab.dataset.tab);
+  if (targetTab) targetTab.classList.add('active');
+}
+
+// --- TOP TAB NAVIGATION ---
+function setupTopTabNavigation() {
+  // Variable to cache the original host website mockup HTML
+  let originalHostWebsiteHTML = '';
+
+  document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      activateNavTab(tab);
+      const tabName = tab.dataset.tab;
+
+      const widgetEmbed = document.getElementById('zotly-widget-embed') || document.querySelector('cw-widget-root');
+      const previewContent = document.getElementById('preview-scrollable-content');
+
+      // Store original host page content if not already cached
+      if (previewContent && !originalHostWebsiteHTML && !previewContent.querySelector('.phone-preview-card-container')) {
+        originalHostWebsiteHTML = previewContent.innerHTML;
+      }
+
+      if (tabName === 'tab-forms') {
+        showFormsTabPreview(widgetEmbed);
+      } else if (tabName === 'tab-notifications') {
+        showNotificationsTabPreview(widgetEmbed, previewContent);
       } else {
-        // Show chat widget overlay on all other tabs
-        if (widgetEmbed) {
-          widgetEmbed.style.display = 'block';
-        }
-        // Restore normal host website content on all other tabs
-        if (previewContent && originalHostWebsiteHTML) {
-          previewContent.innerHTML = originalHostWebsiteHTML;
-        }
+        showDefaultTabPreview(widgetEmbed, previewContent, originalHostWebsiteHTML);
       }
 
       // Handle visibility of minimal message preview dropdown inside preview container
       const msgDropdownBar = document.getElementById('preview-msg-dropdown-bar');
       if (msgDropdownBar) {
-        if (tab.dataset.tab === 'tab-messages') {
-          msgDropdownBar.style.display = 'flex';
-        } else {
-          msgDropdownBar.style.display = 'none';
-        }
+        msgDropdownBar.style.display = tabName === 'tab-messages' ? 'flex' : 'none';
       }
 
-      // Display chat window (active chat view) at first ONLY on Messages and Features tabs
-      if (tab.dataset.tab === 'tab-messages' || tab.dataset.tab === 'tab-features') {
-        if (window.ChatWidgetLit?.chatStore) {
-          const cs = window.ChatWidgetLit.chatStore.get();
-          if (cs) {
-            cs.panelOpen = true;
-            cs.state = 'active';
-          }
-          const rootEl = document.querySelector('cw-widget-root');
-          if (rootEl) rootEl.panelOpen = true;
-        }
-        if (window.Alpine && Alpine.store('chat')) {
-          const widgetContainer = document.getElementById('zotly-widget-embed');
-          if (widgetContainer?._x_dataStack?.[0]) {
-            widgetContainer._x_dataStack[0].openContactWidget = true;
-          }
-          Alpine.store('chat').panelOpen = true;
-          Alpine.store('chat').state = 'active';
-        }
-        if (tab.dataset.tab === 'tab-messages') {
-          applyMessagePreview(window.activeMessagePreviewKey || 'welcome');
-        }
-      } else if (tab.dataset.tab !== 'tab-forms' && tab.dataset.tab !== 'tab-notifications') {
-        // Normal tabs (Appearance, Layout, Snippet, Share): work as normal with bubble/chatbar
-        if (window.ChatWidgetLit?.chatStore) {
-          const cs = window.ChatWidgetLit.chatStore.get();
-          if (cs) cs.panelOpen = false;
-          const rootEl = document.querySelector('cw-widget-root');
-          if (rootEl) rootEl.panelOpen = false;
-        }
-        if (window.Alpine && Alpine.store('chat')) {
-          const widgetContainer = document.getElementById('zotly-widget-embed');
-          if (widgetContainer?._x_dataStack?.[0]) {
-            widgetContainer._x_dataStack[0].openContactWidget = false;
-          }
-          Alpine.store('chat').panelOpen = false;
-        }
-        if (window.Alpine && Alpine.store('bubble') && window.cutomizationConfig?.bubble) {
-          Alpine.store('bubble').hideOnOpen = window.cutomizationConfig.bubble.hideOnOpen !== false;
-        }
-        if (window.Alpine && Alpine.store('chatbar') && window.cutomizationConfig?.chatbar) {
-          Alpine.store('chatbar').hideOnOpen = window.cutomizationConfig.chatbar.hideOnOpen !== false;
-        }
-      }
+      syncChatPanelForTab(tabName);
     });
   });
+}
 
+function setupSaveAndResetButtons() {
   // --- SAVE CONFIG BUTTON ---
   document.getElementById('btn-save-config')?.addEventListener('click', () => {
     let cfg = window.cutomizationConfig;
@@ -1105,52 +1101,48 @@ async function initCustomizationApp() {
   document.getElementById('btn-reset-chat-header')?.addEventListener('click', refreshWidgetPreview);
 
   // --- RETRIGGER BUTTONS ---
+}
 
+// Briefly show "Copied!" on a button label
+function flashCopied(el) {
+  const oldText = el.textContent;
+  el.textContent = 'Copied!';
+  setTimeout(() => { el.textContent = oldText; }, 2000);
+}
 
-  // --- COPY SNIPPET BUTTON ---
+// --- COPY SNIPPET BUTTON ---
+function setupCopySnippetButton() {
   document.getElementById('btn-copy-snippet')?.addEventListener('click', () => {
     const ta = document.getElementById('code-snippet-text');
-    if (ta) {
-      ta.select();
-      document.execCommand('copy');
-      const label = document.querySelector('#btn-copy-snippet .btn-copy-label');
-      const btn = document.getElementById('btn-copy-snippet');
-      if (label) {
-        const oldText = label.textContent;
-        label.textContent = 'Copied!';
-        setTimeout(() => { label.textContent = oldText; }, 2000);
-      } else if (btn) {
-        const oldText = btn.textContent;
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = oldText; }, 2000);
-      }
-    }
+    if (!ta) return;
+    ta.select();
+    document.execCommand('copy');
+    const target = document.querySelector('#btn-copy-snippet .btn-copy-label') || document.getElementById('btn-copy-snippet');
+    if (target) flashCopied(target);
   });
+}
 
-  // --- COPY SHARE LINK BUTTON ---
+// --- COPY SHARE LINK BUTTON ---
+function setupCopyShareButton() {
   document.getElementById('btn-copy-share')?.addEventListener('click', () => {
     const shareUrl = document.getElementById('share-link-input')?.value || 'https://brewflocktechnologies-ui.github.io/ai-widgets-websites/clientwebsites/site-amber.html';
     const btnText = document.querySelector('#btn-copy-share .btn-copy-text');
-    navigator.clipboard.writeText(shareUrl).then(() => {
-      if (btnText) {
-        const oldText = btnText.textContent;
-        btnText.textContent = 'Copied!';
-        setTimeout(() => { btnText.textContent = oldText; }, 2000);
-      }
-    }).catch(() => {
+    const flash = () => {
+      if (btnText) flashCopied(btnText);
+    };
+    navigator.clipboard.writeText(shareUrl).then(flash).catch(() => {
       const inp = document.getElementById('share-link-input');
       if (inp) {
         inp.select();
         document.execCommand('copy');
       }
-      if (btnText) {
-        const oldText = btnText.textContent;
-        btnText.textContent = 'Copied!';
-        setTimeout(() => { btnText.textContent = oldText; }, 2000);
-      }
+      flash();
     });
   });
+}
 
+function setupPreviewZoom() {
+  const previewArea = document.querySelector('.preview-panel');
   // --- PREVIEW ZOOM & AUTO-RESPONSIVE FIT CONTROLS ---
   let userZoomLevel = 1.0;
   const zoomOutBtn = document.getElementById('btn-zoom-out');
@@ -1230,7 +1222,9 @@ async function initCustomizationApp() {
 
   // Initial auto-scale calculation
   setTimeout(calculateAndApplyPreviewScale, 100);
+}
 
+function setupApplyJsonButton() {
   // --- APPLY JSON BUTTON ---
   document.getElementById('btn-apply-json')?.addEventListener('click', () => {
     const ta = document.getElementById('raw-json-textarea');
@@ -1258,14 +1252,69 @@ async function initCustomizationApp() {
       alert('Invalid JSON: ' + e.message);
     }
   });
+}
 
+function signalMfeReady() {
   // --- SIGNAL HOST THAT MFE IS FULLY READY TO RECEIVE CONFIG ---
   // The host listens for this and immediately pushes the MongoDB config via LOAD_WIDGET_CONFIG.
   // This avoids all timing races on page load / website switch.
   if (window.parent && window.parent !== window) {
     postToTrustedParent({ type: 'MFE_READY' });
   }
-};
+}
+
+async function initCustomizationApp() {
+  // 1. Setup collapsible accordions dynamically
+  setupAccordionSections();
+  setupSubSectionToggles();
+  setupMessageAccordionCards();
+
+  // 2. Setup Sidebar Toggle FAB
+  setupSidebarToggle();
+  setupViewportToggles();
+
+  // 3. Setup Welcome background gradient picker event listeners
+  setupWelcomeBgPickerListeners();
+
+  // Setup tab switches
+  setupEditorTabSwitch();
+
+  // Load customization config if not already initialized from mount options
+  if (!window.cutomizationConfig || Array.isArray(window.cutomizationConfig) || Object.keys(window.cutomizationConfig).length === 0) {
+    await loadDefaultConfig();
+  } else {
+    syncConfigToVisualForm(window.cutomizationConfig);
+  }
+
+  // Boot the chat widget preview
+  await bootstrapWidgetPreview();
+
+  // Watch for visual form input changes
+  setupFormEventListeners();
+
+  // Messages-tab preview dropdown (switch which message shows in the chat window)
+  setupMessagePreviewControls();
+
+  // Watch for raw JSON changes
+  setupJsonEditorEventListeners();
+
+  // Setup auxiliary buttons
+  document.getElementById('btn-format-json')?.addEventListener('click', formatRawJson);
+
+  // Host Page Theme controls
+  setupHostPageThemeControls();
+
+  // Initialize Sticky Section Breadcrumb Tracker
+  initStickyBreadcrumbTracker();
+
+  setupTopTabNavigation();
+  setupSaveAndResetButtons();
+  setupCopySnippetButton();
+  setupCopyShareButton();
+  setupPreviewZoom();
+  setupApplyJsonButton();
+  signalMfeReady();
+}
 
 function updateAddressBarDomain(domain) {
   if (!domain || typeof domain !== 'string') return;
@@ -1480,35 +1529,37 @@ async function bootstrapWidgetPreview() {
 }
 
 // Default config loader (replaces preset-based loader)
+// Fetch the default preset, falling back to a minimal structure when it can't be loaded
+async function fetchDefaultConfig(defaultClient) {
+  try {
+    const presetBase = (window.__CUSTOMIZATION_ASSET_BASE__ || '') + 'clients/';
+    const res = await fetch(`${presetBase}${defaultClient}.json`);
+    if (!res.ok) throw new Error("Failed to load default config");
+    return await res.json();
+  } catch (err) {
+    console.warn("Could not load default config, using minimal structure: ", err);
+    return {
+      name: "Brewflock",
+      configname: "Brewflock",
+      clientId: defaultClient || "friday",
+      clientName: "Brewflock",
+      agentName: "Support Agent",
+      features: {},
+      messages: [],
+      greetWindow: { enabled: true, title: "Need help?", description: "Chat with us!", useWebsiteTheme: true },
+      bubble: { useWebsiteTheme: true, width: 55, height: 55 },
+      chatWindow: { useWebsiteTheme: true },
+      chatbar: { enabled: false }
+    };
+  }
+}
+
 async function loadDefaultConfig() {
-  if (window.cutomizationConfig && !Array.isArray(window.cutomizationConfig) && Object.keys(window.cutomizationConfig).length > 0) {
-    // Config already supplied via mount options from MongoDB — preserve it
-  } else {
-    const defaultClient = 'default';
-    try {
-      const presetBase = (window.__CUSTOMIZATION_ASSET_BASE__ || '') + 'clients/';
-      const res = await fetch(`${presetBase}${defaultClient}.json`);
-      if (res.ok) {
-        window.cutomizationConfig = await res.json();
-      } else {
-        throw new Error("Failed to load default config");
-      }
-    } catch (err) {
-      console.warn("Could not load default config, using minimal structure: ", err);
-      window.cutomizationConfig = {
-        name: "Brewflock",
-        configname: "Brewflock",
-        clientId: defaultClient || "friday",
-        clientName: "Brewflock",
-        agentName: "Support Agent",
-        features: {},
-        messages: [],
-        greetWindow: { enabled: true, title: "Need help?", description: "Chat with us!", useWebsiteTheme: true },
-        bubble: { useWebsiteTheme: true, width: 55, height: 55 },
-        chatWindow: { useWebsiteTheme: true },
-        chatbar: { enabled: false }
-      };
-    }
+  const cfg = window.cutomizationConfig;
+  // Config already supplied via mount options from MongoDB — preserve it
+  const hasSuppliedConfig = cfg && !Array.isArray(cfg) && Object.keys(cfg).length > 0;
+  if (!hasSuppliedConfig) {
+    window.cutomizationConfig = await fetchDefaultConfig('default');
   }
 
   // Apply Mock Host theme variables from accent color
@@ -1540,71 +1591,66 @@ async function loadDefaultConfig() {
   }
 }
 
-// Populate visual controls from active config object
+// Reset a data-path control whose config value is missing
+function clearInput(input) {
+  if (input.type === 'checkbox') {
+    input.checked = false;
+  } else {
+    input.value = '';
+  }
+}
+
+// Sync both color input and text input inside wrapper
+function setColorInput(input, val) {
+  input.value = val;
+  const textInput = input.parentElement.querySelector('.color-picker-text');
+  if (textInput) textInput.value = val;
+}
+
+function setNumberInput(input, val) {
+  const num = val === null ? Number.NaN : Number.parseFloat(val);
+  input.value = Number.isNaN(num) ? '' : num;
+}
+
+function setTextInput(input, val) {
+  input.value = val;
+  // Update range labels if present
+  if (input.type === 'range') {
+    const valSpan = input.parentElement.querySelector('.range-val');
+    if (valSpan) valSpan.textContent = val + (input.dataset.unit || '');
+  }
+}
+
 // Write one config value into its data-path form control
 function syncInputFromConfig(input, config) {
   const path = input.dataset.path;
   const val = getValueByPath(config, path);
 
   if (val === undefined) {
-    // Set empty/default
-    if (input.type === 'checkbox') {
-      input.checked = false;
-    } else {
-      input.value = '';
-    }
-    return;
-  }
-
-  // Special presentation for welcome avatars list
-  if (path === 'chatWindow.welcome.avatars' && Array.isArray(val)) {
+    clearInput(input);
+  } else if (path === 'chatWindow.welcome.avatars' && Array.isArray(val)) {
+    // Special presentation for welcome avatars list
     input.value = val.join(', ');
-    return;
-  }
-
-  if (input.type === 'checkbox') {
+  } else if (input.type === 'checkbox') {
     input.checked = !!val;
   } else if (input.type === 'color') {
-    // Sync both color input and text input inside wrapper
-    input.value = val;
-    const textInput = input.parentElement.querySelector('.color-picker-text');
-    if (textInput) textInput.value = val;
+    setColorInput(input, val);
   } else if (input.type === 'number') {
-    const num = val === null ? Number.NaN : Number.parseFloat(val);
-    input.value = Number.isNaN(num) ? '' : num;
+    setNumberInput(input, val);
   } else {
-    input.value = val;
-
-    // Update range labels if present
-    if (input.type === 'range') {
-      const valSpan = input.parentElement.querySelector('.range-val');
-      if (valSpan) valSpan.textContent = val + (input.dataset.unit || '');
-    }
+    setTextInput(input, val);
   }
 }
 
-function syncConfigToVisualForm(config) {
-  if (!config) return;
+function setElValue(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.value = value;
+}
 
-  // Sync raw JSON textarea
-  const jsonTextarea = document.getElementById('raw-json-textarea');
-  if (jsonTextarea) {
-    jsonTextarea.value = JSON.stringify(config, null, 2);
-  }
-
+// Fill in the sections a config may be missing, so the form always has something to bind to
+function ensureConfigDefaults(config) {
   if (!config.features) {
-    config.features = {
-      voiceCallMaster: false,
-      voiceCallAgents: false,
-      voiceCallVisitors: false,
-      videoCallMaster: false,
-      videoCallAgents: false,
-      videoCallVisitors: false,
-      disableVisitorCamera: false,
-      closeChatVisitor: false,
-      averageQueueTime: 1,
-      chatAcceptanceTime: 5
-    };
+    config.features = defaultFeatures();
   }
   if (!config.chatWindow) {
     config.chatWindow = {};
@@ -1628,204 +1674,177 @@ function syncConfigToVisualForm(config) {
       repromptDelay: 1
     };
   }
+}
 
-  document.querySelectorAll('[data-path]').forEach(input => syncInputFromConfig(input, config));
+const NOTIF_COUNTERS = [
+  ['notif-headline-input', 'headline-counter'],
+  ['notif-desc-input', 'desc-counter'],
+  ['notif-approve-btn-input', 'approve-counter'],
+  ['notif-cancel-btn-input', 'cancel-counter']
+];
 
-  // Sync notification character counters & style radio options
-  const notifHeadline = document.getElementById('notif-headline-input');
-  if (notifHeadline) updateNotifCounter(notifHeadline, 'headline-counter');
-  const notifDesc = document.getElementById('notif-desc-input');
-  if (notifDesc) updateNotifCounter(notifDesc, 'desc-counter');
-  const notifApprove = document.getElementById('notif-approve-btn-input');
-  if (notifApprove) updateNotifCounter(notifApprove, 'approve-counter');
-  const notifCancel = document.getElementById('notif-cancel-btn-input');
-  if (notifCancel) updateNotifCounter(notifCancel, 'cancel-counter');
+// Sync notification character counters & style radio options
+function syncNotificationControls(config) {
+  NOTIF_COUNTERS.forEach(([inputId, counterId]) => {
+    const input = document.getElementById(inputId);
+    if (input) updateNotifCounter(input, counterId);
+  });
 
   if (config.notification) {
-    const styleKey = config.notification.promptStyle || 'box2';
-    selectNotifPromptStyle(styleKey);
+    selectNotifPromptStyle(config.notification.promptStyle || 'box2');
 
     const animRadio = document.querySelector(`input[name="notifAnimation"][value="${config.notification.animationStyle || 'drop-in'}"]`);
     if (animRadio) animRadio.checked = true;
     const posRadio = document.querySelector(`input[name="notifPosition"][value="${config.notification.position || 'top'}"]`);
     if (posRadio) posRadio.checked = true;
   }
+}
 
-  triggerNotifPreviewUpdate();
-
-  // Sync Share by Link URL
+// Sync Share by Link URL
+function syncShareLink(config) {
   const presetName = config.clientId || 'default';
   const shareUrl = `https://brewflocktechnologies-ui.github.io/ai-widgets-websites/clientwebsites/site-${presetName}.html`;
-  const shareInput = document.getElementById('share-link-input');
+  setElValue('share-link-input', shareUrl);
   const shareText = document.getElementById('share-link-url-text');
-  if (shareInput) shareInput.value = shareUrl;
   if (shareText) shareText.textContent = shareUrl;
+}
 
-  // Sync padding-grids
+// Sync padding-grids
+function syncPaddingGridsFromConfig(config) {
   document.querySelectorAll('.padding-grid[data-padding-path]').forEach(grid => {
-    const path = grid.dataset.paddingPath;
-    const val = getValueByPath(config, path);
-    const parsed = parsePaddingString(val);
-    const topInput = grid.querySelector('[data-pad="top"]');
-    const rightInput = grid.querySelector('[data-pad="right"]');
-    const bottomInput = grid.querySelector('[data-pad="bottom"]');
-    const leftInput = grid.querySelector('[data-pad="left"]');
-    if (topInput) topInput.value = parsed.top;
-    if (rightInput) rightInput.value = parsed.right;
-    if (bottomInput) bottomInput.value = parsed.bottom;
-    if (leftInput) leftInput.value = parsed.left;
+    const parsed = parsePaddingString(getValueByPath(config, grid.dataset.paddingPath));
+    ['top', 'right', 'bottom', 'left'].forEach(side => {
+      const input = grid.querySelector(`[data-pad="${side}"]`);
+      if (input) input.value = parsed[side];
+    });
   });
+}
 
-  // Sync welcome card background picker & opacity
-  const welcomeBgVal = getValueByPath(config, 'chatWindow.welcome.cardBg');
-  const welcomeBgParsed = parseCardBg(welcomeBgVal);
-  const bgPick = document.getElementById('welcome-card-bg-color-pick');
-  const bgText = document.getElementById('welcome-card-bg-color-text');
-  const bgOpacity = document.getElementById('welcome-card-bg-opacity');
-  const bgOpacityLabel = document.getElementById('welcome-card-bg-opacity-label');
-  if (bgPick) bgPick.value = welcomeBgParsed.color;
-  if (bgText) bgText.value = welcomeBgParsed.color;
-  if (bgOpacity) {
-    bgOpacity.value = welcomeBgParsed.opacity;
-    if (bgOpacityLabel) bgOpacityLabel.textContent = Math.round(welcomeBgParsed.opacity * 100) + '%';
+// Show a color + opacity pair (picker, text box, opacity slider and its % label)
+function setColorOpacityControls(pick, text, opacityInput, opacityLabel, parsed) {
+  if (pick) pick.value = parsed.color;
+  if (text) text.value = parsed.color;
+  if (opacityInput) {
+    opacityInput.value = parsed.opacity;
+    setOpacityLabel(opacityLabel, parsed.opacity);
   }
+}
 
-  // Sync welcome card border details
-  const welcomeBorderVal = getValueByPath(config, 'chatWindow.welcome.cardBorder');
-  const welcomeBorderParsed = parseCardBorder(welcomeBorderVal);
-  const borderW = document.getElementById('welcome-card-border-width');
-  const borderS = document.getElementById('welcome-card-border-style');
-  const borderPick = document.getElementById('welcome-card-border-color-pick');
-  const borderText = document.getElementById('welcome-card-border-color-text');
-  const borderOpacity = document.getElementById('welcome-card-border-opacity');
-  const borderOpacityLabel = document.getElementById('welcome-card-border-opacity-label');
-  if (borderW) borderW.value = welcomeBorderParsed.width;
-  if (borderS) borderS.value = welcomeBorderParsed.style;
-  if (borderPick) borderPick.value = welcomeBorderParsed.color;
-  if (borderText) borderText.value = welcomeBorderParsed.color;
-  if (borderOpacity) {
-    borderOpacity.value = welcomeBorderParsed.opacity;
-    if (borderOpacityLabel) borderOpacityLabel.textContent = Math.round(welcomeBorderParsed.opacity * 100) + '%';
+// Sync welcome card background picker & opacity
+function syncWelcomeCardBgFromConfig(config) {
+  const parsed = parseCardBg(getValueByPath(config, 'chatWindow.welcome.cardBg'));
+  setColorOpacityControls(
+    document.getElementById('welcome-card-bg-color-pick'),
+    document.getElementById('welcome-card-bg-color-text'),
+    document.getElementById('welcome-card-bg-opacity'),
+    document.getElementById('welcome-card-bg-opacity-label'),
+    parsed
+  );
+}
+
+// Sync welcome card border details
+function syncWelcomeCardBorderFromConfig(config) {
+  const parsed = parseCardBorder(getValueByPath(config, 'chatWindow.welcome.cardBorder'));
+  setElValue('welcome-card-border-width', parsed.width);
+  setElValue('welcome-card-border-style', parsed.style);
+  setColorOpacityControls(
+    document.getElementById('welcome-card-border-color-pick'),
+    document.getElementById('welcome-card-border-color-text'),
+    document.getElementById('welcome-card-border-opacity'),
+    document.getElementById('welcome-card-border-opacity-label'),
+    parsed
+  );
+}
+
+// Sync welcome background gradient & solid picker
+function syncWelcomeGradientFromConfig(config) {
+  const gradVal = getValueByPath(config, 'chatWindow.welcome.bgGradient');
+  if (!gradVal) return;
+
+  const parsed = parseBgGradient(gradVal);
+  setElValue('welcome-bg-gradient-hidden', gradVal);
+
+  const typeSelect = document.getElementById('welcome-bg-type');
+  if (!typeSelect) return;
+  typeSelect.value = parsed.type;
+
+  // Update custom component visibility
+  setWelcomeBgVisibility(parsed.type);
+
+  if (parsed.type === 'solid') {
+    setElValue('welcome-bg-solid-pick', parsed.color1);
+    setElValue('welcome-bg-solid-text', parsed.color1);
+  } else {
+    setElValue('welcome-bg-angle', parsed.angle);
+    setElValue('welcome-bg-grad-start-pick', parsed.color1);
+    setElValue('welcome-bg-grad-start-text', parsed.color1);
+    setElValue('welcome-bg-grad-end-pick', parsed.color2);
+    setElValue('welcome-bg-grad-end-text', parsed.color2);
   }
+}
 
-  // Sync welcome background gradient & solid picker
-  const welcomeGradVal = getValueByPath(config, 'chatWindow.welcome.bgGradient');
-  if (welcomeGradVal) {
-    const welcomeBgParsed = parseBgGradient(welcomeGradVal);
-    const typeSelect = document.getElementById('welcome-bg-type');
-    const angleInput = document.getElementById('welcome-bg-angle');
+// Sync the start / end gradient stop colors of a launcher (bubble or chatbar)
+function syncGradientStopsFromConfig(config, section) {
+  const stops = getValueByPath(config, `${section}.gradientStops`);
+  if (!stops || !Array.isArray(stops)) return;
 
-    const solidPick = document.getElementById('welcome-bg-solid-pick');
-    const solidText = document.getElementById('welcome-bg-solid-text');
+  [['start', 0], ['end', 1]].forEach(([edge, index]) => {
+    if (!stops[index]) return;
+    const color = stops[index].color;
+    setElValue(`${section}-grad-${edge}-pick`, color);
+    setElValue(`${section}-grad-${edge}-text`, color);
+  });
+}
 
-    const startPick = document.getElementById('welcome-bg-grad-start-pick');
-    const startText = document.getElementById('welcome-bg-grad-start-text');
-    const endPick = document.getElementById('welcome-bg-grad-end-pick');
-    const endText = document.getElementById('welcome-bg-grad-end-text');
-
-    const hiddenInput = document.getElementById('welcome-bg-gradient-hidden');
-
-    if (hiddenInput) hiddenInput.value = welcomeGradVal;
-    if (typeSelect) {
-      typeSelect.value = welcomeBgParsed.type;
-
-      // Update custom component visibility
-      const angleGroup = document.getElementById('welcome-bg-angle-group');
-      const solidGroup = document.getElementById('welcome-bg-solid-group');
-      const gradGroup = document.getElementById('welcome-bg-gradient-colors');
-
-      if (welcomeBgParsed.type === 'solid') {
-        if (angleGroup) angleGroup.style.display = 'none';
-        if (solidGroup) solidGroup.style.display = 'block';
-        if (gradGroup) gradGroup.style.display = 'none';
-
-        if (solidPick) solidPick.value = welcomeBgParsed.color1;
-        if (solidText) solidText.value = welcomeBgParsed.color1;
-      } else {
-        if (angleGroup) angleGroup.style.display = welcomeBgParsed.type === 'linear' ? 'block' : 'none';
-        if (solidGroup) solidGroup.style.display = 'none';
-        if (gradGroup) gradGroup.style.display = 'flex';
-
-        if (angleInput) angleInput.value = welcomeBgParsed.angle;
-        if (startPick) startPick.value = welcomeBgParsed.color1;
-        if (startText) startText.value = welcomeBgParsed.color1;
-        if (endPick) endPick.value = welcomeBgParsed.color2;
-        if (endText) endText.value = welcomeBgParsed.color2;
-      }
-    }
-  }
-
-  // Sync bubble gradient stops
-  const bubbleGradStops = getValueByPath(config, 'bubble.gradientStops');
-  if (bubbleGradStops && Array.isArray(bubbleGradStops)) {
-    const bubbleStartPick = document.getElementById('bubble-grad-start-pick');
-    const bubbleStartText = document.getElementById('bubble-grad-start-text');
-    const bubbleEndPick = document.getElementById('bubble-grad-end-pick');
-    const bubbleEndText = document.getElementById('bubble-grad-end-text');
-
-    if (bubbleGradStops[0]) {
-      const c = bubbleGradStops[0].color;
-      if (bubbleStartPick) bubbleStartPick.value = c;
-      if (bubbleStartText) bubbleStartText.value = c;
-    }
-    if (bubbleGradStops[1]) {
-      const c = bubbleGradStops[1].color;
-      if (bubbleEndPick) bubbleEndPick.value = c;
-      if (bubbleEndText) bubbleEndText.value = c;
-    }
-  }
-
-  // Sync chatbar gradient stops
-  const chatbarGradStops = getValueByPath(config, 'chatbar.gradientStops');
-  if (chatbarGradStops && Array.isArray(chatbarGradStops)) {
-    const chatbarStartPick = document.getElementById('chatbar-grad-start-pick');
-    const chatbarStartText = document.getElementById('chatbar-grad-start-text');
-    const chatbarEndPick = document.getElementById('chatbar-grad-end-pick');
-    const chatbarEndText = document.getElementById('chatbar-grad-end-text');
-
-    if (chatbarGradStops[0]) {
-      const c = chatbarGradStops[0].color;
-      if (chatbarStartPick) chatbarStartPick.value = c;
-      if (chatbarStartText) chatbarStartText.value = c;
-    }
-    if (chatbarGradStops[1]) {
-      const c = chatbarGradStops[1].color;
-      if (chatbarEndPick) chatbarEndPick.value = c;
-      if (chatbarEndText) chatbarEndText.value = c;
-    }
-  }
-
-  // Sync all shadow-editor-wrapper fields
+// Sync all shadow-editor-wrapper fields
+function syncShadowEditorsFromConfig(config) {
   document.querySelectorAll('.shadow-editor-wrapper[data-shadow-path]').forEach(wrapper => {
-    const path = wrapper.dataset.shadowPath;
-    const val = getValueByPath(config, path);
-    const parsed = parseShadowColor(val);
-    const pickInput = wrapper.querySelector('.shadow-color-pick');
-    const textInput = wrapper.querySelector('.shadow-color-text');
-    const opacityInput = wrapper.querySelector('.shadow-opacity');
-    const opacityLabel = wrapper.querySelector('.shadow-opacity-label');
-
-    if (pickInput) pickInput.value = parsed.color;
-    if (textInput) textInput.value = parsed.color;
-    if (opacityInput) {
-      opacityInput.value = parsed.opacity;
-      if (opacityLabel) opacityLabel.textContent = Math.round(parsed.opacity * 100) + '%';
-    }
+    const parsed = parseShadowColor(getValueByPath(config, wrapper.dataset.shadowPath));
+    setColorOpacityControls(
+      wrapper.querySelector('.shadow-color-pick'),
+      wrapper.querySelector('.shadow-color-text'),
+      wrapper.querySelector('.shadow-opacity'),
+      wrapper.querySelector('.shadow-opacity-label'),
+      parsed
+    );
   });
+}
 
-  // Sync Launcher Style Segmented Buttons
-  const chatbarVal = !!getValueByPath(config, 'chatbar.enabled');
+// Sync Launcher Style Segmented Buttons
+function syncLauncherButtonsFromConfig(config) {
   const chatbarBtn = document.getElementById('launcher-chatbar-btn');
   const bubbleBtn = document.getElementById('launcher-bubble-btn');
-  if (chatbarBtn && bubbleBtn) {
-    if (chatbarVal) {
-      chatbarBtn.classList.add('active');
-      bubbleBtn.classList.remove('active');
-    } else {
-      bubbleBtn.classList.add('active');
-      chatbarBtn.classList.remove('active');
-    }
+  if (!chatbarBtn || !bubbleBtn) return;
+  const chatbarEnabled = !!getValueByPath(config, 'chatbar.enabled');
+  chatbarBtn.classList.toggle('active', chatbarEnabled);
+  bubbleBtn.classList.toggle('active', !chatbarEnabled);
+}
+
+// Populate visual controls from active config object
+function syncConfigToVisualForm(config) {
+  if (!config) return;
+
+  // Sync raw JSON textarea
+  const jsonTextarea = document.getElementById('raw-json-textarea');
+  if (jsonTextarea) {
+    jsonTextarea.value = JSON.stringify(config, null, 2);
   }
+
+  ensureConfigDefaults(config);
+
+  document.querySelectorAll('[data-path]').forEach(input => syncInputFromConfig(input, config));
+
+  syncNotificationControls(config);
+  triggerNotifPreviewUpdate();
+  syncShareLink(config);
+  syncPaddingGridsFromConfig(config);
+  syncWelcomeCardBgFromConfig(config);
+  syncWelcomeCardBorderFromConfig(config);
+  syncWelcomeGradientFromConfig(config);
+  syncGradientStopsFromConfig(config, 'bubble');
+  syncGradientStopsFromConfig(config, 'chatbar');
+  syncShadowEditorsFromConfig(config);
+  syncLauncherButtonsFromConfig(config);
 
   // Sync Messages-tab textareas from the config messages array
   syncMessageTextareas();
@@ -1866,21 +1885,7 @@ function applyControlState(pick, text, hint, disabled, bannerSelector) {
     wrapper.style.opacity = disabled ? '0.4' : '1';
     wrapper.style.pointerEvents = disabled ? 'none' : '';
   }
-  if (hint) {
-    hint.style.display = disabled ? 'inline-flex' : 'none';
-    if (disabled) {
-      hint.style.cursor = 'pointer';
-      hint.title = 'Click to go to Theme Synchronization toggle';
-      hint.onclick = (e) => {
-        e.stopPropagation();
-        scrollToThemeSyncToggle(bannerSelector || '.top-theme-banner-card');
-      };
-    } else {
-      hint.style.cursor = '';
-      hint.title = '';
-      hint.onclick = null;
-    }
-  }
+  if (hint) styleGreetThemeHint(hint, disabled, bannerSelector || '.top-theme-banner-card');
 }
 
 function disablePlainControl(el, disabled) {
@@ -1917,30 +1922,28 @@ function syncChatbarThemeControls(toggle) {
   disablePlainControl(document.querySelector('input[data-path="chatbar.gradientAngle"]'), on);
 }
 
+function styleGreetThemeWrapper(wrapper, on, banner) {
+  wrapper.style.opacity = on ? '0.5' : '1';
+  wrapper.style.cursor = on ? 'pointer' : 'default';
+  wrapper.title = on ? 'Click to go to Theme Synchronization toggle' : '';
+  wrapper.onclick = on ? (e) => { e.stopPropagation(); scrollToThemeSyncToggle(banner); } : null;
+}
+
+function styleGreetThemeHint(hint, on, banner) {
+  hint.style.display = on ? 'inline-flex' : 'none';
+  hint.style.cursor = on ? 'pointer' : '';
+  hint.title = on ? 'Click to go to Theme Synchronization toggle' : '';
+  hint.onclick = on ? (e) => { e.stopPropagation(); scrollToThemeSyncToggle(banner); } : null;
+}
+
 // Apply the theme-sync lock to one greet-window colour control (pick, text and optional hint)
 function applyGreetThemeTarget(t, on, banner) {
   if (!t.pick && !t.text) return;
   if (t.pick) t.pick.disabled = on;
   if (t.text) t.text.disabled = on;
   const wrapper = t.pick?.parentElement || t.text?.parentElement;
-  if (wrapper) {
-    wrapper.style.opacity = on ? '0.5' : '1';
-    wrapper.style.cursor = on ? 'pointer' : 'default';
-    wrapper.title = on ? 'Click to go to Theme Synchronization toggle' : '';
-    wrapper.onclick = on ? (e) => { e.stopPropagation(); scrollToThemeSyncToggle(banner); } : null;
-  }
-  if (t.hint) {
-    t.hint.style.display = on ? 'inline-flex' : 'none';
-    if (on) {
-      t.hint.style.cursor = 'pointer';
-      t.hint.title = 'Click to go to Theme Synchronization toggle';
-      t.hint.onclick = (e) => { e.stopPropagation(); scrollToThemeSyncToggle(banner); };
-    } else {
-      t.hint.style.cursor = '';
-      t.hint.title = '';
-      t.hint.onclick = null;
-    }
-  }
+  if (wrapper) styleGreetThemeWrapper(wrapper, on, banner);
+  if (t.hint) styleGreetThemeHint(t.hint, on, banner);
 }
 
 function syncGreetThemeControls(toggle) {
@@ -2043,333 +2046,334 @@ function updateColorPickerStates() {
   if (welcomeUseTheme) syncWelcomeThemeControls(welcomeUseTheme);
 }
 
-// Form Event Listeners (Sync form input edits back to config and Alpine)
-function setupFormEventListeners() {
-  // Messages-tab textareas write into the config.messages array
+// ---------- Form event listeners helpers ----------
+
+// Mirror the active config into the raw JSON editor
+function writeConfigToJsonEditor() {
+  const jsonTextarea = document.getElementById('raw-json-textarea');
+  if (jsonTextarea) {
+    jsonTextarea.value = JSON.stringify(window.cutomizationConfig, null, 2);
+  }
+}
+
+// Mirror the config into the JSON editor and refresh the preview stores
+function pushConfigUpdate() {
+  writeConfigToJsonEditor();
+  updateAlpineStores(window.cutomizationConfig);
+}
+
+// Keep a color picker in sync with a typed hex value
+function syncPickFromHex(hex, pick) {
+  if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
+    pick.value = hex;
+  }
+}
+
+function setOpacityLabel(label, opacity) {
+  if (label) {
+    label.textContent = Math.round(opacity * 100) + '%';
+  }
+}
+
+function addInputAndChangeListeners(el, handler) {
+  el.addEventListener('input', handler);
+  el.addEventListener('change', handler);
+}
+
+// Messages-tab textareas write into the config.messages array
+function bindMessageTextareas() {
   document.querySelectorAll('.msg-textarea[data-msg-key]').forEach(input => {
     const handleMsgInput = () => {
       const key = input.dataset.msgKey;
-      const entry = getMessagesConfig().find(m => m && m.key === key);
+      const entry = getMessagesConfig().find(m => m?.key === key);
       if (entry) entry.body = input.value;
-      const jsonTextarea = document.getElementById('raw-json-textarea');
-      if (jsonTextarea) jsonTextarea.value = JSON.stringify(window.cutomizationConfig, null, 2);
+      writeConfigToJsonEditor();
       if (window.activeMessagePreviewKey === key) {
         applyMessagePreview(key);
       }
     };
-    input.addEventListener('input', handleMsgInput);
-    input.addEventListener('change', handleMsgInput);
+    addInputAndChangeListeners(input, handleMsgInput);
   });
+}
 
+function readNumberInputValue(input) {
+  if (input.value === '') return undefined;
+  const num = Number.parseFloat(input.value);
+  return input.dataset.unit ? (num + input.dataset.unit) : num;
+}
+
+function readRangeInputValue(input) {
+  const val = Number.parseFloat(input.value);
+  // Update slider value labels
+  const valSpan = input.parentElement.querySelector('.range-val');
+  if (valSpan) valSpan.textContent = val + (input.dataset.unit || '');
+  return val;
+}
+
+// Coerce boolean-looking string values from selects to real booleans
+function coerceBooleanString(val) {
+  if (val === 'true') return true;
+  if (val === 'false') return false;
+  return val;
+}
+
+function readInputValue(input) {
+  if (input.type === 'checkbox') return input.checked;
+  if (input.type === 'number') return readNumberInputValue(input);
+  if (input.type === 'range') return readRangeInputValue(input);
+  return coerceBooleanString(input.value);
+}
+
+// Sync the color picker and its text box
+function syncColorPairFromInput(input, val) {
+  if (input.type === 'color') {
+    const textInput = input.parentElement.querySelector('.color-picker-text');
+    if (textInput) textInput.value = val;
+  }
+  if (input.classList.contains('color-picker-text')) {
+    const colorInput = input.parentElement.querySelector('input[type="color"]');
+    if (colorInput) colorInput.value = val;
+  }
+}
+
+// Root level Website Theme synchronization
+function applyWebsiteThemeSync(val) {
+  const cfg = window.cutomizationConfig;
+  const enabled = !!val;
+  setValueByPath(cfg, 'useWebsiteTheme', enabled);
+  setValueByPath(cfg, 'bubble.useWebsiteTheme', enabled);
+  setValueByPath(cfg, 'greetWindow.useWebsiteTheme', enabled);
+  setValueByPath(cfg, 'chatbar.useWebsiteTheme', enabled);
+  setValueByPath(cfg, 'chatWindow.useWebsiteTheme', enabled);
+  if (cfg.chatWindow) {
+    if (!cfg.chatWindow.welcome) cfg.chatWindow.welcome = {};
+    cfg.chatWindow.welcome.useWebsiteTheme = enabled;
+  }
+}
+
+const ACCENT_COLOR_PATHS = [
+  'accentColor',
+  'chatWindow.accentColor',
+  'chatWindow.headerBg',
+  'chatWindow.visitorBubbleBg',
+  'chatWindow.agentAvatarBg',
+  'chatWindow.inputFocusBorderColor',
+  'chatWindow.sendButtonBgActive',
+  'chatWindow.poweredByColor',
+  'chatWindow.endChatConfirmBg',
+  'greetWindow.iconColor'
+];
+
+// Root level Accent Color synchronization
+function applyAccentColorSync(color) {
+  const cfg = window.cutomizationConfig;
+  ACCENT_COLOR_PATHS.forEach(path => setValueByPath(cfg, path, color));
+  if (cfg.greetWindow?.inputBox) {
+    cfg.greetWindow.inputBox.buttonColor = color;
+  }
+  setValueByPath(cfg, 'bubble.backgroundColor', color);
+  setValueByPath(cfg, 'chatbar.bgColor', color);
+
+  if (cfg.chatWindow?.welcome) {
+    cfg.chatWindow.welcome.bgGradient = createAccentGradient(color);
+    cfg.chatWindow.welcome.buttonIconColor = color;
+  }
+
+  const accentPick = document.getElementById('global-accent-color-pick');
+  const accentText = document.getElementById('global-accent-color');
+  if (accentPick && accentPick.value !== color) accentPick.value = color;
+  if (accentText && accentText.value !== color) accentText.value = color;
+}
+
+// Client Name & Agent Name live at root level; mirror them across their inputs
+function syncRootName(rootKey, val, sourceInput) {
+  const cfg = window.cutomizationConfig;
+  cfg[rootKey] = val;
+  if (cfg.chatWindow) {
+    delete cfg.chatWindow[rootKey];
+  }
+  document.querySelectorAll(`[data-path="${rootKey}"], [data-path="chatWindow.${rootKey}"]`).forEach(inp => {
+    if (inp !== sourceInput && inp.value !== val) inp.value = val;
+  });
+}
+
+// Paths whose edits also fan out to other parts of the config
+function applyLinkedPathSync(path, val, input) {
+  if (path === 'useWebsiteTheme') applyWebsiteThemeSync(val);
+  if (path === 'accentColor') applyAccentColorSync(val);
+  if (path === 'clientName' || path === 'chatWindow.clientName') syncRootName('clientName', val, input);
+  if (path === 'agentName' || path === 'chatWindow.agentName') syncRootName('agentName', val, input);
+}
+
+// Bubble fields the widget ignores while the bubble follows the website theme
+const BUBBLE_THEME_OVERRIDE_PATHS = new Set([
+  'bubble.backgroundColor',
+  'bubble.gradientType',
+  'bubble.gradientAngle',
+  'bubble.outlineRing.color'
+]);
+
+// Editing a bubble color means the user wants that color, so stop the bubble following the website theme
+function releaseBubbleWebsiteTheme() {
+  const bubble = window.cutomizationConfig?.bubble;
+  if (bubble?.useWebsiteTheme === true) bubble.useWebsiteTheme = false;
+}
+
+function handleDataPathInput(input) {
+  const path = input.dataset.path;
+  const val = readInputValue(input);
+
+  syncColorPairFromInput(input, val);
+  setValueByPath(window.cutomizationConfig, path, val);
+  applyLinkedPathSync(path, val, input);
+  if (BUBBLE_THEME_OVERRIDE_PATHS.has(path)) releaseBubbleWebsiteTheme();
+
+  // Update JSON textarea & Alpine / Lit stores
+  pushConfigUpdate();
+  updateColorPickerStates();
+  updateDisabledAccordionStates();
+  if (typeof updateFeatureNestedState === 'function') updateFeatureNestedState();
+
+  // Automatically re-trigger preview if appearance delay or animation speed is modified
+  if (path.startsWith('greetWindow.')) {
+    retriggerGreetCard();
+  }
+}
+
+function bindDataPathInputs() {
   document.querySelectorAll('[data-path]').forEach(input => {
-    const handleInput = () => {
-      const path = input.dataset.path;
-      let val;
-
-      if (input.type === 'checkbox') {
-        val = input.checked;
-      } else if (input.type === 'number') {
-        if (input.value === '') {
-          val = undefined;
-        } else {
-          const num = Number.parseFloat(input.value);
-          val = input.dataset.unit ? (num + input.dataset.unit) : num;
-        }
-      } else if (input.type === 'range') {
-        val = Number.parseFloat(input.value);
-        // Update slider value labels
-        const valSpan = input.parentElement.querySelector('.range-val');
-        if (valSpan) valSpan.textContent = val + (input.dataset.unit || '');
-      } else {
-        val = input.value;
-        // Coerce boolean-looking string values from selects to real booleans
-        if (val === 'true') val = true;
-        else if (val === 'false') val = false;
-      }
-
-      // Sync color inputs
-      if (input.type === 'color') {
-        const textInput = input.parentElement.querySelector('.color-picker-text');
-        if (textInput) textInput.value = val;
-      }
-      if (input.classList.contains('color-picker-text')) {
-        const colorInput = input.parentElement.querySelector('input[type="color"]');
-        if (colorInput) colorInput.value = val;
-      }
-
-      // Update state
-      setValueByPath(window.cutomizationConfig, path, val);
-
-      // Handle root level Website Theme & Accent Color synchronization
-      if (path === 'useWebsiteTheme') {
-        const enabled = !!val;
-        setValueByPath(window.cutomizationConfig, 'useWebsiteTheme', enabled);
-        setValueByPath(window.cutomizationConfig, 'bubble.useWebsiteTheme', enabled);
-        setValueByPath(window.cutomizationConfig, 'greetWindow.useWebsiteTheme', enabled);
-        setValueByPath(window.cutomizationConfig, 'chatbar.useWebsiteTheme', enabled);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.useWebsiteTheme', enabled);
-        if (window.cutomizationConfig.chatWindow) {
-          if (!window.cutomizationConfig.chatWindow.welcome) window.cutomizationConfig.chatWindow.welcome = {};
-          window.cutomizationConfig.chatWindow.welcome.useWebsiteTheme = enabled;
-        }
-      }
-      if (path === 'accentColor') {
-        const color = val;
-        setValueByPath(window.cutomizationConfig, 'accentColor', color);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.accentColor', color);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.headerBg', color);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.visitorBubbleBg', color);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.agentAvatarBg', color);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.inputFocusBorderColor', color);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.sendButtonBgActive', color);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.poweredByColor', color);
-        setValueByPath(window.cutomizationConfig, 'chatWindow.endChatConfirmBg', color);
-        setValueByPath(window.cutomizationConfig, 'greetWindow.iconColor', color);
-        if (window.cutomizationConfig.greetWindow?.inputBox) {
-          window.cutomizationConfig.greetWindow.inputBox.buttonColor = color;
-        }
-        setValueByPath(window.cutomizationConfig, 'bubble.backgroundColor', color);
-        setValueByPath(window.cutomizationConfig, 'chatbar.bgColor', color);
-
-        if (window.cutomizationConfig.chatWindow?.welcome) {
-          window.cutomizationConfig.chatWindow.welcome.bgGradient = createAccentGradient(color);
-          window.cutomizationConfig.chatWindow.welcome.buttonIconColor = color;
-        }
-
-        const accentPick = document.getElementById('global-accent-color-pick');
-        const accentText = document.getElementById('global-accent-color');
-        if (accentPick && accentPick.value !== color) accentPick.value = color;
-        if (accentText && accentText.value !== color) accentText.value = color;
-      }
-
-      // Handle Client Name & Agent Name synchronization at root level
-      if (path === 'clientName' || path === 'chatWindow.clientName') {
-        window.cutomizationConfig.clientName = val;
-        if (window.cutomizationConfig.chatWindow) {
-          delete window.cutomizationConfig.chatWindow.clientName;
-        }
-        document.querySelectorAll('[data-path="clientName"], [data-path="chatWindow.clientName"]').forEach(inp => {
-          if (inp !== input && inp.value !== val) inp.value = val;
-        });
-      }
-      if (path === 'agentName' || path === 'chatWindow.agentName') {
-        window.cutomizationConfig.agentName = val;
-        if (window.cutomizationConfig.chatWindow) {
-          delete window.cutomizationConfig.chatWindow.agentName;
-        }
-        document.querySelectorAll('[data-path="agentName"], [data-path="chatWindow.agentName"]').forEach(inp => {
-          if (inp !== input && inp.value !== val) inp.value = val;
-        });
-      }
-
-      // Update JSON textarea
-      const jsonTextarea = document.getElementById('raw-json-textarea');
-      if (jsonTextarea) {
-        jsonTextarea.value = JSON.stringify(window.cutomizationConfig, null, 2);
-      }
-
-      // Update Alpine & Lit Stores
-      updateAlpineStores(window.cutomizationConfig);
-      updateColorPickerStates();
-      updateDisabledAccordionStates();
-      if (typeof updateFeatureNestedState === 'function') updateFeatureNestedState();
-
-      // Automatically re-trigger preview if appearance delay or animation speed is modified
-      if (path.startsWith('greetWindow.')) {
-        retriggerGreetCard();
-      }
-    };
-
-    input.addEventListener('input', handleInput);
-    input.addEventListener('change', handleInput);
+    addInputAndChangeListeners(input, () => handleDataPathInput(input));
   });
+}
 
-  // Listen to padding-grids changes
+// Listen to padding-grids changes
+function bindPaddingGrids() {
   document.querySelectorAll('.padding-grid[data-padding-path]').forEach(grid => {
     const path = grid.dataset.paddingPath;
-    const inputs = grid.querySelectorAll('input');
+    const readSide = side => Number.parseFloat(grid.querySelector(`[data-pad="${side}"]`)?.value || 0);
     const handlePadInput = () => {
-      const top = Number.parseFloat(grid.querySelector('[data-pad="top"]')?.value || 0);
-      const right = Number.parseFloat(grid.querySelector('[data-pad="right"]')?.value || 0);
-      const bottom = Number.parseFloat(grid.querySelector('[data-pad="bottom"]')?.value || 0);
-      const left = Number.parseFloat(grid.querySelector('[data-pad="left"]')?.value || 0);
-      const formatted = formatPaddingString(top, right, bottom, left);
-
+      const formatted = formatPaddingString(readSide('top'), readSide('right'), readSide('bottom'), readSide('left'));
       setValueByPath(window.cutomizationConfig, path, formatted);
-
-      // Update JSON textarea
-      const jsonTextarea = document.getElementById('raw-json-textarea');
-      if (jsonTextarea) {
-        jsonTextarea.value = JSON.stringify(window.cutomizationConfig, null, 2);
-      }
-
-      // Update Alpine Stores
-      updateAlpineStores(window.cutomizationConfig);
+      pushConfigUpdate();
     };
-    inputs.forEach(input => {
-      input.addEventListener('input', handlePadInput);
-      input.addEventListener('change', handlePadInput);
-    });
+    grid.querySelectorAll('input').forEach(input => addInputAndChangeListeners(input, handlePadInput));
   });
+}
 
-  // Listen to welcome card background editor changes
-  const welcomeCardBgPick = document.getElementById('welcome-card-bg-color-pick');
-  const welcomeCardBgText = document.getElementById('welcome-card-bg-color-text');
-  const welcomeCardBgOpacity = document.getElementById('welcome-card-bg-opacity');
-  const welcomeCardBgOpacityLabel = document.getElementById('welcome-card-bg-opacity-label');
+// Listen to welcome card background editor changes
+function bindWelcomeCardBgEditor() {
+  const pick = document.getElementById('welcome-card-bg-color-pick');
+  const text = document.getElementById('welcome-card-bg-color-text');
+  const opacityInput = document.getElementById('welcome-card-bg-opacity');
+  const opacityLabel = document.getElementById('welcome-card-bg-opacity-label');
 
-  const handleWelcomeBgChange = () => {
-    if (!welcomeCardBgPick || !welcomeCardBgText || !welcomeCardBgOpacity) return;
-    const hex = welcomeCardBgText.value;
-    // Keep hex color in picker in sync
-    if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
-      welcomeCardBgPick.value = hex;
-    }
-    const opacity = Number.parseFloat(welcomeCardBgOpacity.value);
-    if (welcomeCardBgOpacityLabel) {
-      welcomeCardBgOpacityLabel.textContent = Math.round(opacity * 100) + '%';
-    }
-    const rgba = formatCardBg(welcomeCardBgPick.value, opacity);
-    setValueByPath(window.cutomizationConfig, 'chatWindow.welcome.cardBg', rgba);
-
-    // Update JSON textarea
-    const jsonTextarea = document.getElementById('raw-json-textarea');
-    if (jsonTextarea) {
-      jsonTextarea.value = JSON.stringify(window.cutomizationConfig, null, 2);
-    }
-    updateAlpineStores(window.cutomizationConfig);
+  const handleChange = () => {
+    if (!pick || !text || !opacityInput) return;
+    syncPickFromHex(text.value, pick);
+    const opacity = Number.parseFloat(opacityInput.value);
+    setOpacityLabel(opacityLabel, opacity);
+    setValueByPath(window.cutomizationConfig, 'chatWindow.welcome.cardBg', formatCardBg(pick.value, opacity));
+    pushConfigUpdate();
   };
 
-  if (welcomeCardBgPick) {
-    welcomeCardBgPick.addEventListener('input', () => {
-      welcomeCardBgText.value = welcomeCardBgPick.value;
-      handleWelcomeBgChange();
-    });
-  }
-  if (welcomeCardBgText) {
-    welcomeCardBgText.addEventListener('input', handleWelcomeBgChange);
-  }
-  if (welcomeCardBgOpacity) {
-    welcomeCardBgOpacity.addEventListener('input', handleWelcomeBgChange);
-  }
+  pick?.addEventListener('input', () => {
+    text.value = pick.value;
+    handleChange();
+  });
+  text?.addEventListener('input', handleChange);
+  opacityInput?.addEventListener('input', handleChange);
+}
 
-  // Listen to welcome card border editor changes
-  const welcomeBorderWidth = document.getElementById('welcome-card-border-width');
-  const welcomeBorderStyle = document.getElementById('welcome-card-border-style');
-  const welcomeBorderPick = document.getElementById('welcome-card-border-color-pick');
-  const welcomeBorderText = document.getElementById('welcome-card-border-color-text');
-  const welcomeBorderOpacity = document.getElementById('welcome-card-border-opacity');
-  const welcomeBorderOpacityLabel = document.getElementById('welcome-card-border-opacity-label');
+// Listen to welcome card border editor changes
+function bindWelcomeCardBorderEditor() {
+  const widthInput = document.getElementById('welcome-card-border-width');
+  const styleSelect = document.getElementById('welcome-card-border-style');
+  const pick = document.getElementById('welcome-card-border-color-pick');
+  const text = document.getElementById('welcome-card-border-color-text');
+  const opacityInput = document.getElementById('welcome-card-border-opacity');
+  const opacityLabel = document.getElementById('welcome-card-border-opacity-label');
 
-  const handleWelcomeBorderChange = () => {
-    if (!welcomeBorderWidth || !welcomeBorderStyle || !welcomeBorderPick || !welcomeBorderText || !welcomeBorderOpacity) return;
-    const hex = welcomeBorderText.value;
-    if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
-      welcomeBorderPick.value = hex;
-    }
-    const opacity = Number.parseFloat(welcomeBorderOpacity.value);
-    if (welcomeBorderOpacityLabel) {
-      welcomeBorderOpacityLabel.textContent = Math.round(opacity * 100) + '%';
-    }
+  const handleChange = () => {
+    if (!widthInput || !styleSelect || !pick || !text || !opacityInput) return;
+    syncPickFromHex(text.value, pick);
+    const opacity = Number.parseFloat(opacityInput.value);
+    setOpacityLabel(opacityLabel, opacity);
     const borderVal = formatCardBorder(
-      Number.parseInt(welcomeBorderWidth.value || 0),
-      welcomeBorderStyle.value,
-      welcomeBorderPick.value,
+      Number.parseInt(widthInput.value || 0),
+      styleSelect.value,
+      pick.value,
       opacity
     );
     setValueByPath(window.cutomizationConfig, 'chatWindow.welcome.cardBorder', borderVal);
-
-    // Update JSON textarea
-    const jsonTextarea = document.getElementById('raw-json-textarea');
-    if (jsonTextarea) {
-      jsonTextarea.value = JSON.stringify(window.cutomizationConfig, null, 2);
-    }
-    updateAlpineStores(window.cutomizationConfig);
+    pushConfigUpdate();
   };
 
-  if (welcomeBorderWidth) welcomeBorderWidth.addEventListener('input', handleWelcomeBorderChange);
-  if (welcomeBorderStyle) welcomeBorderStyle.addEventListener('change', handleWelcomeBorderChange);
-  if (welcomeBorderPick) {
-    welcomeBorderPick.addEventListener('input', () => {
-      welcomeBorderText.value = welcomeBorderPick.value;
-      handleWelcomeBorderChange();
-    });
-  }
-  if (welcomeBorderText) welcomeBorderText.addEventListener('input', handleWelcomeBorderChange);
-  if (welcomeBorderOpacity) welcomeBorderOpacity.addEventListener('input', handleWelcomeBorderChange);
-
-  // Listen to all shadow-editor-wrapper changes
-  document.querySelectorAll('.shadow-editor-wrapper[data-shadow-path]').forEach(wrapper => {
-    const path = wrapper.dataset.shadowPath;
-    const pickInput = wrapper.querySelector('.shadow-color-pick');
-    const textInput = wrapper.querySelector('.shadow-color-text');
-    const opacityInput = wrapper.querySelector('.shadow-opacity');
-    const opacityLabel = wrapper.querySelector('.shadow-opacity-label');
-
-    const handleShadowChange = () => {
-      if (!pickInput || !textInput || !opacityInput) return;
-      const hex = textInput.value;
-      if (/^#[0-9a-fA-F]{6}$/.test(hex)) {
-        pickInput.value = hex;
-      }
-      const opacity = Number.parseFloat(opacityInput.value);
-      if (opacityLabel) {
-        opacityLabel.textContent = Math.round(opacity * 100) + '%';
-      }
-
-      const currentVal = getValueByPath(window.cutomizationConfig, path) || '';
-      const updated = updateShadowColor(currentVal, pickInput.value, opacity);
-      setValueByPath(window.cutomizationConfig, path, updated);
-
-      // Update JSON textarea
-      const jsonTextarea = document.getElementById('raw-json-textarea');
-      if (jsonTextarea) {
-        jsonTextarea.value = JSON.stringify(window.cutomizationConfig, null, 2);
-      }
-      updateAlpineStores(window.cutomizationConfig);
-    };
-
-    if (pickInput) {
-      pickInput.addEventListener('input', () => {
-        textInput.value = pickInput.value;
-        handleShadowChange();
-      });
-    }
-    if (textInput) {
-      textInput.addEventListener('input', handleShadowChange);
-    }
-    if (opacityInput) {
-      opacityInput.addEventListener('input', handleShadowChange);
-    }
+  widthInput?.addEventListener('input', handleChange);
+  styleSelect?.addEventListener('change', handleChange);
+  pick?.addEventListener('input', () => {
+    text.value = pick.value;
+    handleChange();
   });
+  text?.addEventListener('input', handleChange);
+  opacityInput?.addEventListener('input', handleChange);
+}
 
-  // Listen to Launcher Style Segmented Buttons
+function bindShadowEditor(wrapper) {
+  const path = wrapper.dataset.shadowPath;
+  const pickInput = wrapper.querySelector('.shadow-color-pick');
+  const textInput = wrapper.querySelector('.shadow-color-text');
+  const opacityInput = wrapper.querySelector('.shadow-opacity');
+  const opacityLabel = wrapper.querySelector('.shadow-opacity-label');
+
+  const handleShadowChange = () => {
+    if (!pickInput || !textInput || !opacityInput) return;
+    syncPickFromHex(textInput.value, pickInput);
+    const opacity = Number.parseFloat(opacityInput.value);
+    setOpacityLabel(opacityLabel, opacity);
+
+    const currentVal = getValueByPath(window.cutomizationConfig, path) || '';
+    setValueByPath(window.cutomizationConfig, path, updateShadowColor(currentVal, pickInput.value, opacity));
+    pushConfigUpdate();
+  };
+
+  pickInput?.addEventListener('input', () => {
+    textInput.value = pickInput.value;
+    handleShadowChange();
+  });
+  textInput?.addEventListener('input', handleShadowChange);
+  opacityInput?.addEventListener('input', handleShadowChange);
+}
+
+// Listen to Launcher Style Segmented Buttons
+function bindLauncherStyleButtons() {
   const chatbarBtn = document.getElementById('launcher-chatbar-btn');
   const bubbleBtn = document.getElementById('launcher-bubble-btn');
   const hiddenCheckbox = document.getElementById('master-chatbar-enabled');
+  if (!chatbarBtn || !bubbleBtn || !hiddenCheckbox) return;
 
-  if (chatbarBtn && bubbleBtn && hiddenCheckbox) {
-    chatbarBtn.addEventListener('click', () => {
-      if (hiddenCheckbox.checked !== true) {
-        hiddenCheckbox.checked = true;
-        // Dispatch change event to trigger form listener and update state
-        hiddenCheckbox.dispatchEvent(new Event('change'));
-
-        chatbarBtn.classList.add('active');
-        bubbleBtn.classList.remove('active');
-      }
+  const bindLauncherButton = (btn, otherBtn, chatbarEnabled) => {
+    btn.addEventListener('click', () => {
+      if (hiddenCheckbox.checked === chatbarEnabled) return;
+      hiddenCheckbox.checked = chatbarEnabled;
+      // Dispatch change event to trigger form listener and update state
+      hiddenCheckbox.dispatchEvent(new Event('change'));
+      btn.classList.add('active');
+      otherBtn.classList.remove('active');
     });
+  };
+  bindLauncherButton(chatbarBtn, bubbleBtn, true);
+  bindLauncherButton(bubbleBtn, chatbarBtn, false);
+}
 
-    bubbleBtn.addEventListener('click', () => {
-      if (hiddenCheckbox.checked !== false) {
-        hiddenCheckbox.checked = false;
-        hiddenCheckbox.dispatchEvent(new Event('change'));
-
-        bubbleBtn.classList.add('active');
-        chatbarBtn.classList.remove('active');
-      }
-    });
-  }
+// Form Event Listeners (Sync form input edits back to config and Alpine)
+function setupFormEventListeners() {
+  bindMessageTextareas();
+  bindDataPathInputs();
+  bindPaddingGrids();
+  bindWelcomeCardBgEditor();
+  bindWelcomeCardBorderEditor();
+  document.querySelectorAll('.shadow-editor-wrapper[data-shadow-path]').forEach(bindShadowEditor);
+  bindLauncherStyleButtons();
 }
 
 // JSON Textarea Editor Listeners (Validate and sync raw edits)
@@ -2415,233 +2419,375 @@ function setupJsonEditorEventListeners() {
   });
 }
 
+function ensureSection(parent, key) {
+  if (!parent[key]) parent[key] = {};
+  return parent[key];
+}
+
+const ACCENT_CHATWINDOW_KEYS = [
+  'accentColor',
+  'headerBg',
+  'visitorBubbleBg',
+  'agentAvatarBg',
+  'inputFocusBorderColor',
+  'sendButtonBgActive',
+  'poweredByColor',
+  'endChatConfirmBg'
+];
+
+// Sync root accentColor across sub-component state objects
+function propagateAccentColor(config) {
+  const accent = config.accentColor;
+  const chatWindow = ensureSection(config, 'chatWindow');
+  ACCENT_CHATWINDOW_KEYS.forEach(key => { chatWindow[key] = accent; });
+  const greetWindow = ensureSection(config, 'greetWindow');
+  greetWindow.iconColor = accent;
+  ensureSection(greetWindow, 'inputBox').buttonColor = accent;
+  ensureSection(config, 'bubble').backgroundColor = accent;
+}
+
+// Sync root useWebsiteTheme across sub-component state objects
+function propagateWebsiteTheme(config) {
+  ['bubble', 'greetWindow', 'chatbar', 'chatWindow'].forEach(key => ensureSection(config, key));
+  ['bubble', 'greetWindow', 'chatbar', 'chatWindow'].forEach(key => {
+    config[key].useWebsiteTheme = config.useWebsiteTheme;
+  });
+}
+
+// Last root accent / website-theme values copied into each config object
+const rootThemeSyncState = new WeakMap();
+
+// Copy the root accent / website theme into the component colors when a config is first seen or the
+// root value changes. Re-copying on every update would overwrite colors edited per component.
+function syncRootThemeIntoConfig(config) {
+  const seen = rootThemeSyncState.get(config) || {};
+  if (config.accentColor && seen.accentColor !== config.accentColor) propagateAccentColor(config);
+  if (config.useWebsiteTheme !== undefined && seen.useWebsiteTheme !== config.useWebsiteTheme) propagateWebsiteTheme(config);
+  rootThemeSyncState.set(config, { accentColor: config.accentColor, useWebsiteTheme: config.useWebsiteTheme });
+}
+
+// In customization mode the greet card is always shown
+function revealLitGreetWindow() {
+  if (!window.ChatWidgetLit.greetWindowStore) return;
+  const gw = window.ChatWidgetLit.greetWindowStore.get();
+  if (gw?.enabled) {
+    gw.visible = true;
+    gw.dismissed = false;
+    if (gw.inputBox) gw.inputBox.visible = true;
+  }
+}
+
+// Sync Lit Web Component Stores if available
+function syncLitStores(config) {
+  if (!window.ChatWidgetLit?.injectStoreConfig) return;
+  window.ChatWidgetLit.injectStoreConfig(config);
+  const widgetRoot = document.querySelector('#preview-viewport-wrapper cw-widget-root');
+  if (widgetRoot) {
+    ensureLitPointerEvents(widgetRoot);
+  }
+  revealLitGreetWindow();
+  if (window.ChatWidgetLit.chatStore) {
+    const isMobileView = document.querySelector('.preview-panel')?.classList.contains('mode-mobile');
+    window.ChatWidgetLit.chatStore.get().isMobile = !!isMobileView;
+  }
+}
+
+// 1. Update Bubble Trigger Store
+function updateBubbleStore(config, theme) {
+  if (!(Alpine.store('bubble') && config.bubble)) return;
+  const bubbleConfig = jsonClone(config.bubble);
+  if (bubbleConfig.useWebsiteTheme === true) {
+    bubbleConfig.backgroundColor = theme.primary;
+    bubbleConfig.gradientType = 'none';
+    if (bubbleConfig.outlineRing) { bubbleConfig.outlineRing.color = theme.secondary; }
+  }
+  Object.assign(Alpine.store('bubble'), bubbleConfig);
+}
+
+function applyWebsiteThemeToGreetInputBox(inputBox, primary) {
+  if (inputBox.layout === 'separated') {
+    inputBox.buttonIconColor = primary;
+  } else {
+    inputBox.buttonColor = primary;
+  }
+}
+
+// 2. Update Greet Window Store
+function updateGreetWindowStore(config, theme) {
+  if (!(Alpine.store('greetWindow') && config.greetWindow)) return;
+  const greetWindowConfig = jsonClone(config.greetWindow);
+  if (greetWindowConfig.inputBox) {
+    greetWindowConfig.inputBox = { ...Alpine.store('greetWindow').inputBox, ...greetWindowConfig.inputBox };
+    // Always force input box to be visible in customization mode
+    greetWindowConfig.inputBox.visible = true;
+  }
+
+  // Always force greet card to be visible and active in customization mode
+  greetWindowConfig.visible = true;
+  greetWindowConfig.dismissed = false;
+
+  if (greetWindowConfig.useWebsiteTheme === true) {
+    greetWindowConfig.iconColor = theme.primary;
+    if (greetWindowConfig.inputBox) {
+      applyWebsiteThemeToGreetInputBox(greetWindowConfig.inputBox, theme.primary);
+    }
+  }
+  Object.assign(Alpine.store('greetWindow'), greetWindowConfig);
+}
+
+function isOffsetSet(value) {
+  return value !== undefined && value !== null && value !== '';
+}
+
+// 3. Update Chatbar Store
+function updateChatbarStore(config) {
+  if (!(Alpine.store('chatbar') && config.chatbar)) return;
+  const chatbarConfig = jsonClone(config.chatbar);
+
+  // Copy the correct offset fields to offsetRight and offsetBottom dynamically
+  const prefix = chatbarConfig.layout === 'card' ? 'card' : 'bar';
+  ['Right', 'Bottom'].forEach(side => {
+    const value = chatbarConfig[`${prefix}Offset${side}`];
+    if (isOffsetSet(value)) {
+      chatbarConfig[`offset${side}`] = value;
+    }
+  });
+
+  Object.assign(Alpine.store('chatbar'), chatbarConfig);
+}
+
+// Overrides applied to the chat window when the preview host is in dark mode
+const DARK_HOST_THEME_OVERRIDES = {
+  bodyBg: 'var(--cw-bg)',
+  inputBg: 'var(--cw-surface)',
+  agentBubbleBg: 'var(--cw-surface)',
+  agentBubbleColor: 'var(--cw-ink)',
+  agentBubbleBorderColor: 'var(--cw-border)',
+  footerBg: 'var(--cw-bg)',
+  footerTextColor: 'var(--cw-muted)',
+  inputTextColor: 'var(--cw-ink)',
+  inputBorderColor: 'var(--cw-border)',
+  attachButtonBg: 'var(--cw-surface)',
+  attachButtonColor: 'var(--cw-muted)',
+  emojiButtonColor: 'var(--cw-muted)',
+  modalCardBg: 'var(--cw-surface)',
+  modalMessageColor: 'var(--cw-ink)',
+  endChatCancelBg: 'var(--cw-surface)',
+  endChatCancelTextColor: 'var(--cw-muted)',
+  endChatCancelBorderColor: 'var(--cw-border)'
+};
+
+// Force the chat window to the host website theme colors
+function applyWebsiteThemeToChatWindow(chatConfig, theme, isDark) {
+  Object.assign(chatConfig, {
+    accentColor: theme.primary,
+    visitorBubbleBg: theme.primary,
+    visitorBubbleColor: '#ffffff',
+    headerBg: theme.primary,
+    headerTextColor: '#ffffff',
+    headerAvatarBg: 'rgba(255,255,255,0.2)',
+    headerAvatarColor: '#ffffff',
+    agentAvatarBg: theme.primary,
+    agentAvatarColor: '#ffffff',
+    inputFocusBorderColor: theme.primary,
+    inputFocusShadow: `0 0 0 2px ${theme.primary}26`,
+    sendButtonBgActive: theme.primary,
+    poweredByColor: theme.primary,
+    endChatConfirmBg: theme.primary,
+    endChatConfirmTextColor: '#ffffff'
+  });
+  if (isDark) {
+    Object.assign(chatConfig, DARK_HOST_THEME_OVERRIDES);
+  }
+}
+
+// Welcome dashboard gradient + button icon follow the website theme or the accent color
+function applyWelcomeTheme(chatConfig, config, theme) {
+  const welcomeObj = chatConfig.welcome || Alpine.store('chatWindow')?.welcome;
+  if (!welcomeObj) return;
+  const welcomeUseTheme = welcomeObj.useWebsiteTheme !== undefined ? welcomeObj.useWebsiteTheme : chatConfig.useWebsiteTheme;
+  const activeAccent = config.accentColor || chatConfig.accentColor || '#0b5fff';
+  if (welcomeUseTheme === true) {
+    const secondaryColor = (theme.secondary && theme.secondary !== theme.primary) ? theme.secondary : theme.primary;
+    welcomeObj.bgGradient = `linear-gradient(135deg, ${theme.primary}, ${secondaryColor})`;
+    welcomeObj.buttonIconColor = theme.primary;
+  } else {
+    welcomeObj.bgGradient = createAccentGradient(activeAccent);
+    welcomeObj.buttonIconColor = activeAccent;
+  }
+  chatConfig.welcome = welcomeObj;
+}
+
+function defaultFeatures() {
+  return {
+    voiceCallMaster: false,
+    voiceCallAgents: false,
+    voiceCallVisitors: false,
+    videoCallMaster: false,
+    videoCallAgents: false,
+    videoCallVisitors: false,
+    disableVisitorCamera: false,
+    closeChatVisitor: false,
+    averageQueueTime: 1,
+    chatAcceptanceTime: 5
+  };
+}
+
+// Sync Chat general info (names and welcome / active view)
+function syncChatInfoStore(chatConfig) {
+  const chatStore = Alpine.store('chat');
+  if (!chatStore) return;
+  if (chatConfig.clientName) chatStore.clientName = chatConfig.clientName;
+  if (chatConfig.agentName) {
+    chatStore.agentName = chatConfig.agentName;
+    if (chatStore.messages?.[0]?.senderType === 'AGENT') { chatStore.messages[0].senderName = chatConfig.agentName; }
+  }
+
+  // Dynamically switch active view to welcome or active based on checkbox toggle if user hasn't sent messages
+  if (!chatStore.hasSentMessage && chatConfig.welcome) {
+    const targetState = (chatConfig.welcome.enabled === true) ? 'welcome' : 'active';
+    if (window.lastWelcomeEnabled === undefined || window.lastWelcomeEnabled !== chatConfig.welcome.enabled) {
+      window.lastWelcomeEnabled = chatConfig.welcome.enabled;
+      chatStore.state = targetState;
+    }
+  }
+}
+
+// 4. Update Chat Window & Welcome Store
+function updateChatWindowStore(config, theme) {
+  if (!(Alpine.store('chatWindow') && config.chatWindow)) return;
+  const chatConfig = jsonClone(config.chatWindow);
+  const isDark = document.documentElement.classList.contains('dark') || document.querySelector('.preview-panel').classList.contains('dark-mode');
+
+  if (chatConfig.useWebsiteTheme === true) {
+    applyWebsiteThemeToChatWindow(chatConfig, theme, isDark);
+  }
+
+  applyWelcomeTheme(chatConfig, config, theme);
+
+  if (isDark && chatConfig.dark && Object.keys(chatConfig.dark).length > 0) {
+    Object.assign(chatConfig, chatConfig.dark);
+  }
+
+  // Sync features at both top-level and chatWindow level
+  if (!config.features) {
+    config.features = chatConfig.features || defaultFeatures();
+  }
+  chatConfig.features = config.features;
+  if (Alpine.store('features')) {
+    Object.assign(Alpine.store('features'), config.features);
+  }
+
+  Object.assign(Alpine.store('chatWindow'), chatConfig);
+  if (Alpine.store('chatcontactv2')) {
+    Object.assign(Alpine.store('chatcontactv2'), chatConfig);
+  }
+
+  syncChatInfoStore(chatConfig);
+}
+
 // Dynamic updates of the active widget stores (Lit & Alpine)
 function updateAlpineStores(config) {
   if (!config) return;
 
-  // Sync root accentColor & useWebsiteTheme across sub-component state objects
-  if (config) {
-    if (config.accentColor) {
-      if (!config.chatWindow) config.chatWindow = {};
-      config.chatWindow.accentColor = config.accentColor;
-      config.chatWindow.headerBg = config.accentColor;
-      config.chatWindow.visitorBubbleBg = config.accentColor;
-      config.chatWindow.agentAvatarBg = config.accentColor;
-      config.chatWindow.inputFocusBorderColor = config.accentColor;
-      config.chatWindow.sendButtonBgActive = config.accentColor;
-      config.chatWindow.poweredByColor = config.accentColor;
-      config.chatWindow.endChatConfirmBg = config.accentColor;
-      if (!config.greetWindow) config.greetWindow = {};
-      config.greetWindow.iconColor = config.accentColor;
-      if (!config.greetWindow.inputBox) config.greetWindow.inputBox = {};
-      config.greetWindow.inputBox.buttonColor = config.accentColor;
-      if (!config.bubble) config.bubble = {};
-      config.bubble.backgroundColor = config.accentColor;
-    }
-    if (config.useWebsiteTheme !== undefined) {
-      if (!config.bubble) config.bubble = {};
-      if (!config.greetWindow) config.greetWindow = {};
-      if (!config.chatbar) config.chatbar = {};
-      if (!config.chatWindow) config.chatWindow = {};
-      config.bubble.useWebsiteTheme = config.useWebsiteTheme;
-      config.greetWindow.useWebsiteTheme = config.useWebsiteTheme;
-      config.chatbar.useWebsiteTheme = config.useWebsiteTheme;
-      config.chatWindow.useWebsiteTheme = config.useWebsiteTheme;
-    }
-  }
-
-  // Sync Lit Web Component Stores if available
-  if (window.ChatWidgetLit?.injectStoreConfig) {
-    window.ChatWidgetLit.injectStoreConfig(config);
-    const widgetRoot = document.querySelector('#preview-viewport-wrapper cw-widget-root');
-    if (widgetRoot) {
-      ensureLitPointerEvents(widgetRoot);
-    }
-    if (window.ChatWidgetLit.greetWindowStore) {
-      const gw = window.ChatWidgetLit.greetWindowStore.get();
-      if (gw?.enabled) {
-        gw.visible = true;
-        gw.dismissed = false;
-        if (gw.inputBox) gw.inputBox.visible = true;
-      }
-    }
-    if (window.ChatWidgetLit.chatStore) {
-      const isMobileView = document.querySelector('.preview-panel')?.classList.contains('mode-mobile');
-      window.ChatWidgetLit.chatStore.get().isMobile = !!isMobileView;
-    }
-  }
+  syncRootThemeIntoConfig(config);
+  syncLitStores(config);
 
   if (!window.Alpine) return;
   const theme = window.ZotlyUtils ? window.ZotlyUtils.getParentTheme() : { primary: '#0b5fff', secondary: '#8b5cf6' };
 
-  // 1. Update Bubble Trigger Store
-  if (Alpine.store('bubble') && config.bubble) {
-    let bubbleConfig = jsonClone(config.bubble);
-    if (bubbleConfig.useWebsiteTheme === true) {
-      bubbleConfig.backgroundColor = theme.primary;
-      bubbleConfig.gradientType = 'none';
-      if (bubbleConfig.outlineRing) { bubbleConfig.outlineRing.color = theme.secondary; }
-    }
-    Object.assign(Alpine.store('bubble'), bubbleConfig);
+  updateBubbleStore(config, theme);
+  updateGreetWindowStore(config, theme);
+  updateChatbarStore(config);
+  updateChatWindowStore(config, theme);
+}
+
+// Copy the listed keys from source to target when they are defined
+function copyDefinedKeys(target, source, keys) {
+  keys.forEach(key => {
+    if (source[key] !== undefined) target[key] = source[key];
+  });
+}
+
+function emitGreetStore(gwStore) {
+  if (typeof gwStore.emit === 'function') gwStore.emit('store:greetWindow');
+}
+
+// Delay (ms) between the greet card appearing and its input box appearing
+function remainingInputDelayMs(greetDelaySec, inputDelaySec) {
+  return Math.max(0, (inputDelaySec - greetDelaySec) * 1000);
+}
+
+// Sync latest delay and animation configuration into the Lit greet-window store
+function syncGreetStoreFromConfig(gw, greetConfig) {
+  if (!greetConfig) return;
+  copyDefinedKeys(gw, greetConfig, ['openingTimeAfterInitialLoadSec', 'animationOpeningSec', 'animationClosingSec']);
+  if (gw.inputBox && greetConfig.inputBox) {
+    copyDefinedKeys(gw.inputBox, greetConfig.inputBox, ['openingTimeAfterInitialLoadSec', 'animationOpeningSec']);
   }
+}
 
-  // 2. Update Greet Window Store
-  if (Alpine.store('greetWindow') && config.greetWindow) {
-    let greetWindowConfig = jsonClone(config.greetWindow);
-    if (greetWindowConfig.inputBox) {
-      greetWindowConfig.inputBox = { ...Alpine.store('greetWindow').inputBox, ...greetWindowConfig.inputBox };
-      // Always force input box to be visible in customization mode
-      greetWindowConfig.inputBox.visible = true;
+// Show the greet card (and then the input box) after their configured delays
+function scheduleLitGreetReveal(gwStore, gw, greetDelaySec, inputDelaySec) {
+  window._retriggerGreetTimer = setTimeout(() => {
+    const currentGw = gwStore.get();
+    if (currentGw) {
+      currentGw.visible = true;
+      currentGw.dismissed = false;
+      emitGreetStore(gwStore);
     }
 
-    // Always force greet card to be visible and active in customization mode
-    greetWindowConfig.visible = true;
-    greetWindowConfig.dismissed = false;
-
-    if (greetWindowConfig.useWebsiteTheme === true) {
-      greetWindowConfig.iconColor = theme.primary;
-      if (greetWindowConfig.inputBox) {
-        if (greetWindowConfig.inputBox.layout === 'separated') {
-          greetWindowConfig.inputBox.buttonIconColor = theme.primary;
-        } else {
-          greetWindowConfig.inputBox.buttonColor = theme.primary;
+    // Trigger input card reveal delay countdown
+    if (gw.inputBox?.enabled) {
+      window._retriggerInputTimer = setTimeout(() => {
+        const curGw = gwStore.get();
+        if (curGw?.inputBox) {
+          curGw.inputBox.visible = true;
+          emitGreetStore(gwStore);
         }
-      }
+      }, remainingInputDelayMs(greetDelaySec, inputDelaySec));
     }
-    Object.assign(Alpine.store('greetWindow'), greetWindowConfig);
-  }
+  }, Math.max(50, greetDelaySec * 1000));
+}
 
-  // 3. Update Chatbar Store
-  if (Alpine.store('chatbar') && config.chatbar) {
-    let chatbarConfig = jsonClone(config.chatbar);
+// Lit Web Component widget re-triggering
+function retriggerLitGreetCard(config, greetDelaySec, inputDelaySec) {
+  const gwStore = window.ChatWidgetLit?.greetWindowStore;
+  const gw = gwStore?.get();
+  if (!gw) return;
 
-    // Copy the correct offset fields to offsetRight and offsetBottom dynamically
-    if (chatbarConfig.layout === 'card') {
-      if (chatbarConfig.cardOffsetRight !== undefined && chatbarConfig.cardOffsetRight !== null && chatbarConfig.cardOffsetRight !== '') {
-        chatbarConfig.offsetRight = chatbarConfig.cardOffsetRight;
-      }
-      if (chatbarConfig.cardOffsetBottom !== undefined && chatbarConfig.cardOffsetBottom !== null && chatbarConfig.cardOffsetBottom !== '') {
-        chatbarConfig.offsetBottom = chatbarConfig.cardOffsetBottom;
-      }
-    } else {
-      if (chatbarConfig.barOffsetRight !== undefined && chatbarConfig.barOffsetRight !== null && chatbarConfig.barOffsetRight !== '') {
-        chatbarConfig.offsetRight = chatbarConfig.barOffsetRight;
-      }
-      if (chatbarConfig.barOffsetBottom !== undefined && chatbarConfig.barOffsetBottom !== null && chatbarConfig.barOffsetBottom !== '') {
-        chatbarConfig.offsetBottom = chatbarConfig.barOffsetBottom;
-      }
+  syncGreetStoreFromConfig(gw, config.greetWindow);
+
+  // Reset visibility state
+  gw.visible = false;
+  gw.dismissed = false;
+  if (gw.inputBox) gw.inputBox.visible = false;
+  emitGreetStore(gwStore);
+
+  // Clear existing timers
+  if (window._retriggerGreetTimer) clearTimeout(window._retriggerGreetTimer);
+  if (window._retriggerInputTimer) clearTimeout(window._retriggerInputTimer);
+
+  scheduleLitGreetReveal(gwStore, gw, greetDelaySec, inputDelaySec);
+}
+
+// Alpine fallback widget re-triggering
+function retriggerAlpineGreetCard(greetDelaySec, inputDelaySec) {
+  const greetStore = window.Alpine && Alpine.store('greetWindow');
+  if (!greetStore) return;
+
+  greetStore.visible = false;
+  greetStore.dismissed = false;
+  if (greetStore.inputBox) greetStore.inputBox.visible = false;
+
+  setTimeout(() => {
+    greetStore.visible = true;
+    if (greetStore.inputBox?.enabled) {
+      setTimeout(() => {
+        greetStore.inputBox.visible = true;
+      }, remainingInputDelayMs(greetDelaySec, inputDelaySec));
     }
-
-    Object.assign(Alpine.store('chatbar'), chatbarConfig);
-  }
-
-  // 4. Update Chat Window & Welcome Store
-  if (Alpine.store('chatWindow') && config.chatWindow) {
-    let chatConfig = jsonClone(config.chatWindow);
-    const isDark = document.documentElement.classList.contains('dark') || document.querySelector('.preview-panel').classList.contains('dark-mode');
-
-    if (chatConfig.useWebsiteTheme === true) {
-      chatConfig.accentColor = theme.primary;
-      chatConfig.visitorBubbleBg = theme.primary;
-      chatConfig.visitorBubbleColor = '#ffffff';
-      chatConfig.headerBg = theme.primary;
-      chatConfig.headerTextColor = '#ffffff';
-      chatConfig.headerAvatarBg = 'rgba(255,255,255,0.2)';
-      chatConfig.headerAvatarColor = '#ffffff';
-      chatConfig.agentAvatarBg = theme.primary;
-      chatConfig.agentAvatarColor = '#ffffff';
-      chatConfig.inputFocusBorderColor = theme.primary;
-      chatConfig.inputFocusShadow = `0 0 0 2px ${theme.primary}26`;
-      chatConfig.sendButtonBgActive = theme.primary;
-      chatConfig.poweredByColor = theme.primary;
-      chatConfig.endChatConfirmBg = theme.primary;
-      chatConfig.endChatConfirmTextColor = '#ffffff';
-
-      if (isDark) {
-        chatConfig.bodyBg = 'var(--cw-bg)';
-        chatConfig.inputBg = 'var(--cw-surface)';
-        chatConfig.agentBubbleBg = 'var(--cw-surface)';
-        chatConfig.agentBubbleColor = 'var(--cw-ink)';
-        chatConfig.agentBubbleBorderColor = 'var(--cw-border)';
-        chatConfig.footerBg = 'var(--cw-bg)';
-        chatConfig.footerTextColor = 'var(--cw-muted)';
-        chatConfig.inputTextColor = 'var(--cw-ink)';
-        chatConfig.inputBorderColor = 'var(--cw-border)';
-        chatConfig.attachButtonBg = 'var(--cw-surface)';
-        chatConfig.attachButtonColor = 'var(--cw-muted)';
-        chatConfig.emojiButtonColor = 'var(--cw-muted)';
-        chatConfig.modalCardBg = 'var(--cw-surface)';
-        chatConfig.modalMessageColor = 'var(--cw-ink)';
-        chatConfig.endChatCancelBg = 'var(--cw-surface)';
-        chatConfig.endChatCancelTextColor = 'var(--cw-muted)';
-        chatConfig.endChatCancelBorderColor = 'var(--cw-border)';
-      }
-    }
-
-    const welcomeObj = chatConfig.welcome || Alpine.store('chatWindow')?.welcome;
-    if (welcomeObj) {
-      const welcomeUseTheme = welcomeObj.useWebsiteTheme !== undefined ? welcomeObj.useWebsiteTheme : chatConfig.useWebsiteTheme;
-      const activeAccent = config.accentColor || chatConfig.accentColor || '#0b5fff';
-      if (welcomeUseTheme === true) {
-        const secondaryColor = (theme.secondary && theme.secondary !== theme.primary) ? theme.secondary : theme.primary;
-        welcomeObj.bgGradient = `linear-gradient(135deg, ${theme.primary}, ${secondaryColor})`;
-        welcomeObj.buttonIconColor = theme.primary;
-        chatConfig.welcome = welcomeObj;
-      } else {
-        welcomeObj.bgGradient = createAccentGradient(activeAccent);
-        welcomeObj.buttonIconColor = activeAccent;
-        chatConfig.welcome = welcomeObj;
-      }
-    }
-
-    if (isDark && chatConfig.dark && Object.keys(chatConfig.dark).length > 0) {
-      Object.assign(chatConfig, chatConfig.dark);
-    }
-
-    // Sync features at both top-level and chatWindow level
-    if (!config.features) {
-      config.features = chatConfig.features || {
-        voiceCallMaster: false,
-        voiceCallAgents: false,
-        voiceCallVisitors: false,
-        videoCallMaster: false,
-        videoCallAgents: false,
-        videoCallVisitors: false,
-        disableVisitorCamera: false,
-        closeChatVisitor: false,
-        averageQueueTime: 1,
-        chatAcceptanceTime: 5
-      };
-    }
-    chatConfig.features = config.features;
-    if (Alpine.store('features')) {
-      Object.assign(Alpine.store('features'), config.features);
-    }
-
-    Object.assign(Alpine.store('chatWindow'), chatConfig);
-    if (Alpine.store('chatcontactv2')) {
-      Object.assign(Alpine.store('chatcontactv2'), chatConfig);
-    }
-
-    // Sync Chat general info
-    const chatStore = Alpine.store('chat');
-    if (chatStore) {
-      if (chatConfig.clientName) chatStore.clientName = chatConfig.clientName;
-      if (chatConfig.agentName) {
-        chatStore.agentName = chatConfig.agentName;
-        if (chatStore.messages?.[0]?.senderType === 'AGENT') { chatStore.messages[0].senderName = chatConfig.agentName; }
-      }
-
-      // Dynamically switch active view to welcome or active based on checkbox toggle if user hasn't sent messages
-      if (!chatStore.hasSentMessage && chatConfig.welcome) {
-        const targetState = (chatConfig.welcome.enabled === true) ? 'welcome' : 'active';
-        if (window.lastWelcomeEnabled === undefined || window.lastWelcomeEnabled !== chatConfig.welcome.enabled) {
-          window.lastWelcomeEnabled = chatConfig.welcome.enabled;
-          chatStore.state = targetState;
-        }
-      }
-    }
-  }
+  }, Math.max(50, greetDelaySec * 1000));
 }
 
 // Retrigger entrance transition & appearance delay for greeting card
@@ -2652,85 +2798,8 @@ function retriggerGreetCard() {
   const greetDelaySec = Math.max(0, Number.parseFloat(config.greetWindow?.openingTimeAfterInitialLoadSec ?? 2));
   const inputDelaySec = Math.max(0, Number.parseFloat(config.greetWindow?.inputBox?.openingTimeAfterInitialLoadSec ?? 4));
 
-  // 1. Lit Web Component widget re-triggering
-  if (window.ChatWidgetLit?.greetWindowStore) {
-    const gwStore = window.ChatWidgetLit.greetWindowStore;
-    const gw = gwStore.get();
-    if (gw) {
-      // Sync latest delay and animation configuration
-      if (config.greetWindow) {
-        if (config.greetWindow.openingTimeAfterInitialLoadSec !== undefined) {
-          gw.openingTimeAfterInitialLoadSec = config.greetWindow.openingTimeAfterInitialLoadSec;
-        }
-        if (config.greetWindow.animationOpeningSec !== undefined) {
-          gw.animationOpeningSec = config.greetWindow.animationOpeningSec;
-        }
-        if (config.greetWindow.animationClosingSec !== undefined) {
-          gw.animationClosingSec = config.greetWindow.animationClosingSec;
-        }
-        if (gw.inputBox && config.greetWindow.inputBox) {
-          if (config.greetWindow.inputBox.openingTimeAfterInitialLoadSec !== undefined) {
-            gw.inputBox.openingTimeAfterInitialLoadSec = config.greetWindow.inputBox.openingTimeAfterInitialLoadSec;
-          }
-          if (config.greetWindow.inputBox.animationOpeningSec !== undefined) {
-            gw.inputBox.animationOpeningSec = config.greetWindow.inputBox.animationOpeningSec;
-          }
-        }
-      }
-
-      // Reset visibility state
-      gw.visible = false;
-      gw.dismissed = false;
-      if (gw.inputBox) gw.inputBox.visible = false;
-      if (typeof gwStore.emit === 'function') gwStore.emit('store:greetWindow');
-
-      // Clear existing timers
-      if (window._retriggerGreetTimer) clearTimeout(window._retriggerGreetTimer);
-      if (window._retriggerInputTimer) clearTimeout(window._retriggerInputTimer);
-
-      // Trigger appearance delay countdown
-      window._retriggerGreetTimer = setTimeout(() => {
-        const currentGw = gwStore.get();
-        if (currentGw) {
-          currentGw.visible = true;
-          currentGw.dismissed = false;
-          if (typeof gwStore.emit === 'function') gwStore.emit('store:greetWindow');
-        }
-
-        // Trigger input card reveal delay countdown
-        if (gw.inputBox?.enabled) {
-          const remainingInputDelayMs = Math.max(0, (inputDelaySec - greetDelaySec) * 1000);
-          window._retriggerInputTimer = setTimeout(() => {
-            const curGw = gwStore.get();
-            if (curGw?.inputBox) {
-              curGw.inputBox.visible = true;
-              if (typeof gwStore.emit === 'function') gwStore.emit('store:greetWindow');
-            }
-          }, remainingInputDelayMs);
-        }
-      }, Math.max(50, greetDelaySec * 1000));
-    }
-  }
-
-  // 2. Alpine fallback widget re-triggering
-  if (window.Alpine && Alpine.store('greetWindow')) {
-    const greetStore = Alpine.store('greetWindow');
-    if (greetStore) {
-      greetStore.visible = false;
-      greetStore.dismissed = false;
-      if (greetStore.inputBox) greetStore.inputBox.visible = false;
-
-      setTimeout(() => {
-        greetStore.visible = true;
-        if (greetStore.inputBox?.enabled) {
-          const remainingInputDelayMs = Math.max(0, (inputDelaySec - greetDelaySec) * 1000);
-          setTimeout(() => {
-            greetStore.inputBox.visible = true;
-          }, remainingInputDelayMs);
-        }
-      }, Math.max(50, greetDelaySec * 1000));
-    }
-  }
+  retriggerLitGreetCard(config, greetDelaySec, inputDelaySec);
+  retriggerAlpineGreetCard(greetDelaySec, inputDelaySec);
 }
 
 // Reset/restart conversation session simulation
@@ -2920,6 +2989,7 @@ window.setGradientStop = function (section, index, color) {
   if (!window.cutomizationConfig[section]) {
     window.cutomizationConfig[section] = {};
   }
+  if (section === 'bubble') releaseBubbleWebsiteTheme();
   if (!window.cutomizationConfig[section].gradientStops) {
     window.cutomizationConfig[section].gradientStops = [
       { color: '#0b5fff', pos: 0 },
@@ -3082,40 +3152,45 @@ function bindTicketFormCounters() {
   bindCharCounter(subheadingInput, document.getElementById('subheading-char-count'), triggerTicketPreview);
 }
 
+// Lit widget: open the panel on the pre-chat / post-chat form
+function showLitFormPreview(formType) {
+  if (!window.ChatWidgetLit?.chatStore) return;
+  const rootEl = document.querySelector('cw-widget-root');
+  const isPostchat = formType === 'postchat';
+  const cs = window.ChatWidgetLit.chatStore.get();
+  if (cs) {
+    cs.panelOpen = true;
+    cs.state = isPostchat ? 'postchat' : 'prechat';
+    if (rootEl) {
+      if (isPostchat) rootEl.postchatEnabled = true;
+      else rootEl.prechatEnabled = true;
+    }
+  }
+  if (rootEl) {
+    rootEl.panelOpen = true;
+    if (typeof rootEl.requestUpdate === 'function') rootEl.requestUpdate();
+  }
+}
+
+// Alpine fallback widget: open the panel on the pre-chat / post-chat form
+function showAlpineFormPreview(formType) {
+  if (!(window.Alpine && Alpine.store('chat'))) return;
+  const widgetContainer = document.getElementById('zotly-widget-embed');
+  if (widgetContainer?._x_dataStack?.[0]) {
+    widgetContainer._x_dataStack[0].openContactWidget = true;
+  }
+  Alpine.store('chat').panelOpen = true;
+  Alpine.store('chat').state = (formType === 'postchat') ? 'postchat' : 'prechat';
+}
+
 // Trigger Pre-Chat / Post-Chat form live preview on Lit Web Component
 function showFormInLivePreview(formType) {
   const widgetEmbed = document.getElementById('zotly-widget-embed') || document.querySelector('cw-widget-root');
   if (widgetEmbed) {
     widgetEmbed.style.display = 'block';
   }
-
-  const rootEl = document.querySelector('cw-widget-root');
-  if (window.ChatWidgetLit?.chatStore) {
-    const cs = window.ChatWidgetLit.chatStore.get();
-    if (cs) {
-      cs.panelOpen = true;
-      if (formType === 'postchat') {
-        cs.state = 'postchat';
-        if (rootEl) rootEl.postchatEnabled = true;
-      } else {
-        cs.state = 'prechat';
-        if (rootEl) rootEl.prechatEnabled = true;
-      }
-    }
-    if (rootEl) {
-      rootEl.panelOpen = true;
-      if (typeof rootEl.requestUpdate === 'function') rootEl.requestUpdate();
-    }
-  }
-
-  if (window.Alpine && Alpine.store('chat')) {
-    const widgetContainer = document.getElementById('zotly-widget-embed');
-    if (widgetContainer?._x_dataStack?.[0]) {
-      widgetContainer._x_dataStack[0].openContactWidget = true;
-    }
-    Alpine.store('chat').panelOpen = true;
-    Alpine.store('chat').state = (formType === 'postchat') ? 'postchat' : 'prechat';
-  }
+  showLitFormPreview(formType);
+  showAlpineFormPreview(formType);
 }
 
 // Post chat form toggle select visibility & preview trigger
