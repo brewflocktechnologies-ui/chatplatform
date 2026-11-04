@@ -20,12 +20,15 @@ test.describe('Billing & Plans', () => {
   test.describe.configure({ mode: 'serial', timeout: 120_000 });
   test.beforeAll(async () => {
     test.setTimeout(90_000);
-    let ok = false;
+    // With IS_MOCK=true the app serves the in-memory billing mock, not the service.
+    let ok = process.env.IS_MOCK === 'true';
     try {
-      const res = await fetch(`${BILLING_URL}/api/plans?page=0&size=1&sort=id,desc`, {
-        signal: AbortSignal.timeout(60_000)
-      });
-      ok = res.ok;
+      if (!ok) {
+        const res = await fetch(`${BILLING_URL}/api/plans?page=0&size=1&sort=id,desc`, {
+          signal: AbortSignal.timeout(60_000)
+        });
+        ok = res.ok;
+      }
     } catch {
       ok = false;
     }

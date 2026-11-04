@@ -70,8 +70,9 @@ const plans = (): Plan[] =>
     modifiedByUserId: 1
   }));
 
+// Reverse alphabetical by id, and few enough to fit one page: a column sort must visibly reorder them.
 const companies = (): Company[] =>
-  NAMES.map((name, i) => {
+  NAMES.slice(0, 8).reverse().map((name, i) => {
     const [city, state, country, postalCode] = CITIES[i % CITIES.length];
     return {
       id: i + 1,

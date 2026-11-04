@@ -11,9 +11,17 @@ export const BILLING_URL = (
 
 const COMPANIES = `${BILLING_URL}/api/v1/companies`;
 
+/**
+ * With `IS_MOCK=true` the app serves the in-memory billing mock instead of the
+ * service: it is always "reachable", and there is nothing to clean up because it
+ * lives in the app server's memory and resets on every restart.
+ */
+const isMock = () => process.env.IS_MOCK === 'true';
+
 type CompanyRow = { id: number; name: string };
 
 export async function isBillingReachable(): Promise<boolean> {
+  if (isMock()) return true;
   try {
     const res = await fetch(`${COMPANIES}?page=0&size=1&sort=name,asc`, {
       signal: AbortSignal.timeout(60_000)
@@ -39,7 +47,7 @@ async function listAll(): Promise<CompanyRow[]> {
 
 /** Deletes every company whose name starts with `prefix`. Never touches other rows. */
 export async function deleteCompaniesWithPrefix(prefix: string): Promise<number> {
-  if (!prefix) return 0;
+  if (!prefix || isMock()) return 0;
   const doomed = (await listAll()).filter((c) => c.name.startsWith(prefix));
   for (const company of doomed) {
     await fetch(`${COMPANIES}/${company.id}`, {
