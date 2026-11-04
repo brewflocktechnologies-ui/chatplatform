@@ -828,6 +828,11 @@ function bindMessageToolButton(card, selector, textarea, action) {
 
 const MSG_EMOJIS = ['😊', '👋', '💬', '⏳', '✨', '👍'];
 
+function pickRandomEmoji() {
+  const [n] = crypto.getRandomValues(new Uint32Array(1));
+  return MSG_EMOJIS[n % MSG_EMOJIS.length];
+}
+
 function setupMessageAccordionCard(card) {
   const header = card.querySelector('.msg-accordion-header');
   if (!header) return;
@@ -841,9 +846,7 @@ function setupMessageAccordionCard(card) {
   setupMessageCardCounter(card, textarea);
 
   // Emoji, variable tag and formatting / type button handlers
-  bindMessageToolButton(card, '.msg-tool-emoji', textarea, () => {
-    insertTextAtCursor(textarea, MSG_EMOJIS[Math.floor(Math.random() * MSG_EMOJIS.length)]);
-  });
+  bindMessageToolButton(card, '.msg-tool-emoji', textarea, () => insertTextAtCursor(textarea, pickRandomEmoji()));
   bindMessageToolButton(card, '.msg-tool-variable', textarea, () => insertTextAtCursor(textarea, '{agent_name}'));
   bindMessageToolButton(card, '.msg-tool-type', textarea, () => textarea.focus());
 }
@@ -1957,22 +1960,23 @@ function syncGreetThemeControls(toggle) {
   greetTargets.forEach(t => applyGreetThemeTarget(t, on, banner));
 }
 
+// Chat window colors overridden by the website theme regardless of preview theme (light-mode values are forced)
+const CHAT_WINDOW_THEMED_PATHS = [
+  'chatWindow.visitorBubbleBg', 'chatWindow.visitorBubbleColor',
+  'chatWindow.headerBg', 'chatWindow.headerTextColor',
+  'chatWindow.headerAvatarBg', 'chatWindow.headerAvatarColor',
+  'chatWindow.agentAvatarBg', 'chatWindow.agentAvatarColor',
+  'chatWindow.inputFocusBorderColor', 'chatWindow.sendButtonBgActive',
+  'chatWindow.poweredByColor', 'chatWindow.endChatConfirmBg',
+  'chatWindow.endChatConfirmTextColor'
+];
+
 function syncChatWindowThemeControls(toggle, isDark) {
   const on = toggle.checked;
   const banner = '#config-theme-banner';
   applyControlState(document.getElementById('config-accent-color-pick'), document.getElementById('config-accent-color'), document.getElementById('config-accent-color-hint'), on, banner);
 
-  // Overridden regardless of preview theme (light-mode values are forced)
-  const alwaysOverriddenPaths = [
-    'chatWindow.visitorBubbleBg', 'chatWindow.visitorBubbleColor',
-    'chatWindow.headerBg', 'chatWindow.headerTextColor',
-    'chatWindow.headerAvatarBg', 'chatWindow.headerAvatarColor',
-    'chatWindow.agentAvatarBg', 'chatWindow.agentAvatarColor',
-    'chatWindow.inputFocusBorderColor', 'chatWindow.sendButtonBgActive',
-    'chatWindow.poweredByColor', 'chatWindow.endChatConfirmBg',
-    'chatWindow.endChatConfirmTextColor'
-  ];
-  alwaysOverriddenPaths.forEach(path => {
+  CHAT_WINDOW_THEMED_PATHS.forEach(path => {
     const pair = findByPath(path);
     applyControlState(pair.pick, pair.text, null, on, banner);
   });
@@ -2205,18 +2209,37 @@ function applyLinkedPathSync(path, val, input) {
   if (path === 'agentName' || path === 'chatWindow.agentName') syncRootName('agentName', val, input);
 }
 
-// Bubble fields the widget ignores while the bubble follows the website theme
-const BUBBLE_THEME_OVERRIDE_PATHS = new Set([
-  'bubble.backgroundColor',
-  'bubble.gradientType',
-  'bubble.gradientAngle',
-  'bubble.outlineRing.color'
-]);
+// Fields the widget ignores while their component follows the website theme, per component
+const THEME_OVERRIDE_PATHS = {
+  bubble: new Set([
+    'bubble.backgroundColor',
+    'bubble.gradientType',
+    'bubble.gradientAngle',
+    'bubble.outlineRing.color'
+  ]),
+  chatbar: new Set([
+    'chatbar.bgColor',
+    'chatbar.gradientEnabled',
+    'chatbar.gradientType',
+    'chatbar.gradientAngle'
+  ]),
+  greetWindow: new Set([
+    'greetWindow.iconColor',
+    'greetWindow.inputBox.buttonColor',
+    'greetWindow.inputBox.buttonIconColor'
+  ]),
+  chatWindow: new Set(CHAT_WINDOW_THEMED_PATHS)
+};
 
-// Editing a bubble color means the user wants that color, so stop the bubble following the website theme
-function releaseBubbleWebsiteTheme() {
-  const bubble = window.cutomizationConfig?.bubble;
-  if (bubble?.useWebsiteTheme === true) bubble.useWebsiteTheme = false;
+// Editing one of those fields means the user wants that color, so stop the component following the website theme
+function releaseWebsiteThemeForSection(section) {
+  const target = window.cutomizationConfig?.[section];
+  if (target?.useWebsiteTheme === true) target.useWebsiteTheme = false;
+}
+
+function releaseWebsiteThemeForPath(path) {
+  const section = path.split('.')[0];
+  if (THEME_OVERRIDE_PATHS[section]?.has(path)) releaseWebsiteThemeForSection(section);
 }
 
 function handleDataPathInput(input) {
@@ -2226,7 +2249,7 @@ function handleDataPathInput(input) {
   syncColorPairFromInput(input, val);
   setValueByPath(window.cutomizationConfig, path, val);
   applyLinkedPathSync(path, val, input);
-  if (BUBBLE_THEME_OVERRIDE_PATHS.has(path)) releaseBubbleWebsiteTheme();
+  releaseWebsiteThemeForPath(path);
 
   // Update JSON textarea & Alpine / Lit stores
   pushConfigUpdate();
@@ -2989,7 +3012,7 @@ window.setGradientStop = function (section, index, color) {
   if (!window.cutomizationConfig[section]) {
     window.cutomizationConfig[section] = {};
   }
-  if (section === 'bubble') releaseBubbleWebsiteTheme();
+  if (section === 'bubble' || section === 'chatbar') releaseWebsiteThemeForSection(section);
   if (!window.cutomizationConfig[section].gradientStops) {
     window.cutomizationConfig[section].gradientStops = [
       { color: '#0b5fff', pos: 0 },
