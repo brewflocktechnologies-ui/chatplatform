@@ -25,6 +25,11 @@ const baseConfig: NextConfig = {
   //   NEXT_DIST_DIR=.next-prod next build && NEXT_DIST_DIR=.next-prod next start
   distDir: process.env.NEXT_DIST_DIR || '.next',
   transpilePackages: ['geist'],
+  experimental: {
+    // Inline the (single, ~56 KiB) stylesheet into the HTML so it is no longer a
+    // render-blocking request ahead of first paint / LCP. Production builds only.
+    inlineCss: true
+  },
   compiler: {
     removeConsole: process.env.NODE_ENV === 'production'
   }
