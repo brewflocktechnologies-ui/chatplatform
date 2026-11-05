@@ -201,9 +201,9 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className='flex h-full w-full flex-col' role='navigation' aria-label='Main navigation'>
+          <nav className='flex h-full w-full flex-col' aria-label='Main navigation'>
             {children}
-          </div>
+          </nav>
         </SheetContent>
       </Sheet>
     );
@@ -243,15 +243,14 @@ function Sidebar({
         )}
         {...props}
       >
-        <div
+        <nav
           data-sidebar='sidebar'
           data-slot='sidebar-inner'
-          role='navigation'
           aria-label='Main navigation'
           className='flex size-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:shadow-sm group-data-[variant=floating]:ring-1 group-data-[variant=floating]:ring-sidebar-border'
         >
           {children}
-        </div>
+        </nav>
       </div>
     </div>
   );
