@@ -1266,7 +1266,77 @@ function signalMfeReady() {
   }
 }
 
+// The settings markup pairs a visible `.setting-title` with controls in the same
+// `.setting-row`, but never links them, so screen readers announce bare "combo box" /
+// "edit text". Give every unnamed control an accessible name from its row title.
+const CONTROL_KIND_SUFFIX = {
+  color: 'color picker',
+  range: 'slider',
+  number: 'value',
+  file: 'file'
+};
+
+function hasAccessibleName(el) {
+  if (el.hasAttribute('aria-label') || el.hasAttribute('aria-labelledby') || el.title) return true;
+  // A wrapping <label> only names the control when it carries text (toggle switches don't).
+  if (el.closest('label')?.textContent.trim()) return true;
+  return !!(el.id && el.ownerDocument.querySelector(`label[for="${CSS.escape(el.id)}"]`));
+}
+
+function humanizePath(path) {
+  const last = (path || '').split('.').pop() || '';
+  return last.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
+}
+
+const cleanText = (node) => node?.textContent.trim().replace(/\s+/g, ' ') || '';
+
+// The visible title for a control: `.setting-title` in its row, otherwise the leading
+// heading-like block of the nearest ancestor that has one before the control.
+function findControlTitle(el) {
+  const row = el.closest('.setting-row');
+  const rowTitle = cleanText(row?.querySelector('.setting-title'));
+  if (rowTitle) return { title: rowTitle, scope: row };
+  for (let node = el.parentElement, depth = 0; node && depth < 6; node = node.parentElement, depth++) {
+    const lead = node.firstElementChild;
+    if (!lead || lead.contains(el)) continue;
+    const text = cleanText(lead.firstElementChild || lead);
+    if (text && text.length <= 80) return { title: text, scope: node };
+  }
+  return { title: '', scope: el.parentElement };
+}
+
+function labelUnnamedControls(root = document) {
+  const controls = [...root.querySelectorAll('input, select, textarea')].filter(
+    (el) => !['hidden', 'button', 'submit', 'reset', 'image'].includes(el.type) && !hasAccessibleName(el)
+  );
+  const groups = new Map();
+  controls.forEach((el) => {
+    const { title, scope } = findControlTitle(el);
+    if (!groups.has(scope)) groups.set(scope, { title, els: [] });
+    groups.get(scope).els.push(el);
+  });
+
+  groups.forEach(({ title, els }) => {
+    const used = new Map();
+    els.forEach((el, i) => {
+      const base = title || humanizePath(el.dataset.path) || el.placeholder || 'Setting';
+      let detail = CONTROL_KIND_SUFFIX[el.type] || '';
+      if (el.classList.contains('color-picker-text')) detail = 'hex value';
+      else if (el.tagName === 'TEXTAREA') detail = '';
+      // Several controls share one title: tell them apart.
+      if (!detail && els.length > 1 && el.type !== 'checkbox') detail = el.placeholder || `field ${i + 1}`;
+      const label = detail ? `${base} (${detail})` : base;
+      const n = (used.get(label) || 0) + 1;
+      used.set(label, n);
+      // Identical siblings (e.g. top/right/bottom/left) get a position number.
+      el.setAttribute('aria-label', n > 1 ? `${label} ${n}` : label);
+    });
+  });
+}
+
 async function initCustomizationApp() {
+  labelUnnamedControls();
+
   // 1. Setup collapsible accordions dynamically
   setupAccordionSections();
   setupSubSectionToggles();
