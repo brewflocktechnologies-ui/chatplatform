@@ -73,6 +73,7 @@ const columns: ColumnDef<PocWebsite>[] = [
   },
   {
     id: 'actions',
+    header: () => <span className='sr-only'>Actions</span>,
     cell: ({ row }) => <PocWebsiteCellAction data={row.original} />
   }
 ];

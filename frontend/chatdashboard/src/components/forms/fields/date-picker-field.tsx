@@ -42,7 +42,7 @@ export function DatePickerField({
               aria-describedby={isInvalid ? `${field.name}-error` : undefined}
               className={cn(
                 'w-full justify-start text-left font-normal',
-                !field.state.value && 'text-muted-foreground/60'
+                !field.state.value && 'text-muted-foreground'
               )}
             />
           }
@@ -99,7 +99,7 @@ export function DateRangeField({
               aria-describedby={isInvalid ? `${field.name}-error` : undefined}
               className={cn(
                 'w-full justify-start text-left font-normal',
-                !range?.from && 'text-muted-foreground/60'
+                !range?.from && 'text-muted-foreground'
               )}
             />
           }

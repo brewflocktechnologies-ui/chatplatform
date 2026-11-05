@@ -16,7 +16,7 @@ export default async function CompanyPage(props: Readonly<PageProps>) {
   searchParamsCache.parse(searchParams);
 
   return (
-    <PageContainer>
+    <PageContainer srTitle='Company'>
       <CompanyListing />
     </PageContainer>
   );

@@ -64,6 +64,7 @@ const columns: ColumnDef<PocConfig>[] = [
   },
   {
     id: 'actions',
+    header: () => <span className='sr-only'>Actions</span>,
     cell: ({ row }) => <PocConfigCellAction data={row.original} />
   }
 ];

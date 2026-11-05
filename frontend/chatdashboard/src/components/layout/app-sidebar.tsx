@@ -49,6 +49,10 @@ const CreditCardIcon = Icons.creditCard;
 const NotificationIcon = Icons.notification;
 const LogoutIcon = Icons.logout;
 
+/** Accessible name for a nav link: the title plus the visible "API" tag, so the label contains the visible text. */
+const navLabel = (item: { title: string; api?: boolean }) =>
+  item.api ? `${item.title} API` : item.title;
+
 /** Superscript tag for tabs that read from the billing API. Hidden when the sidebar is icon-only. */
 function ApiTag() {
   return (
@@ -56,6 +60,7 @@ function ApiTag() {
       title='Uses the billing API'
       className='-ml-1 self-start text-[0.55rem] leading-none font-semibold tracking-wide text-muted-foreground uppercase group-data-[collapsible=icon]:hidden'
     >
+      {/* The leading space keeps the visible text "Customers API", matching the link's name. */}{' '}
       API
     </sup>
   );
@@ -128,7 +133,7 @@ export default function AppSidebar() {
                         {item.items?.map((subItem) => (
                           <SidebarMenuSubItem key={subItem.title}>
                             <SidebarMenuSubButton
-                              render={<Link href={subItem.url} aria-label={subItem.title} />}
+                              render={<Link href={subItem.url} aria-label={navLabel(subItem)} />}
                               isActive={pathname === subItem.url}
                             >
                               <span>{subItem.title}</span>
@@ -142,7 +147,7 @@ export default function AppSidebar() {
                 ) : (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton
-                      render={<Link href={item.url} aria-label={item.title} />}
+                      render={<Link href={item.url} aria-label={navLabel(item)} />}
                       tooltip={item.title}
                       isActive={pathname === item.url}
                     >

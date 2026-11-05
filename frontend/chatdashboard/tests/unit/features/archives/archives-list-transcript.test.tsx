@@ -131,7 +131,7 @@ describe('ArchivesList', () => {
     render(<ArchivesList chats={chats} selectedId='' onSelect={vi.fn()} totalCount={3} />);
     fireEvent.click(screen.getByRole('menuitem', { name: 'Oldest' }));
     expect(names()).toEqual(['Tom', 'Zed', 'Amy']);
-    expect(screen.getByLabelText('Sort chats')).toHaveTextContent('Oldest');
+    expect(screen.getByLabelText(/^Sort chats/)).toHaveTextContent('Oldest');
     fireEvent.click(screen.getByRole('menuitem', { name: 'Newest' }));
     expect(names()).toEqual(['Amy', 'Zed', 'Tom']);
   });

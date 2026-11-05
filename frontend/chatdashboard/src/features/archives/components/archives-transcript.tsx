@@ -73,6 +73,7 @@ export function ArchivesTranscript({
                 <Button
                   variant='ghost'
                   size='icon-sm'
+                  aria-label='Link or merge conversation'
                   className='h-8 w-8 text-muted-foreground hover:text-foreground'
                 />
               }
@@ -88,6 +89,7 @@ export function ArchivesTranscript({
                 <Button
                   variant='ghost'
                   size='icon-sm'
+                  aria-label='More conversation actions'
                   className='h-8 w-8 text-muted-foreground hover:text-foreground'
                 />
               }

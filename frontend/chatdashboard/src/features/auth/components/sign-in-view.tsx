@@ -12,7 +12,7 @@ export const metadata: Metadata = {
 
 export default function SignInViewPage() {
   return (
-    <div className='relative flex min-h-screen flex-col items-center justify-center overflow-hidden md:grid lg:max-w-none lg:grid-cols-2 lg:px-0'>
+    <main className='relative flex min-h-screen flex-col items-center justify-center overflow-hidden md:grid lg:max-w-none lg:grid-cols-2 lg:px-0'>
       <Link
         href='/examples/authentication'
         className={cn(
@@ -59,6 +59,6 @@ export default function SignInViewPage() {
           <MockLoginForm />
         </div>
       </div>
-    </div>
+    </main>
   );
 }

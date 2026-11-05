@@ -26,6 +26,22 @@ describe('AuthGuard', () => {
     expect(replace).not.toHaveBeenCalled();
   });
 
+  it('renders the page while loading when the server saw the signed-in hint', () => {
+    auth.isLoaded = false;
+    auth.isAuthenticated = false;
+    render(<AuthGuard signedInHint>secret</AuthGuard>);
+    expect(screen.getByText('secret')).toBeInTheDocument();
+    expect(replace).not.toHaveBeenCalled();
+  });
+
+  it('drops the page and redirects once a stale hint is disproved', () => {
+    auth.isLoaded = true;
+    auth.isAuthenticated = false;
+    const { container } = render(<AuthGuard signedInHint>secret</AuthGuard>);
+    expect(container).toBeEmptyDOMElement();
+    expect(replace).toHaveBeenCalledWith('/auth/sign-in');
+  });
+
   it('redirects to sign-in when loaded but unauthenticated', () => {
     auth.isLoaded = true;
     auth.isAuthenticated = false;

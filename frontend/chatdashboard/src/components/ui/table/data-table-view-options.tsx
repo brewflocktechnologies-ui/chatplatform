@@ -39,7 +39,7 @@ export function DataTableViewOptions<TData>({ table }: Readonly<DataTableViewOpt
       <PopoverTrigger
         render={
           <Button
-            aria-label='Toggle columns'
+            aria-label='View columns'
             variant='outline'
             size='sm'
             className='ml-auto hidden h-8 lg:flex'

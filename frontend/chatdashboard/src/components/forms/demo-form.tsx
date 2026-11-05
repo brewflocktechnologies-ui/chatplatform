@@ -77,9 +77,9 @@ function SectionTitle({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
     <div className='space-y-1'>
       <Separator />
-      <h3 className='text-muted-foreground pt-2 text-sm font-medium tracking-wide uppercase'>
+      <h2 className='text-muted-foreground pt-2 text-sm font-medium tracking-wide uppercase'>
         {children}
-      </h3>
+      </h2>
     </div>
   );
 }

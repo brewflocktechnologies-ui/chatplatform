@@ -78,7 +78,9 @@ export default async function WidgetPage() {
                   <TableHead>Conversations</TableHead>
                   <TableHead>Last activity</TableHead>
                   <TableHead className='text-right'>Config</TableHead>
-                  <TableHead className='w-12' />
+                  <TableHead className='w-12'>
+                    <span className='sr-only'>Expand</span>
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>

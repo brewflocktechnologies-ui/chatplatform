@@ -31,8 +31,12 @@ export function UserDropdown() {
   const { user, logout } = useMockAuth();
   const { acceptChats, toggleAcceptChats } = useUserStatus();
   const [isOpen, setIsOpen] = React.useState(false);
+  // The theme is only known on the client, so render nothing until after mount: the server HTML
+  // and the first client render then agree and hydration does not fail.
+  const [mounted, setMounted] = React.useState(false);
+  React.useEffect(() => setMounted(true), []);
 
-  if (!resolvedTheme) return null;
+  if (!mounted || !resolvedTheme) return null;
 
   const isDark = resolvedTheme === 'dark';
 

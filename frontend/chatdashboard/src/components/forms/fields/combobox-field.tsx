@@ -64,7 +64,7 @@ export function ComboboxField({
               aria-describedby={isInvalid ? `${field.name}-error` : undefined}
               className={cn(
                 'w-full justify-between font-normal',
-                !selected && 'text-muted-foreground/60'
+                !selected && 'text-muted-foreground'
               )}
             />
           }

@@ -328,7 +328,9 @@ export function PlanAdmin() {
                 />
                 <TableHead className='w-[17%]'>Annual saving</TableHead>
                 <TableHead className='w-[11%]'>Active</TableHead>
-                <TableHead className='w-[8%]' />
+                <TableHead className='w-[8%]'>
+                  <span className='sr-only'>Actions</span>
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -98,24 +98,19 @@ export const NotificationCard: FC<NotificationCardProps> = ({
           <div className='min-w-0 flex-1 space-y-1'>
             {/* Title with unread indicator */}
             <div className='flex items-center gap-2'>
-              <h3
+              <h2
                 className={cn(
                   'text-[15px] leading-tight font-semibold',
                   isUnread ? 'text-foreground' : 'text-muted-foreground'
                 )}
               >
                 {title}
-              </h3>
+              </h2>
               {isUnread && <div className='h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sky-500' />}
             </div>
 
             {/* Description */}
-            <p
-              className={cn(
-                'mb-0 text-[13px]',
-                isUnread ? 'text-muted-foreground' : 'text-muted-foreground/60'
-              )}
-            >
+            <p className='mb-0 text-[13px] text-muted-foreground'>
               {body}
             </p>
           </div>
@@ -178,7 +173,7 @@ export const NotificationCard: FC<NotificationCardProps> = ({
 
           {/* Timestamp */}
           {createdAt && (
-            <span className='text-muted-foreground/60 inline-block text-[11px]'>
+            <span className='text-muted-foreground inline-block text-[11px]'>
               {formatDate(createdAt)}
             </span>
           )}

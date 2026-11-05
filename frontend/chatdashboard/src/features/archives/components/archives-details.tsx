@@ -138,7 +138,11 @@ export function ArchivesDetails({
           <div className='space-y-3 pt-1'>
             <div className='flex items-center justify-between'>
               <h4 className='text-xs font-semibold text-foreground tracking-tight'>General info</h4>
-              <button type='button' className='text-muted-foreground hover:text-foreground'>
+              <button
+                type='button'
+                aria-label='General info options'
+                className='text-muted-foreground hover:text-foreground'
+              >
                 <MoreHorizontalIcon className='h-4 w-4' />
               </button>
             </div>

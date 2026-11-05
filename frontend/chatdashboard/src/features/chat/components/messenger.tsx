@@ -153,6 +153,7 @@ export function Messenger() {
 
   return (
     <div className='flex h-full w-full overflow-hidden bg-background'>
+      <h1 className='sr-only'>Live chat dashboard</h1>
       {/* 1. Left Conversations Sidebar */}
       <ConversationList
         conversations={conversations}

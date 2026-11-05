@@ -12,9 +12,37 @@ const wrapper = ({ children }: { children: React.ReactNode }) => (
   <MockAuthProvider>{children}</MockAuthProvider>
 );
 
+const hintCookie = () => document.cookie.split('; ').find((c) => c.startsWith('mock_auth='));
+
 beforeEach(() => {
   push.mockReset();
   localStorage.clear();
+  document.cookie = 'mock_auth=; path=/; max-age=0';
+});
+
+describe('signed-in cookie hint', () => {
+  it('is set for a stored session (also one that predates the cookie)', async () => {
+    localStorage.setItem('mock_auth_user', JSON.stringify(DEMO_USER));
+    const { result } = renderHook(() => useMockAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+    expect(hintCookie()).toBe('mock_auth=1');
+  });
+
+  it('is cleared when there is no stored session', async () => {
+    document.cookie = 'mock_auth=1; path=/';
+    const { result } = renderHook(() => useMockAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+    expect(hintCookie()).toBeUndefined();
+  });
+
+  it('is set by login and cleared by logout', async () => {
+    const { result } = renderHook(() => useMockAuth(), { wrapper });
+    await waitFor(() => expect(result.current.isLoaded).toBe(true));
+    act(() => result.current.login('Jane'));
+    expect(hintCookie()).toBe('mock_auth=1');
+    act(() => result.current.logout());
+    expect(hintCookie()).toBeUndefined();
+  });
 });
 
 describe('useMockAuth', () => {

@@ -290,7 +290,7 @@ export function WidgetModifierView() {
         <div className='flex items-center gap-1.5'>
           <span className='text-muted-foreground text-xs font-medium'>Customer</span>
           <Select value={params.customerId ?? ''} onValueChange={handleCustomerChange}>
-            <SelectTrigger className='h-8 w-44 text-xs'>
+            <SelectTrigger aria-label='Customer' className='h-8 w-44 text-xs'>
               <SelectValue placeholder='Select customer' />
             </SelectTrigger>
             <SelectContent>
@@ -309,7 +309,7 @@ export function WidgetModifierView() {
             <Icons.spinner className='text-muted-foreground h-4 w-4 animate-spin' />
           ) : (
             <Select value={params.websiteId ?? ''} onValueChange={handleWebsiteChange}>
-              <SelectTrigger className='h-8 w-44 text-xs'>
+              <SelectTrigger aria-label='Website' className='h-8 w-44 text-xs'>
                 <SelectValue
                   placeholder={params.customerId ? 'Select website' : 'Pick a customer first'}
                 />
@@ -470,7 +470,7 @@ export function WidgetModifierView() {
             <div className='bg-background mb-4 flex h-14 w-14 items-center justify-center rounded-2xl border'>
               <Icons.globe className='text-primary/70 h-7 w-7' />
             </div>
-            <h3 className='mb-1 text-base font-semibold'>Select a customer and website</h3>
+            <h2 className='mb-1 text-base font-semibold'>Select a customer and website</h2>
             <p className='text-muted-foreground max-w-sm text-xs'>
               Pick a customer and target website from the toolbar to customize and save the widget
               configuration.

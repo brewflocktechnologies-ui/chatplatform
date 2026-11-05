@@ -42,6 +42,7 @@ export default function ArchivesView() {
 
   return (
     <div className='flex h-[calc(100dvh-4rem)] w-full overflow-hidden border-t border-border/60 bg-background'>
+      <h1 className='sr-only'>Chat archives</h1>
       {/* 1. Left Archives Sidebar */}
       <ArchivesList
         chats={chats}

@@ -17,7 +17,7 @@ export default async function WebsitesPage(props: Readonly<PageProps>) {
   searchParamsCache.parse(searchParams);
 
   return (
-    <PageContainer infoContent={websitesInfoContent}>
+    <PageContainer srTitle='Websites' infoContent={websitesInfoContent}>
       <WebsiteListingPage />
     </PageContainer>
   );

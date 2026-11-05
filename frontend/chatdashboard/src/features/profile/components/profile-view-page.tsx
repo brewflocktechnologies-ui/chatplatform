@@ -30,6 +30,7 @@ export default function ProfileViewPage() {
 
   return (
     <div className='flex w-full flex-col p-4'>
+      <h1 className='sr-only'>Profile</h1>
       <Card className='max-w-xl'>
         <CardHeader>
           <CardTitle>Profile</CardTitle>

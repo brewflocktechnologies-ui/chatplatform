@@ -176,7 +176,7 @@ export function ArchivesList({
             render={
               <button
                 type='button'
-                aria-label='Sort chats'
+                aria-label={`Sort chats: ${sortOrder === 'newest' ? 'Newest' : 'Oldest'}`}
                 className='flex items-center gap-1 font-medium text-foreground/80 hover:text-foreground'
               />
             }
@@ -252,7 +252,7 @@ export function ArchivesList({
                         className={cn(
                           'h-4.5 px-1.5 py-0 text-[10px] font-normal border',
                           tag === 'lead'
-                            ? 'bg-amber-500/10 text-amber-700 dark:text-amber-300 border-amber-500/20'
+                            ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-500/20'
                             : 'bg-blue-500/10 text-blue-700 dark:text-blue-300 border-blue-500/20'
                         )}
                       >
