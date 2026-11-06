@@ -9,11 +9,16 @@ import { useChatStore } from '../utils/store';
 
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+const ChevronLeftIcon = Icons.chevronLeft;
+const PhoneIcon = Icons.phone;
+const VideoIcon = Icons.video;
+const EllipsisIcon = Icons.ellipsis;
+
 interface ChatHeaderProps {
-  conversation: Conversation;
-  isDetailsOpen?: boolean;
-  onToggleDetails?: () => void;
-  onBack?: () => void;
+  readonly conversation: Conversation;
+  readonly isDetailsOpen?: boolean;
+  readonly onToggleDetails?: () => void;
+  readonly onBack?: () => void;
 }
 
 export function ChatHeader({
@@ -21,7 +26,7 @@ export function ChatHeader({
   isDetailsOpen,
   onToggleDetails,
   onBack
-}: ChatHeaderProps) {
+}: Readonly<ChatHeaderProps>) {
   const typingMap = useChatStore((state) => state.typingMap);
   const isTyping = !!typingMap[conversation.id];
 
@@ -37,7 +42,7 @@ export function ChatHeader({
             className='md:hidden h-8 w-8 -ml-1 text-muted-foreground hover:text-foreground shrink-0'
             aria-label='Back to conversations'
           >
-            <Icons.chevronLeft className='h-4 w-4' />
+            <ChevronLeftIcon className='h-4 w-4' />
           </Button>
         )}
 
@@ -64,7 +69,7 @@ export function ChatHeader({
             {conversation.status === 'online' && !isTyping && (
               <span className='inline-flex items-center gap-1 text-[10px] font-medium text-emerald-600 dark:text-emerald-400 shrink-0'>
                 <span className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse' />
-                online
+                <span>online</span>
               </span>
             )}
           </div>
@@ -106,7 +111,7 @@ export function ChatHeader({
               />
             }
           >
-            <Icons.phone className='h-3.5 w-3.5' />
+            <PhoneIcon className='h-3.5 w-3.5' />
           </TooltipTrigger>
           <TooltipContent>Start audio call</TooltipContent>
         </Tooltip>
@@ -123,7 +128,7 @@ export function ChatHeader({
               />
             }
           >
-            <Icons.video className='h-3.5 w-3.5' />
+            <VideoIcon className='h-3.5 w-3.5' />
           </TooltipTrigger>
           <TooltipContent>Start video call</TooltipContent>
         </Tooltip>
@@ -140,7 +145,7 @@ export function ChatHeader({
               />
             }
           >
-            <Icons.ellipsis className='h-3.5 w-3.5' />
+            <EllipsisIcon className='h-3.5 w-3.5' />
           </TooltipTrigger>
           <TooltipContent>More options</TooltipContent>
         </Tooltip>

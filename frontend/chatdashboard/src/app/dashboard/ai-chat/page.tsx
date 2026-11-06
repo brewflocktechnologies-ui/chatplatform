@@ -7,7 +7,7 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <PageContainer>
+    <PageContainer srTitle='AI Chat'>
       <AiChatDemo />
     </PageContainer>
   );

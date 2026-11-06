@@ -10,7 +10,7 @@ export class CwFormField extends LitElement {
   @property({ type: String }) error = '';
   @property({ type: Boolean }) disabled = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {
@@ -129,12 +129,65 @@ export class CwFormField extends LitElement {
     );
   }
 
+  private renderControl(f: FormField, ctrlClass: string) {
+    if (f.type === 'textarea') {
+      return html`
+        <textarea
+          id="${f.name}"
+          name="${f.name}"
+          class="${ctrlClass}"
+          rows="${f.rows || 3}"
+          placeholder="${f.placeholder || ''}"
+          .value="${this.value}"
+          ?disabled="${this.disabled}"
+          @input="${this.handleInput}"
+        ></textarea>
+      `;
+    }
+
+    if (f.type === 'select') {
+      return html`
+        <select
+          id="${f.name}"
+          name="${f.name}"
+          class="${ctrlClass}"
+          .value="${this.value}"
+          ?disabled="${this.disabled}"
+          @change="${this.handleInput}"
+        >
+          ${f.placeholder ? html`<option value="" disabled ?selected="${!this.value}">${f.placeholder}</option>` : ''}
+          ${(f.options || []).map(
+            (opt) => html`
+              <option value="${opt.value}" ?selected="${this.value === opt.value}">
+                ${opt.label}
+              </option>
+            `
+          )}
+        </select>
+      `;
+    }
+
+    return html`
+      <input
+        id="${f.name}"
+        name="${f.name}"
+        type="${f.type || 'text'}"
+        class="${ctrlClass}"
+        placeholder="${f.placeholder || ''}"
+        .value="${this.value}"
+        ?disabled="${this.disabled}"
+        @input="${this.handleInput}"
+      />
+    `;
+  }
+
   render() {
     if (!this.field) return html``;
 
     const f = this.field;
     const isError = !!this.error;
     const ctrlClass = `input-ctrl ${isError ? 'has-error' : ''}`;
+    const requiredMark = f.required ? html`<span class="req-asterisk">*</span>` : '';
 
     return html`
       <div class="field-container">
@@ -142,58 +195,13 @@ export class CwFormField extends LitElement {
           ? html`
               <label for="${f.name}">
                 <span>${f.label}</span>
-                ${f.required ? html`<span class="req-asterisk">*</span>` : ''}
+                ${requiredMark}
               </label>
             `
           : ''
         }
 
-        ${f.type === 'textarea'
-          ? html`
-              <textarea
-                id="${f.name}"
-                name="${f.name}"
-                class="${ctrlClass}"
-                rows="${f.rows || 3}"
-                placeholder="${f.placeholder || ''}"
-                .value="${this.value}"
-                ?disabled="${this.disabled}"
-                @input="${this.handleInput}"
-              ></textarea>
-            `
-          : f.type === 'select'
-          ? html`
-              <select
-                id="${f.name}"
-                name="${f.name}"
-                class="${ctrlClass}"
-                .value="${this.value}"
-                ?disabled="${this.disabled}"
-                @change="${this.handleInput}"
-              >
-                ${f.placeholder ? html`<option value="" disabled ?selected="${!this.value}">${f.placeholder}</option>` : ''}
-                ${(f.options || []).map(
-                  (opt) => html`
-                    <option value="${opt.value}" ?selected="${this.value === opt.value}">
-                      ${opt.label}
-                    </option>
-                  `
-                )}
-              </select>
-            `
-          : html`
-              <input
-                id="${f.name}"
-                name="${f.name}"
-                type="${f.type || 'text'}"
-                class="${ctrlClass}"
-                placeholder="${f.placeholder || ''}"
-                .value="${this.value}"
-                ?disabled="${this.disabled}"
-                @input="${this.handleInput}"
-              />
-            `
-        }
+        ${this.renderControl(f, ctrlClass)}
 
         ${isError
           ? html`

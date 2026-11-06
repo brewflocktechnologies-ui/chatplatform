@@ -1,9 +1,33 @@
 import { LitElement, html, css } from 'lit';
 import { customElement, property } from 'lit/decorators.js';
 import type { WelcomeConfig } from '../../store/types.js';
+import { cssLength } from '../../utils/style-helpers.js';
 import { REDUCED_MOTION_CSS } from '../../tokens/accessibility.js';
 import '../atoms/cw-icon.js';
 import './cw-avatar.js';
+
+type Alignments = { logoAlign: string; textAlign: string; avatarAlign: string };
+
+/** Only the glassy card honours the configured alignment; every other card is left-aligned. */
+function resolveAlignments(w: Partial<WelcomeConfig>, isGlassy: boolean): Alignments {
+  if (!isGlassy) return { logoAlign: 'flex-start', textAlign: 'left', avatarAlign: 'flex-start' };
+  const centered = w.textAlign === 'center' || w.cardAlign === 'center';
+  const flexAlign = centered ? 'center' : 'flex-start';
+  return {
+    logoAlign: w.logoAlign || flexAlign,
+    textAlign: w.textAlign || (w.cardAlign === 'center' ? 'center' : 'left'),
+    avatarAlign: w.avatarAlign || flexAlign,
+  };
+}
+
+/** A CSS custom property declaration for a font size, or nothing when no size is set. */
+function fontSizeVar(cssVar: string, size: number | string | undefined): string {
+  return size ? `${cssVar}: ${cssLength(size, '')};` : '';
+}
+
+function avatarLabel(avatar: any): string {
+  return typeof avatar === 'object' && avatar?.name ? avatar.name : 'Agent';
+}
 
 /**
  * cw-welcome-hero
@@ -17,7 +41,7 @@ export class CwWelcomeHero extends LitElement {
   @property({ type: Boolean }) hideLogo = false;
   @property({ type: Boolean }) logoOnly = false;
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {
@@ -95,78 +119,60 @@ export class CwWelcomeHero extends LitElement {
     return '';
   }
 
+  private renderLogo(w: Partial<WelcomeConfig>, logoAlign: string, logoMargin: string) {
+    return html`
+      <div class="logo-container" style="justify-content: ${logoAlign}; margin-bottom: ${logoMargin}">
+        ${w.logoUrl
+          ? html`<img src="${w.logoUrl}" alt="${w.logoAlt || 'Company Logo'}" class="logo-img" />`
+          : html`
+              <div style="color: ${this.headerTextColor}">
+                <cw-icon .name="${'MessageCircle'}" .size="${42}"></cw-icon>
+              </div>
+            `
+        }
+      </div>
+    `;
+  }
+
+  private renderAvatars(w: Partial<WelcomeConfig>) {
+    return (w.avatars || []).map(
+      (avatar: any, idx: number) => html`
+        <cw-avatar
+          .src="${this.resolveAvatarUrl(avatar)}"
+          .name="${avatarLabel(avatar)}"
+          .size="${34}"
+          .showOnline="${false}"
+          style="margin-left: ${idx === 0 ? '0' : '-10px'}; border: 2px solid ${w.avatarBorderColor || 'rgba(255,255,255,0.2)'}; border-radius: 50%; z-index: ${10 + idx}; box-shadow: 0 4px 6px rgba(0,0,0,0.1)"
+        ></cw-avatar>
+      `
+    );
+  }
+
   render() {
     const w = this.config || {};
-    const logoAlign = this.isGlassy
-      ? (w.logoAlign || (w.textAlign === 'center' || w.cardAlign === 'center' ? 'center' : 'flex-start'))
-      : 'flex-start';
+    const { logoAlign, textAlign, avatarAlign } = resolveAlignments(w, this.isGlassy);
     const logoMargin = this.isGlassy ? '20px' : '28px';
 
-    const textAlign = this.isGlassy
-      ? (w.textAlign || (w.cardAlign === 'center' ? 'center' : 'left'))
-      : 'left';
-
-    const avatarAlign = this.isGlassy
-      ? (w.avatarAlign || (w.textAlign === 'center' || w.cardAlign === 'center' ? 'center' : 'flex-start'))
-      : 'flex-start';
-
-    if (this.logoOnly) {
-      return html`
-        <div class="logo-container" style="justify-content: ${logoAlign}; margin-bottom: ${logoMargin}">
-          ${w.logoUrl
-            ? html`<img src="${w.logoUrl}" alt="${w.logoAlt || 'Company Logo'}" class="logo-img" />`
-            : html`
-                <div style="color: ${this.headerTextColor}">
-                  <cw-icon .name="${'MessageCircle'}" .size="${42}"></cw-icon>
-                </div>
-              `
-          }
-        </div>
-      `;
-    }
+    if (this.logoOnly) return this.renderLogo(w, logoAlign, logoMargin);
 
     return html`
-      ${!this.hideLogo
-        ? html`
-            <div class="logo-container" style="justify-content: ${logoAlign}; margin-bottom: ${logoMargin}">
-              ${w.logoUrl
-                ? html`<img src="${w.logoUrl}" alt="${w.logoAlt || 'Company Logo'}" class="logo-img" />`
-                : html`
-                    <div style="color: ${this.headerTextColor}">
-                      <cw-icon .name="${'MessageCircle'}" .size="${42}"></cw-icon>
-                    </div>
-                  `
-              }
-            </div>
-          `
-        : ''
-      }
+      ${!this.hideLogo ? this.renderLogo(w, logoAlign, logoMargin) : ''}
 
       <!-- Text Block -->
       <div
         class="text-block"
         style="text-align: ${textAlign}; align-items: ${textAlign === 'center' ? 'center' : 'flex-start'}; margin-bottom: ${this.isGlassy ? '0' : '24px'}"
       >
-        <h2 class="welcome-title" style="${w.titleFontSize ? `--cw-welcome-title-size: ${typeof w.titleFontSize === 'number' ? `${w.titleFontSize}px` : w.titleFontSize};` : ''} color: ${this.headerTextColor}">
+        <h2 class="welcome-title" style="${fontSizeVar('--cw-welcome-title-size', w.titleFontSize)} color: ${this.headerTextColor}">
           ${w.title || 'Hi there! 👋 How can we help you today?'}
         </h2>
-        <p class="welcome-desc" style="${w.descriptionFontSize ? `--cw-welcome-desc-size: ${typeof w.descriptionFontSize === 'number' ? `${w.descriptionFontSize}px` : w.descriptionFontSize};` : ''} color: ${w.subtextColor || 'rgba(255,255,255,0.9)'}">
+        <p class="welcome-desc" style="${fontSizeVar('--cw-welcome-desc-size', w.descriptionFontSize)} color: ${w.subtextColor || 'rgba(255,255,255,0.9)'}">
           ${w.description || 'Our support heroes are here to assist you.'}
         </p>
 
         <!-- Overlapping Avatars -->
         <div class="avatars-row" style="justify-content: ${avatarAlign}">
-          ${(w.avatars || []).map(
-            (avatar: any, idx: number) => html`
-              <cw-avatar
-                .src="${this.resolveAvatarUrl(avatar)}"
-                .name="${typeof avatar === 'object' && avatar?.name ? avatar.name : 'Agent'}"
-                .size="${34}"
-                .showOnline="${false}"
-                style="margin-left: ${idx === 0 ? '0' : '-10px'}; border: 2px solid ${w.avatarBorderColor || 'rgba(255,255,255,0.2)'}; border-radius: 50%; z-index: ${10 + idx}; box-shadow: 0 4px 6px rgba(0,0,0,0.1)"
-              ></cw-avatar>
-            `
-          )}
+          ${this.renderAvatars(w)}
         </div>
       </div>
     `;

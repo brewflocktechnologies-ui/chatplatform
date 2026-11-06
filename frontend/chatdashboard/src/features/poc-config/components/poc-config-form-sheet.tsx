@@ -3,7 +3,7 @@
 import { useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { useStore } from '@tanstack/react-form';
+import { useSelector } from '@tanstack/react-form';
 import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
@@ -17,6 +17,9 @@ import {
   SheetTitle
 } from '@/components/ui/sheet';
 import { Icons } from '@/components/icons';
+
+const AddIcon = Icons.add;
+
 import { useAppForm } from '@/lib/form';
 import { ApiError, unwrap } from '@/lib/billing/errors';
 import { useCustomerOptions } from '@/features/customers/hooks/use-customer-options';
@@ -32,9 +35,9 @@ import type { PocConfig, PocConfigMutationPayload } from '../api/types';
 import { pocConfigSchema, type PocConfigFormValues } from '../schemas/poc-config';
 
 interface PocConfigFormSheetProps {
-  config?: PocConfig;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly config?: PocConfig;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 // The API has no name, so the picker is sorted by email for scanning.
@@ -53,7 +56,7 @@ function prettyJson(value: string | undefined) {
   }
 }
 
-export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigFormSheetProps) {
+export function PocConfigFormSheet({ config, open, onOpenChange }: Readonly<PocConfigFormSheetProps>) {
   const isEdit = !!config;
   const router = useRouter();
 
@@ -148,7 +151,7 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
     isError: websitesError
   } = useQuery({ ...allPocWebsitesQueryOptions(), enabled: open });
 
-  const clientId = useStore(form.store, (state) => state.values.clientId);
+  const clientId = useSelector(form.store, (state) => state.values.clientId);
 
   const websiteOptions = useMemo(() => {
     const options = (websites ?? [])
@@ -163,6 +166,13 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
     }
     return options;
   }, [websites, clientId, config]);
+
+  let websitePlaceholder = 'Select website';
+  if (!clientId) {
+    websitePlaceholder = 'Select a customer first';
+  } else if (websitesLoading) {
+    websitePlaceholder = 'Loading websites...';
+  }
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
@@ -187,12 +197,11 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
           >
             <FormGrid>
               <FormRow>
-                <form.AppField
-                  name='configName'
-                  children={(field) => (
+                <form.AppField name='configName'>
+                  {(field) => (
                     <field.TextField label='Config Name' required placeholder='Deploy Test' />
                   )}
-                />
+                </form.AppField>
               </FormRow>
               {/* Picking a customer sets the client id and name, then its website. */}
               <form.AppField
@@ -210,7 +219,8 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
                     }
                   }
                 }}
-                children={(field) => (
+              >
+                {(field) => (
                   <field.ComboboxField
                     label='Customer'
                     required
@@ -222,7 +232,7 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
                     }
                   />
                 )}
-              />
+              </form.AppField>
               {/* Picking a website sets the website link and the tenant (its company). */}
               <form.AppField
                 name='websiteId'
@@ -234,18 +244,13 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
                     form.setFieldValue('tenantId', tenantIdOf(site));
                   }
                 }}
-                children={(field) => (
+              >
+                {(field) => (
                   <field.ComboboxField
                     label='Website'
                     required
                     options={websiteOptions}
-                    placeholder={
-                      !clientId
-                        ? 'Select a customer first'
-                        : websitesLoading
-                          ? 'Loading websites...'
-                          : 'Select website'
-                    }
+                    placeholder={websitePlaceholder}
                     searchPlaceholder='Search websites...'
                     emptyMessage={
                       websitesError
@@ -254,10 +259,9 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
                     }
                   />
                 )}
-              />
-              <form.AppField
-                name='tenantId'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='tenantId'>
+                {(field) => (
                   <field.TextField
                     label='Tenant ID'
                     required
@@ -265,21 +269,19 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
                     description="Taken from the selected website's company."
                   />
                 )}
-              />
-              <form.AppField
-                name='websiteLink'
-                children={(field) => (
+              </form.AppField>
+              <form.AppField name='websiteLink'>
+                {(field) => (
                   <field.TextField
                     label='Website Link'
                     readOnly
                     description='Taken from the selected website.'
                   />
                 )}
-              />
+              </form.AppField>
               <FormRow>
-                <form.AppField
-                  name='cdnConfig'
-                  children={(field) => (
+                <form.AppField name='cdnConfig'>
+                  {(field) => (
                     <field.TextareaField
                       label='CDN Config (JSON)'
                       rows={10}
@@ -287,7 +289,7 @@ export function PocConfigFormSheet({ config, open, onOpenChange }: PocConfigForm
                       description='Widget settings served from the CDN.'
                     />
                   )}
-                />
+                </form.AppField>
               </FormRow>
             </FormGrid>
           </form>
@@ -312,7 +314,7 @@ export function PocConfigFormSheetTrigger() {
   return (
     <>
       <Button onClick={() => setOpen(true)}>
-        <Icons.add className='mr-2 h-4 w-4' /> Add Config
+        <AddIcon className='mr-2 h-4 w-4' /> Add Config
       </Button>
       <PocConfigFormSheet open={open} onOpenChange={setOpen} />
     </>

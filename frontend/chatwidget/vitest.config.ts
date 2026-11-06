@@ -10,7 +10,15 @@ export default defineConfig({
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
       reportsDirectory: './coverage',
-      include: ['components/**', 'store/**', 'tokens/**', 'utils/**', 'index.ts'],
+      include: [
+        'components/**',
+        'config/**',
+        'services/**',
+        'store/**',
+        'tokens/**',
+        'utils/**',
+        'index.ts'
+      ],
       exclude: [
         '**/*.d.ts',
         '**/*.test.ts',

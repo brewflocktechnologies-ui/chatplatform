@@ -109,20 +109,18 @@ function SheetFormSection() {
               }}
             >
               <FieldGroup>
-                <form.AppField
-                  name='name'
-                  children={(field) => (
+                <form.AppField name='name'>
+                  {(field) => (
                     <field.TextField
                       label='Product Name'
                       required
                       placeholder='Enter product name'
                     />
                   )}
-                />
+                </form.AppField>
 
-                <form.AppField
-                  name='category'
-                  children={(field) => (
+                <form.AppField name='category'>
+                  {(field) => (
                     <field.SelectField
                       label='Category'
                       required
@@ -130,11 +128,10 @@ function SheetFormSection() {
                       placeholder='Select a category'
                     />
                   )}
-                />
+                </form.AppField>
 
-                <form.AppField
-                  name='price'
-                  children={(field) => (
+                <form.AppField name='price'>
+                  {(field) => (
                     <field.TextField
                       label='Price'
                       required
@@ -144,11 +141,10 @@ function SheetFormSection() {
                       placeholder='0.00'
                     />
                   )}
-                />
+                </form.AppField>
 
-                <form.AppField
-                  name='description'
-                  children={(field) => (
+                <form.AppField name='description'>
+                  {(field) => (
                     <field.TextareaField
                       label='Description'
                       required
@@ -157,7 +153,7 @@ function SheetFormSection() {
                       rows={4}
                     />
                   )}
-                />
+                </form.AppField>
               </FieldGroup>
             </form>
 
@@ -229,9 +225,8 @@ function DialogFormSection() {
               }}
             >
               <FieldGroup>
-                <form.AppField
-                  name='rating'
-                  children={(field) => (
+                <form.AppField name='rating'>
+                  {(field) => (
                     <field.SliderField
                       label='Rating'
                       description='Rate your experience (0-10)'
@@ -240,11 +235,10 @@ function DialogFormSection() {
                       step={1}
                     />
                   )}
-                />
+                </form.AppField>
 
-                <form.AppField
-                  name='feedback'
-                  children={(field) => (
+                <form.AppField name='feedback'>
+                  {(field) => (
                     <field.TextareaField
                       label='Feedback'
                       required
@@ -253,7 +247,7 @@ function DialogFormSection() {
                       rows={3}
                     />
                   )}
-                />
+                </form.AppField>
               </FieldGroup>
             </form>
 

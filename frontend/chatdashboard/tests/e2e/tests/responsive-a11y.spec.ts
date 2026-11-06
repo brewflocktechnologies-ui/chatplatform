@@ -1,4 +1,5 @@
 import { expect, test } from '../support/fixtures';
+import { navLinkName } from '../support/pages/dashboard-shell';
 
 /**
  * Responsive shell behaviour (mobile sidebar sheet, desktop collapse) and
@@ -19,7 +20,7 @@ test.describe('Mobile viewport', () => {
     const mobileSidebar = page.locator('[data-slot="sidebar"][data-mobile="true"]');
     await expect(mobileSidebar).toBeVisible();
     for (const title of ['Dashboard', 'Customers', 'Websites', 'Chat', 'Archives']) {
-      await expect(mobileSidebar.getByRole('link', { name: title, exact: true })).toBeVisible();
+      await expect(mobileSidebar.getByRole('link', { name: navLinkName(title) })).toBeVisible();
     }
   });
 
@@ -29,8 +30,9 @@ test.describe('Mobile viewport', () => {
     await page.getByRole('button', { name: 'Toggle Sidebar' }).first().click();
 
     const mobileSidebar = page.locator('[data-slot="sidebar"][data-mobile="true"]');
-    await mobileSidebar.getByRole('link', { name: 'Customers', exact: true }).click();
+    await mobileSidebar.getByRole('link', { name: navLinkName('Customers') }).click();
     await page.waitForURL('**/dashboard/customers', { waitUntil: 'commit' });
+    await expect(page).toHaveURL(/\/dashboard\/customers/);
   });
 
   test('the mobile sidebar closes on Escape', async ({ page }) => {

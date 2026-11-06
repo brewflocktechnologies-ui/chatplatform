@@ -4,6 +4,48 @@ import { CORE_STYLES } from '../../styles/core-styles.js';
 import { REDUCED_MOTION_CSS } from '../../tokens/accessibility.js';
 import { getTooltipBorderRadius, type BorderRadiusConfig } from '../../utils/style-helpers.js';
 
+const ARROW_SIZE = 8;
+const DEFAULT_TOOLTIP_SHADOW = '0 4px 12px rgba(0,0,0,0.1)';
+
+/** Numbers are pixels; an empty value falls back to the default padding. */
+function resolveTooltipPadding(raw: string | number | undefined): string {
+  if (typeof raw === 'number') return `${raw}px`;
+  return raw || '8px 16px';
+}
+
+/** A bare colour becomes a soft drop shadow; a full shadow value (or `none`) is used as-is. */
+function resolveTooltipShadow(raw: string | undefined): string {
+  if (!raw) return DEFAULT_TOOLTIP_SHADOW;
+  return raw.includes('px') || raw === 'none' ? raw : `0 4px 12px ${raw}`;
+}
+
+type ArrowPlacement = {
+  /** Where the arrow sits on the box, given half its size. */
+  place: (half: number) => string;
+  /** The two edges that face the tooltip box and carry the border. */
+  borderEdges: readonly [string, string];
+};
+
+const ARROW_PLACEMENTS: ReadonlyMap<string, ArrowPlacement> = new Map([
+  ['left', { place: (h) => `right: -${h}px; top: 50%; transform: translateY(-50%) rotate(45deg);`, borderEdges: ['top', 'right'] }],
+  ['right', { place: (h) => `left: -${h}px; top: 50%; transform: translateY(-50%) rotate(45deg);`, borderEdges: ['bottom', 'left'] }],
+  ['top', { place: (h) => `bottom: -${h}px; left: 50%; transform: translateX(-50%) rotate(45deg);`, borderEdges: ['bottom', 'right'] }],
+  ['bottom', { place: (h) => `top: -${h}px; left: 50%; transform: translateX(-50%) rotate(45deg);`, borderEdges: ['top', 'left'] }],
+]);
+
+/** Inline style that positions (and, with a border, outlines) the arrow for a tooltip side. */
+function buildArrowStyle(position: string, borderWidth: number, borderColor: string): string {
+  // Any unrecognised position is treated like "bottom", as before.
+  const placement = ARROW_PLACEMENTS.get(position) ?? (ARROW_PLACEMENTS.get('bottom') as ArrowPlacement);
+  let style = placement.place(ARROW_SIZE / 2);
+  if (borderWidth > 0) {
+    for (const edge of placement.borderEdges) {
+      style += ` border-${edge}: ${borderWidth}px solid ${borderColor};`;
+    }
+  }
+  return style;
+}
+
 @customElement('cw-tooltip')
 export class CwTooltip extends LitElement {
   @property({ type: String }) text = 'Chat with us';
@@ -19,7 +61,7 @@ export class CwTooltip extends LitElement {
   @property({ type: Boolean }) arrowEnabled = true;
   @property({ type: Boolean }) visible = true;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`
@@ -86,31 +128,11 @@ export class CwTooltip extends LitElement {
 
     const pos = this.position || 'left';
     const tBorderRadius = getTooltipBorderRadius(this.borderRadius, pos);
-    const arrowSize = 8;
-    const tPadding = typeof this.padding === 'number' ? `${this.padding}px` : (this.padding || '8px 16px');
-    const rawShadow = this.boxShadow;
-    let tBoxShadow = '0 4px 12px rgba(0,0,0,0.1)';
-    if (rawShadow) {
-      tBoxShadow = rawShadow.includes('px') || rawShadow === 'none' ? rawShadow : `0 4px 12px ${rawShadow}`;
-    }
+    const tPadding = resolveTooltipPadding(this.padding);
+    const tBoxShadow = resolveTooltipShadow(this.boxShadow);
     const tBorderW = Math.max(0, this.borderWidth || 0);
     const tBorderC = this.borderColor || 'transparent';
-
-    let arrowPosStyle = '';
-
-    if (pos === 'left') {
-      arrowPosStyle = `right: -${arrowSize / 2}px; top: 50%; transform: translateY(-50%) rotate(45deg);`;
-      if (tBorderW > 0) arrowPosStyle += ` border-top: ${tBorderW}px solid ${tBorderC}; border-right: ${tBorderW}px solid ${tBorderC};`;
-    } else if (pos === 'right') {
-      arrowPosStyle = `left: -${arrowSize / 2}px; top: 50%; transform: translateY(-50%) rotate(45deg);`;
-      if (tBorderW > 0) arrowPosStyle += ` border-bottom: ${tBorderW}px solid ${tBorderC}; border-left: ${tBorderW}px solid ${tBorderC};`;
-    } else if (pos === 'top') {
-      arrowPosStyle = `bottom: -${arrowSize / 2}px; left: 50%; transform: translateX(-50%) rotate(45deg);`;
-      if (tBorderW > 0) arrowPosStyle += ` border-bottom: ${tBorderW}px solid ${tBorderC}; border-right: ${tBorderW}px solid ${tBorderC};`;
-    } else {
-      arrowPosStyle = `top: -${arrowSize / 2}px; left: 50%; transform: translateX(-50%) rotate(45deg);`;
-      if (tBorderW > 0) arrowPosStyle += ` border-top: ${tBorderW}px solid ${tBorderC}; border-left: ${tBorderW}px solid ${tBorderC};`;
-    }
+    const arrowPosStyle = buildArrowStyle(pos, tBorderW, tBorderC);
 
     return html`
       <div

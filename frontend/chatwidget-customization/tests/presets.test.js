@@ -47,8 +47,8 @@ describe('bundled client presets', () => {
   // The same presets are duplicated in chatwidget/public/clients
   // (the copy the deployed widget actually fetches). Until the duplication is
   // removed, this guards against silent drift between the two copies.
-  it('stays in sync with the widget library copy of each preset', () => {
-    if (!existsSync(WIDGET_PRESET_DIR)) return; // standalone checkout
+  it('stays in sync with the widget library copy of each preset', (ctx) => {
+    if (!existsSync(WIDGET_PRESET_DIR)) ctx.skip(); // standalone checkout
     for (const file of presets) {
       const widgetCopy = join(WIDGET_PRESET_DIR, file);
       if (!existsSync(widgetCopy)) continue;

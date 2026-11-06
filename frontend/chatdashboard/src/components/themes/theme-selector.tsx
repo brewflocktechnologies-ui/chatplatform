@@ -44,16 +44,14 @@ export function ThemeSelector() {
         </SelectTrigger>
         <SelectContent align='start' side='bottom' sideOffset={4} alignItemWithTrigger={false}>
           {THEMES.length > 0 && (
-            <>
-              <SelectGroup>
-                <SelectLabel>themes</SelectLabel>
-                {THEMES.map((theme) => (
-                  <SelectItem key={theme.name} value={theme.value}>
-                    {theme.name}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </>
+            <SelectGroup>
+              <SelectLabel>themes</SelectLabel>
+              {THEMES.map((theme) => (
+                <SelectItem key={theme.name} value={theme.value}>
+                  {theme.name}
+                </SelectItem>
+              ))}
+            </SelectGroup>
           )}
         </SelectContent>
       </Select>

@@ -72,5 +72,7 @@ describe('utils/transition.ts', () => {
     // Call hostDisconnected while leave timeout is active
     element.controller.setTarget(false);
     element.controller.hostDisconnected();
+
+    expect(element.controller.phase).toBe('leave');
   });
 });

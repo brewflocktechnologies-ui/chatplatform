@@ -24,7 +24,7 @@ export class CwConfirmDialog extends LitElement {
   @property({ type: String }) confirmBg = 'var(--cw-accent, #0b5fff)';
   @property({ type: String }) confirmTextColor = '#ffffff';
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`

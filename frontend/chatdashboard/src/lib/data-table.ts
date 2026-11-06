@@ -3,6 +3,15 @@ import type { Column } from '@tanstack/react-table';
 
 import { dataTableConfig } from '@/config/data-table';
 
+function getPinnedBoxShadow(
+  isLastLeftPinned: boolean,
+  isFirstRightPinned: boolean
+): string | undefined {
+  if (isLastLeftPinned) return '-5px 0 5px -5px var(--border) inset';
+  if (isFirstRightPinned) return '5px 0 5px -5px var(--border) inset';
+  return undefined;
+}
+
 export function getCommonPinningStyles<TData>({
   column
 }: {
@@ -13,11 +22,7 @@ export function getCommonPinningStyles<TData>({
   const isFirstRightPinnedColumn = isPinned === 'right' && column.getIsFirstColumn('right');
 
   return {
-    boxShadow: isLastLeftPinnedColumn
-      ? '-5px 0 5px -5px var(--border) inset'
-      : isFirstRightPinnedColumn
-        ? '5px 0 5px -5px var(--border) inset'
-        : undefined,
+    boxShadow: getPinnedBoxShadow(isLastLeftPinnedColumn, isFirstRightPinnedColumn),
     left: isPinned === 'left' ? `${column.getStart('left')}px` : undefined,
     right: isPinned === 'right' ? `${column.getAfter('right')}px` : undefined,
     position: isPinned ? 'sticky' : 'relative',

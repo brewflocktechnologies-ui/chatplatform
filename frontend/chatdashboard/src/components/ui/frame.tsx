@@ -6,7 +6,7 @@ function Frame({
   className,
   stackedPanels = false,
   ...props
-}: React.ComponentProps<'div'> & { stackedPanels?: boolean }) {
+}: Readonly<React.ComponentProps<'div'> & { stackedPanels?: boolean }>) {
   return (
     <div
       className={cn(
@@ -22,7 +22,7 @@ function Frame({
   );
 }
 
-function FramePanel({ className, ...props }: React.ComponentProps<'div'>) {
+function FramePanel({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       className={cn(
@@ -35,7 +35,7 @@ function FramePanel({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function FrameHeader({ className, ...props }: React.ComponentProps<'header'>) {
+function FrameHeader({ className, ...props }: Readonly<React.ComponentProps<'header'>>) {
   return (
     <header
       className={cn('flex flex-col px-5 py-4', className)}
@@ -45,7 +45,7 @@ function FrameHeader({ className, ...props }: React.ComponentProps<'header'>) {
   );
 }
 
-function FrameTitle({ className, ...props }: React.ComponentProps<'div'>) {
+function FrameTitle({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       className={cn('text-sm font-semibold', className)}
@@ -55,7 +55,7 @@ function FrameTitle({ className, ...props }: React.ComponentProps<'div'>) {
   );
 }
 
-function FrameDescription({ className, ...props }: React.ComponentProps<'div'>) {
+function FrameDescription({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       className={cn('text-muted-foreground text-sm', className)}
@@ -65,7 +65,7 @@ function FrameDescription({ className, ...props }: React.ComponentProps<'div'>) 
   );
 }
 
-function FrameFooter({ className, ...props }: React.ComponentProps<'footer'>) {
+function FrameFooter({ className, ...props }: Readonly<React.ComponentProps<'footer'>>) {
   return (
     <footer
       className={cn('flex flex-col gap-1 px-5 py-4', className)}

@@ -26,7 +26,9 @@ test.describe('Widget Modifier', () => {
     db,
     request
   }) => {
-    const customer = await firstLiveCustomer(request);
+    // Its own customer (not the first): the deep-link test below seeds a website for
+    // the first one in parallel, and the first website of a customer is auto-selected.
+    const customer = await firstLiveCustomer(request, 1);
     const website = await db.seedWebsite(customer);
 
     await page.goto('/dashboard/widget-modifier');

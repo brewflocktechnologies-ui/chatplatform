@@ -6,6 +6,9 @@ import { Icons } from '@/components/icons';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
+const MinimizeIcon = Icons.minimize;
+const MaximizeIcon = Icons.maximize;
+
 function toggleFullscreen() {
   if (document.fullscreenElement) {
     void document.exitFullscreen();
@@ -30,7 +33,7 @@ export function FullscreenToggle() {
           <Button variant='secondary' size='icon' className='size-8' onClick={toggleFullscreen} />
         }
       >
-        {isFullscreen ? <Icons.minimize /> : <Icons.maximize />}
+        {isFullscreen ? <MinimizeIcon /> : <MaximizeIcon />}
         <span className='sr-only'>{isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}</span>
       </TooltipTrigger>
       <TooltipContent>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</TooltipContent>

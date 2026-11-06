@@ -7,7 +7,7 @@
   --border-light: #F6F8FB;
   --text-main: #0F172A;
   --text-secondary: #5a6072;
-  --text-muted: #8e94a6;
+  --text-muted: #646b7d; /* ≥4.5:1 on every light surface (was #8e94a6, ~2.8:1) */
   --accent: #0b5fff;
   --accent-light: #eef4ff;
   --accent-border: #cddfff;

@@ -25,12 +25,14 @@ export function ComboboxField({
   placeholder = 'Select an option',
   searchPlaceholder = 'Search...',
   emptyMessage = 'No results found.'
-}: BaseFieldProps & {
-  options: { value: string; label: string; disabled?: boolean }[];
-  placeholder?: string;
-  searchPlaceholder?: string;
-  emptyMessage?: string;
-}) {
+}: Readonly<
+  BaseFieldProps & {
+    options: { value: string; label: string; disabled?: boolean }[];
+    placeholder?: string;
+    searchPlaceholder?: string;
+    emptyMessage?: string;
+  }
+>) {
   const field = useFieldContext<string>();
   const isInvalid = useFieldInvalid();
   const [open, setOpen] = React.useState(false);
@@ -62,7 +64,7 @@ export function ComboboxField({
               aria-describedby={isInvalid ? `${field.name}-error` : undefined}
               className={cn(
                 'w-full justify-between font-normal',
-                !selected && 'text-muted-foreground/60'
+                !selected && 'text-muted-foreground'
               )}
             />
           }

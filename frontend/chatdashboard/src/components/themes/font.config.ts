@@ -14,6 +14,9 @@ import {
 
 import { cn } from '@/lib/utils';
 
+// Only the default theme's font (Geist, `--font-sans`) is preloaded. The others are declared with
+// `preload: false`: they are fetched on demand when a theme actually renders text with them,
+// instead of being downloaded (and competing with the page's JS and CSS) on every page load.
 const fontSans = Geist({
   subsets: ['latin'],
   variable: '--font-sans'
@@ -21,12 +24,14 @@ const fontSans = Geist({
 
 const fontMono = Geist_Mono({
   subsets: ['latin'],
-  variable: '--font-mono'
+  variable: '--font-mono',
+  preload: false
 });
 
 const fontGoogleSansFlex = Google_Sans_Flex({
   subsets: ['latin'],
   variable: '--font-google-sans-flex',
+  preload: false,
   // Next.js has no fallback metrics for this font — it warns on every compile
   // and skips the fallback anyway, so opt out explicitly to silence it.
   adjustFontFallback: false,
@@ -35,44 +40,52 @@ const fontGoogleSansFlex = Google_Sans_Flex({
 
 const fontSourceCodePro = Source_Code_Pro({
   subsets: ['latin'],
-  variable: '--font-source-code-pro'
+  variable: '--font-source-code-pro',
+  preload: false
 });
 
 const fontInter = Inter({
   subsets: ['latin'],
-  variable: '--font-inter'
+  variable: '--font-inter',
+  preload: false
 });
 
 const fontArchitectsDaughter = Architects_Daughter({
   subsets: ['latin'],
   weight: '400',
-  variable: '--font-architects-daughter'
+  variable: '--font-architects-daughter',
+  preload: false
 });
 
 const fontFiraCode = Fira_Code({
   subsets: ['latin'],
-  variable: '--font-fira-code'
+  variable: '--font-fira-code',
+  preload: false
 });
 
 const fontOutfit = Outfit({
   subsets: ['latin'],
-  variable: '--font-outfit'
+  variable: '--font-outfit',
+  preload: false
 });
 
 const fontJetBrainsMono = JetBrains_Mono({
   subsets: ['latin'],
-  variable: '--font-jetbrains-mono'
+  variable: '--font-jetbrains-mono',
+  preload: false
 });
 
 const fontMerriweather = Merriweather({
   subsets: ['latin'],
   weight: ['300', '400', '700'],
-  variable: '--font-merriweather'
+  variable: '--font-merriweather',
+  preload: false
 });
 
 const fontPlayfairDisplay = Playfair_Display({
   subsets: ['latin'],
-  variable: '--font-playfair-display'
+  variable: '--font-playfair-display',
+  preload: false
 });
 
 export const fontVariables = cn(

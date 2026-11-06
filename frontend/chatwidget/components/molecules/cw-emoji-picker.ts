@@ -25,7 +25,9 @@ function parseEmojiInput(val: string[] | string | undefined | null): string[] {
     const segmenter = new Intl.Segmenter(undefined, { granularity: 'grapheme' });
     const segments = [...segmenter.segment(str)].map((s) => s.segment.trim()).filter(Boolean);
     if (segments.length > 0) return segments;
-  } catch (e) {
+  } catch (error) {
+    // Older engines lack Intl.Segmenter (or reject the options): split by code point instead.
+    console.debug('cw-emoji-picker: Intl.Segmenter unavailable, using code points', error);
     return Array.from(str).map((s) => s.trim()).filter(Boolean);
   }
 
@@ -42,9 +44,9 @@ function parseEmojiInput(val: string[] | string | undefined | null): string[] {
 export class CwEmojiPicker extends LitElement {
   @property() emojis: string[] | string = DEFAULT_EMOJIS;
 
-  private dismiss = new DismissController(this);
+  private readonly dismiss = new DismissController(this);
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

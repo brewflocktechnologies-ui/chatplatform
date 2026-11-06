@@ -5,6 +5,7 @@ const valid = {
   protocol: 'https',
   domain: 'example.com',
   customerId: 'cust-1',
+  customerName: 'Acme',
   businessCategory: 'ecommerce',
   flavour: 'default',
   isActive: true,

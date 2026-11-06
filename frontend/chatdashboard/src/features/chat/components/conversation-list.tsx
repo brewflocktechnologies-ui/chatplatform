@@ -16,13 +16,62 @@ const SearchIcon = Icons.search;
 const ChatIcon = Icons.chat;
 const ChecksIcon = Icons.checks;
 
+type ConversationMessage = Conversation['messages'][number];
+
+function ConversationPreview({
+  isTyping,
+  lastMessage,
+  isSentByAgent
+}: Readonly<{
+  isTyping: boolean;
+  lastMessage: ConversationMessage | undefined;
+  isSentByAgent: boolean;
+}>) {
+  if (isTyping) {
+    return (
+      <span className='text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-xs font-medium'>
+        <span
+          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+          style={{ animationDelay: '0ms' }}
+        />
+        <span
+          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+          style={{ animationDelay: '150ms' }}
+        />
+        <span
+          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
+          style={{ animationDelay: '300ms' }}
+        />
+        <span>typing...</span>
+      </span>
+    );
+  }
+
+  if (lastMessage) {
+    return (
+      <p className='text-muted-foreground flex items-center gap-1 truncate text-xs'>
+        {isSentByAgent && (
+          <ChecksIcon className='text-primary shrink-0 h-3.5 w-3.5' aria-label='Sent' />
+        )}
+        <span className='truncate'>{lastMessage.text}</span>
+      </p>
+    );
+  }
+
+  return <p className='text-muted-foreground text-xs italic'>No messages yet</p>;
+}
+
 interface ConversationListProps {
   conversations: Conversation[];
   selectedId: string;
   onSelect: (id: string) => void;
 }
 
-export function ConversationList({ conversations, selectedId, onSelect }: ConversationListProps) {
+export function ConversationList({
+  conversations,
+  selectedId,
+  onSelect
+}: Readonly<ConversationListProps>) {
   const [search, setSearch] = useState('');
   const [filterTab, setFilterTab] = useState<FilterTab>('all');
   const typingMap = useChatStore((state) => state.typingMap);
@@ -180,11 +229,7 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
       </div>
 
       {/* Conversations List (WhatsApp / Archives Layout) */}
-      <div
-        className='flex-1 overflow-y-auto divide-y divide-border/40'
-        aria-label='User conversations list'
-        role='list'
-      >
+      <div className='flex-1 overflow-y-auto'>
         {filtered.length === 0 ? (
           <div className='flex flex-col items-center justify-center py-12 text-center px-4'>
             <div className='mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-muted/60 text-muted-foreground'>
@@ -201,108 +246,90 @@ export function ConversationList({ conversations, selectedId, onSelect }: Conver
           </div>
         ) : null}
 
-        {filtered.map((conversation) => {
-          const isActive = conversation.id === selectedId;
-          const lastMessage = conversation.messages[conversation.messages.length - 1];
-          const isTyping = !!typingMap[conversation.id];
-          const isSentByAgent = lastMessage?.sender === 'user';
+        {filtered.length > 0 && (
+          <ul aria-label='User conversations list' className='divide-y divide-border/40'>
+            {filtered.map((conversation) => {
+              const isActive = conversation.id === selectedId;
+              const lastMessage = conversation.messages.at(-1);
+              const isTyping = !!typingMap[conversation.id];
+              const isSentByAgent = lastMessage?.sender === 'user';
 
-          return (
-            <motion.button
-              key={conversation.id}
-              type='button'
-              onClick={() => onSelect(conversation.id)}
-              aria-current={isActive ? 'true' : undefined}
-              className={cn(
-                'group relative flex w-full items-center gap-3 cursor-pointer px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 border-l-4 select-none',
-                isActive
-                  ? 'bg-accent/70 border-l-primary shadow-2xs font-normal'
-                  : 'border-l-transparent hover:bg-muted/40'
-              )}
-              role='listitem'
-            >
-              {/* Avatar with Status Indicator */}
-              <div className='relative shrink-0'>
-                <Avatar className='h-11 w-11 rounded-full border border-border/40 bg-background/80 shadow-xs'>
-                  <AvatarFallback className='bg-primary/15 text-primary text-sm font-semibold'>
-                    {conversation.initials}
-                  </AvatarFallback>
-                </Avatar>
-                <span
-                  className={cn(
-                    'absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-background',
-                    conversation.status === 'online' ? 'bg-emerald-500' : 'bg-muted-foreground/40'
-                  )}
-                  aria-label={conversation.status === 'online' ? 'Online' : 'Offline'}
-                />
-              </div>
-
-              {/* Chat details */}
-              <div className='min-w-0 flex-1'>
-                {/* Top Row: User Name & Timestamp */}
-                <div className='flex items-center justify-between gap-1.5'>
-                  <p className='text-foreground truncate text-sm font-semibold'>
-                    {conversation.name}
-                  </p>
-                  {lastMessage && (
-                    <span
-                      className={cn(
-                        'shrink-0 text-[11px]',
-                        conversation.unread > 0
-                          ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
-                          : 'text-muted-foreground'
-                      )}
-                    >
-                      {lastMessage.timestamp}
-                    </span>
-                  )}
-                </div>
-
-                {/* Bottom Row: Message snippet / Typing & Unread badge */}
-                <div className='mt-0.5 flex items-center justify-between gap-2'>
-                  <div className='min-w-0 flex-1'>
-                    {isTyping ? (
-                      <span className='text-emerald-600 dark:text-emerald-400 flex items-center gap-1 text-xs font-medium'>
-                        <span
-                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
-                          style={{ animationDelay: '0ms' }}
-                        />
-                        <span
-                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
-                          style={{ animationDelay: '150ms' }}
-                        />
-                        <span
-                          className='h-1.5 w-1.5 rounded-full bg-emerald-500 animate-bounce'
-                          style={{ animationDelay: '300ms' }}
-                        />
-                        <span>typing...</span>
-                      </span>
-                    ) : lastMessage ? (
-                      <p className='text-muted-foreground flex items-center gap-1 truncate text-xs'>
-                        {isSentByAgent && (
-                          <ChecksIcon
-                            className='text-primary shrink-0 h-3.5 w-3.5'
-                            aria-label='Sent'
-                          />
-                        )}
-                        <span className='truncate'>{lastMessage.text}</span>
-                      </p>
-                    ) : (
-                      <p className='text-muted-foreground text-xs italic'>No messages yet</p>
+              return (
+                <li key={conversation.id}>
+                  <motion.button
+                    type='button'
+                    onClick={() => onSelect(conversation.id)}
+                    aria-current={isActive ? 'true' : undefined}
+                    className={cn(
+                      'group relative flex w-full items-center gap-3 cursor-pointer px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 border-l-4 select-none',
+                      isActive
+                        ? 'bg-accent/70 border-l-primary shadow-2xs font-normal'
+                        : 'border-l-transparent hover:bg-muted/40'
                     )}
-                  </div>
+                  >
+                    {/* Avatar with Status Indicator */}
+                    <div className='relative shrink-0'>
+                      <Avatar className='h-11 w-11 rounded-full border border-border/40 bg-background/80 shadow-xs'>
+                        <AvatarFallback className='bg-primary/15 text-primary text-sm font-semibold'>
+                          {conversation.initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span
+                        className={cn(
+                          'absolute right-0 bottom-0 h-3 w-3 rounded-full border-2 border-background',
+                          conversation.status === 'online'
+                            ? 'bg-emerald-500'
+                            : 'bg-muted-foreground/40'
+                        )}
+                        aria-label={conversation.status === 'online' ? 'Online' : 'Offline'}
+                      />
+                    </div>
 
-                  {/* WhatsApp-style Unread Badge */}
-                  {conversation.unread > 0 && (
-                    <span className='bg-emerald-500 text-white shadow-xs ml-1 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-bold'>
-                      {conversation.unread}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </motion.button>
-          );
-        })}
+                    {/* Chat details */}
+                    <div className='min-w-0 flex-1'>
+                      {/* Top Row: User Name & Timestamp */}
+                      <div className='flex items-center justify-between gap-1.5'>
+                        <p className='text-foreground truncate text-sm font-semibold'>
+                          {conversation.name}
+                        </p>
+                        {lastMessage && (
+                          <span
+                            className={cn(
+                              'shrink-0 text-[11px]',
+                              conversation.unread > 0
+                                ? 'text-emerald-600 dark:text-emerald-400 font-semibold'
+                                : 'text-muted-foreground'
+                            )}
+                          >
+                            {lastMessage.timestamp}
+                          </span>
+                        )}
+                      </div>
+
+                      {/* Bottom Row: Message snippet / Typing & Unread badge */}
+                      <div className='mt-0.5 flex items-center justify-between gap-2'>
+                        <div className='min-w-0 flex-1'>
+                          <ConversationPreview
+                            isTyping={isTyping}
+                            lastMessage={lastMessage}
+                            isSentByAgent={isSentByAgent}
+                          />
+                        </div>
+
+                        {/* WhatsApp-style Unread Badge */}
+                        {conversation.unread > 0 && (
+                          <span className='bg-emerald-500 text-white shadow-xs ml-1 flex h-5 min-w-5 shrink-0 items-center justify-center rounded-full px-1.5 text-[11px] font-bold'>
+                            {conversation.unread}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </motion.button>
+                </li>
+              );
+            })}
+          </ul>
+        )}
       </div>
     </div>
   );

@@ -1,22 +1,24 @@
 'use client';
 
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Icons } from '@/components/icons';
 import { cn } from '@/lib/utils';
 
+const CloseIcon = Icons.close;
+
 interface Contact {
-  name: string;
-  phone?: string;
-  address?: string;
-  joinedDate?: string;
-  notes?: string;
-  status: 'online' | 'offline';
+  readonly name: string;
+  readonly phone?: string;
+  readonly address?: string;
+  readonly joinedDate?: string;
+  readonly notes?: string;
+  readonly status: 'online' | 'offline';
 }
 
 interface ContactProfileProps {
-  contact: Contact | null;
-  expanded: boolean;
-  setExpanded: (expanded: boolean) => void;
+  readonly contact: Contact | null;
+  readonly expanded: boolean;
+  readonly setExpanded: (expanded: boolean) => void;
 }
 
 const tabs = [
@@ -26,7 +28,11 @@ const tabs = [
   { id: 'info', icon: Icons.info, label: 'More Info' }
 ];
 
-export default function ContactProfile({ contact, expanded, setExpanded }: ContactProfileProps) {
+export default function ContactProfile({
+  contact,
+  expanded,
+  setExpanded
+}: Readonly<ContactProfileProps>) {
   const [activeTab, setActiveTab] = useState('phone');
 
   const renderTabContent = () => {
@@ -103,7 +109,7 @@ export default function ContactProfile({ contact, expanded, setExpanded }: Conta
               title='Close'
               className='hover:bg-accent rounded-md p-1.5 transition-colors'
             >
-              <Icons.close className='text-muted-foreground hover:text-destructive h-5 w-5' />
+              <CloseIcon className='text-muted-foreground hover:text-destructive h-5 w-5' />
             </button>
           </div>
 

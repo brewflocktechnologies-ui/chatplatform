@@ -2,6 +2,8 @@
 
 @import 'tw-animate-css';
 
+@import './theme.css';
+
 @custom-variant dark (&:is(.dark *));
 
 /* Base UI exposes orientation as data-orientation="…"; the base-nova
@@ -9,22 +11,17 @@
 @custom-variant data-horizontal (&[data-orientation='horizontal']);
 @custom-variant data-vertical (&[data-orientation='vertical']);
 
-@import './theme.css';
-
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
   }
   body {
     @apply bg-background text-foreground;
   }
 
-  /* Global scrollbar styling to match ScrollArea */
-  * {
-    scrollbar-width: thin;
-    scrollbar-color: var(--border) transparent;
-  }
-
+  /* Global scrollbar styling to match ScrollArea (the `*` rule above) */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
@@ -61,6 +58,8 @@
 ::view-transition-new(root) {
   /* Ensure the incoming view (new theme) is always on top */
   z-index: 1;
+  /* Apply the reveal animation */
+  animation: reveal 0.4s ease-in-out forwards;
 }
 
 @keyframes reveal {
@@ -76,10 +75,6 @@
   }
 }
 
-::view-transition-new(root) {
-  /* Apply the reveal animation */
-  animation: reveal 0.4s ease-in-out forwards;
-}
 
 /* Base UI sets --accordion-panel-height on Accordion.Panel, but tw-animate-css's
    accordion keyframes only read the radix-era variable. Redefine them (later in

@@ -11,9 +11,9 @@ import '../atoms/cw-menu-item.js';
  */
 @customElement('cw-attach-menu')
 export class CwAttachMenu extends LitElement {
-  private dismiss = new DismissController(this);
+  private readonly dismiss = new DismissController(this);
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

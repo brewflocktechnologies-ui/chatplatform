@@ -13,7 +13,7 @@ export function ToggleGroupField({
   label,
   description,
   children
-}: Omit<BaseFieldProps, 'required'> & { children: React.ReactNode }) {
+}: Readonly<Omit<BaseFieldProps, 'required'> & { children: React.ReactNode }>) {
   const field = useFieldContext<string[]>();
   const labelId = `${field.name}-label`;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { Icons } from '@/components/icons';
+import { Icons, type Icon } from '@/components/icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,17 +18,16 @@ import {
   SidebarMenuItem,
   useSidebar
 } from '@/components/ui/sidebar';
-import { Icon } from '@/components/icons';
 
 export function NavProjects({
   projects
-}: {
+}: Readonly<{
   projects: {
     name: string;
     url: string;
     icon: Icon;
   }[];
-}) {
+}>) {
   const { isMobile } = useSidebar();
 
   return (

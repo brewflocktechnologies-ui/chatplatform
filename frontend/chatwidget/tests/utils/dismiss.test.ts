@@ -95,6 +95,8 @@ describe('utils/dismiss.ts', () => {
     document.body.appendChild(outsideDiv);
 
     outsideDiv.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true, composed: true }));
+
+    expect(element.onDismissCallback).not.toHaveBeenCalled();
   });
 
   it('handles enabled boolean, inside clicks, default eventName, and multiple hostConnected calls', async () => {

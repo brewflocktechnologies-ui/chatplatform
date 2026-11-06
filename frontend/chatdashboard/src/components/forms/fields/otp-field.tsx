@@ -10,7 +10,7 @@ import {
 import { useFieldContext, useFieldInvalid, type BaseFieldProps } from '@/lib/form-context';
 
 /** 6-digit one-time-code input (3 + 3 with a separator). */
-export function OtpField({ label, description, required }: BaseFieldProps) {
+export function OtpField({ label, description, required }: Readonly<BaseFieldProps>) {
   const field = useFieldContext<string>();
   const isInvalid = useFieldInvalid();
 

@@ -32,6 +32,34 @@ services:
       retries: 10
     restart: unless-stopped
 
+  # Realtime hub between the chat widget and the dashboard. Same config file
+  # the standalone binary uses (localrun/centrifugo/config.json), so local,
+  # e2e and container runs behave identically. Anything in that file can be
+  # overridden per environment with CENTRIFUGO_* variables, no rebuild needed.
+  centrifugo:
+    image: centrifugo/centrifugo:v6.10.2
+    container_name: chatplatform-centrifugo
+    command: centrifugo --config=/centrifugo/config.json
+    environment:
+      # Comma-free, space-separated list. Lock this to the real widget and
+      # dashboard origins in production (the file default is "*").
+      CENTRIFUGO_CLIENT_ALLOWED_ORIGINS: ${CENTRIFUGO_ALLOWED_ORIGINS:-*}
+      # The file ships client.insecure=true (no token auth), which is
+      # dev-only. Do not run production with it: set it to false and issue
+      # connection/subscription JWTs signed with
+      # CENTRIFUGO_CLIENT_TOKEN_HMAC_SECRET_KEY.
+      CENTRIFUGO_CLIENT_INSECURE: ${CENTRIFUGO_INSECURE:-true}
+    ports:
+      - '8000:8000'
+    volumes:
+      - ../localrun/centrifugo/config.json:/centrifugo/config.json:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -qO- http://localhost:8000/health >/dev/null || exit 1']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
 volumes:
   chatplatform_postgres_data:
     name: chatplatform_postgres_data

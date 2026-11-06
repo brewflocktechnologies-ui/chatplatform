@@ -13,7 +13,7 @@ export function ConversationSelect({
   conversations,
   selectedId,
   onSelect
-}: ConversationSelectProps) {
+}: Readonly<ConversationSelectProps>) {
   const onlineCount = conversations.filter((c) => c.status === 'online').length;
 
   return (

@@ -107,7 +107,7 @@ export class ChatDashboardSocketClient {
   }
 
   private publish(data: Record<string, unknown>) {
-    if (!this.sub || this.sub.state !== SubscriptionState.Subscribed) return;
+    if (this.sub?.state !== SubscriptionState.Subscribed) return;
     this.sub
       .publish({
         ...data,

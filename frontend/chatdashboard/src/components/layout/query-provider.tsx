@@ -16,7 +16,7 @@ const ReactQueryDevtools =
       )
     : null;
 
-export default function QueryProvider({ children }: { children: React.ReactNode }) {
+export default function QueryProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const queryClient = getQueryClient();
 
   return (

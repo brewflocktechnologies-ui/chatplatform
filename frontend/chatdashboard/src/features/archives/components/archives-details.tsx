@@ -1,15 +1,24 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import {
+  CannedSection,
+  DetailsTabBar,
+  NotesSection
+} from '@/features/chat/components/details-panel-parts';
+import { useState, type SyntheticEvent } from 'react';
 import type { ArchivedChat } from '../types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
+
+const MoreHorizontalIcon = Icons.moreHorizontal;
+const ClockIcon = Icons.clock;
+const MapPinIcon = Icons.mapPin;
+const ExternalLinkIcon = Icons.externalLink;
+const InfoIcon = Icons.info;
+const PageIcon = Icons.page;
+
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 
 export type DetailsTab = 'info' | 'canned' | 'apps';
@@ -20,11 +29,11 @@ function copyToClipboard(text: string, label: string) {
 }
 
 interface ArchivesDetailsProps {
-  chat: ArchivedChat;
-  isOpen: boolean;
-  onToggle: () => void;
-  activeTab: DetailsTab;
-  onTabChange: (tab: DetailsTab) => void;
+  readonly chat: ArchivedChat;
+  readonly isOpen: boolean;
+  readonly onToggle: () => void;
+  readonly activeTab: DetailsTab;
+  readonly onTabChange: (tab: DetailsTab) => void;
 }
 
 interface AgentNote {
@@ -76,7 +85,7 @@ export function ArchivesDetails({
   onToggle,
   activeTab,
   onTabChange
-}: ArchivesDetailsProps) {
+}: Readonly<ArchivesDetailsProps>) {
   const [notes, setNotes] = useState<Record<string, AgentNote[]>>(DEFAULT_NOTES);
   const [newNoteText, setNewNoteText] = useState('');
   const [cannedSearch, setCannedSearch] = useState('');
@@ -87,7 +96,7 @@ export function ArchivesDetails({
 
   const currentNotes = notes[chat.id] || [];
 
-  const handleAddNote = (e: FormEvent) => {
+  const handleAddNote = (e: SyntheticEvent) => {
     e.preventDefault();
     if (!newNoteText.trim()) return;
 
@@ -114,92 +123,13 @@ export function ArchivesDetails({
 
   return (
     <div className='relative flex h-full w-full sm:w-[320px] md:w-[360px] shrink-0 flex-col border-l border-border/60 bg-card/50 overflow-hidden'>
-
       {/* Top Tab Bar & Utility Actions */}
-      <div className='flex items-center justify-between border-b border-border/60 px-4 h-[56px] shrink-0 bg-background/50'>
-        <div className='flex items-center gap-1'>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type='button'
-                  aria-label='Customer Details'
-                  onClick={() => onTabChange('info')}
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer',
-                    activeTab === 'info'
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                  )}
-                />
-              }
-            >
-              <Icons.user className='h-4 w-4' />
-            </TooltipTrigger>
-            <TooltipContent>Customer Details</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type='button'
-                  aria-label='Notes & Canned Responses'
-                  onClick={() => onTabChange('canned')}
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer',
-                    activeTab === 'canned'
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                  )}
-                />
-              }
-            >
-              <Icons.post className='h-4 w-4' />
-            </TooltipTrigger>
-            <TooltipContent>Notes & Canned Responses</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type='button'
-                  aria-label='Apps & Integrations'
-                  onClick={() => onTabChange('apps')}
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer',
-                    activeTab === 'apps'
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                  )}
-                />
-              }
-            >
-              <Icons.galleryVerticalEnd className='h-4 w-4' />
-            </TooltipTrigger>
-            <TooltipContent>Apps & Integrations</TooltipContent>
-          </Tooltip>
-        </div>
-
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon-sm'
-                onClick={onToggle}
-                className='h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer'
-                aria-label='Hide Details Panel'
-              />
-            }
-          >
-            <Icons.chevronRight className='h-4 w-4' />
-          </TooltipTrigger>
-          <TooltipContent side='left'>Hide Details Panel</TooltipContent>
-        </Tooltip>
-      </div>
+      <DetailsTabBar
+        infoLabel='Customer Details'
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        onToggle={onToggle}
+      />
 
       {/* Tab 1: Customer Details */}
       {activeTab === 'info' && (
@@ -208,8 +138,12 @@ export function ArchivesDetails({
           <div className='space-y-3 pt-1'>
             <div className='flex items-center justify-between'>
               <h4 className='text-xs font-semibold text-foreground tracking-tight'>General info</h4>
-              <button type='button' className='text-muted-foreground hover:text-foreground'>
-                <Icons.moreHorizontal className='h-4 w-4' />
+              <button
+                type='button'
+                aria-label='General info options'
+                className='text-muted-foreground hover:text-foreground'
+              >
+                <MoreHorizontalIcon className='h-4 w-4' />
               </button>
             </div>
 
@@ -236,11 +170,11 @@ export function ArchivesDetails({
 
             <div className='space-y-1.5 pt-1 text-muted-foreground'>
               <div className='flex items-center gap-2'>
-                <Icons.clock className='h-3.5 w-3.5 shrink-0' />
+                <ClockIcon className='h-3.5 w-3.5 shrink-0' />
                 <span>{chat.customer.localTime}</span>
               </div>
               <div className='flex items-center gap-2'>
-                <Icons.mapPin className='h-3.5 w-3.5 shrink-0' />
+                <MapPinIcon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{chat.customer.location}</span>
               </div>
             </div>
@@ -251,7 +185,7 @@ export function ArchivesDetails({
               className='w-full h-8 text-xs font-normal justify-center border-border/70 text-foreground/80 hover:text-foreground'
             >
               <span>View all chats ({chat.customer.allChatsCount})</span>
-              <Icons.externalLink className='ml-1.5 h-3 w-3' />
+              <ExternalLinkIcon className='ml-1.5 h-3 w-3' />
             </Button>
           </div>
 
@@ -275,7 +209,7 @@ export function ArchivesDetails({
                 <span className='text-muted-foreground'>Chatting time:</span>
                 <div className='flex items-center gap-1 font-medium text-foreground'>
                   <span>{chat.chatInfo.chattingTime}</span>
-                  <Icons.info className='h-3 w-3 text-muted-foreground' />
+                  <InfoIcon className='h-3 w-3 text-muted-foreground' />
                 </div>
               </div>
 
@@ -353,92 +287,32 @@ export function ArchivesDetails({
       {activeTab === 'canned' && (
         <div className='flex-1 overflow-y-auto p-4 space-y-5 text-xs'>
           {/* Internal Notes Section */}
-          <div className='space-y-3'>
-            <div className='flex items-center justify-between'>
-              <h4 className='text-xs font-semibold text-foreground tracking-tight'>
-                Internal Notes
-              </h4>
-              <Badge variant='secondary' className='text-[10px] h-4.5 px-1.5'>
-                {currentNotes.length}
-              </Badge>
-            </div>
-
-            <form onSubmit={handleAddNote} className='space-y-2'>
-              <Textarea
-                placeholder='Leave a private note about this chat or customer...'
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                className='min-h-[70px] text-xs resize-none'
-              />
-              <div className='flex justify-end'>
-                <Button type='submit' size='sm' className='h-7 text-xs'>
-                  <Icons.add className='mr-1 h-3 w-3' />
-                  Add Note
-                </Button>
-              </div>
-            </form>
-
-            <div className='space-y-2 pt-1'>
-              {currentNotes.length === 0 ? (
-                <p className='text-muted-foreground italic text-[11px]'>No notes recorded yet.</p>
-              ) : (
-                currentNotes.map((note) => (
-                  <div
-                    key={note.id}
-                    className='rounded-lg border border-border/50 bg-background/60 p-2.5 space-y-1'
-                  >
-                    <div className='flex items-center justify-between text-[10px] text-muted-foreground'>
-                      <span className='font-medium text-foreground'>{note.author}</span>
-                      <span>{note.createdAt}</span>
-                    </div>
-                    <p className='text-[11px] text-foreground/90'>{note.text}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <NotesSection
+            notes={currentNotes}
+            value={newNoteText}
+            onValueChange={setNewNoteText}
+            onSubmit={handleAddNote}
+            placeholder='Leave a private note about this chat or customer...'
+          />
 
           <hr className='border-border/40' />
 
           {/* Canned Responses Section */}
-          <div className='space-y-3'>
-            <div className='flex items-center justify-between'>
-              <h4 className='text-xs font-semibold text-foreground tracking-tight'>
-                Canned Responses
-              </h4>
-            </div>
-
-            <Input
-              placeholder='Search canned responses...'
-              value={cannedSearch}
-              onChange={(e) => setCannedSearch(e.target.value)}
-              className='h-8 text-xs'
-            />
-
-            <div className='space-y-2 pt-1'>
-              {filteredCanned.map((canned, idx) => (
-                <div
-                  key={idx}
-                  className='rounded-lg border border-border/50 bg-background/50 p-2.5 space-y-1.5 hover:bg-muted/40 transition-colors'
-                >
-                  <div className='flex items-center justify-between'>
-                    <span className='font-semibold text-foreground text-[11px]'>
-                      {canned.title}
-                    </span>
-                    <button
-                      type='button'
-                      onClick={() => copyToClipboard(canned.text, canned.title)}
-                      className='text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 font-medium'
-                    >
-                      <Icons.page className='h-3 w-3' />
-                      Copy
-                    </button>
-                  </div>
-                  <p className='text-[11px] text-muted-foreground line-clamp-2'>{canned.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+          <CannedSection
+            responses={filteredCanned}
+            search={cannedSearch}
+            onSearchChange={setCannedSearch}
+            renderActions={(canned) => (
+              <button
+                type='button'
+                onClick={() => copyToClipboard(canned.text, canned.title)}
+                className='text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 font-medium'
+              >
+                <PageIcon className='h-3 w-3' />
+                Copy
+              </button>
+            )}
+          />
         </div>
       )}
 

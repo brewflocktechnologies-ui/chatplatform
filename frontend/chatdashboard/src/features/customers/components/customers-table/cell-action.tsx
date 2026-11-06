@@ -1,17 +1,8 @@
 'use client';
+import { RowActions } from '@/components/ui/table/row-actions';
 import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { AlertModal } from '@/components/modal/alert-modal';
-import { Button } from '@/components/ui/button';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuGroup,
-  DropdownMenuLabel,
-  DropdownMenuTrigger
-} from '@/components/ui/dropdown-menu';
 import { Icons } from '@/components/icons';
 import { invalidateEntity } from '@/lib/cache/invalidation';
 import { deleteCustomerMutation } from '../../api/mutations';
@@ -20,11 +11,10 @@ import type { Customer } from '../../api/types';
 import { CustomerFormSheet } from '../customer-form-sheet';
 
 interface CellActionProps {
-  data: Customer;
+  readonly data: Customer;
 }
 
-export function CellAction({ data }: CellActionProps) {
-  const [deleteOpen, setDeleteOpen] = useState(false);
+export function CellAction({ data }: Readonly<CellActionProps>) {
   const [editOpen, setEditOpen] = useState(false);
   const queryClient = useQueryClient();
 
@@ -34,42 +24,20 @@ export function CellAction({ data }: CellActionProps) {
     onSuccess: () => {
       invalidateEntity('customers', queryClient);
       toast.success('Customer deleted successfully');
-      setDeleteOpen(false);
     },
     onError: (error) => {
       toast.error(error instanceof CustomerApiError ? error.message : 'Failed to delete customer');
-      setDeleteOpen(false);
     }
   });
 
   return (
-    <>
-      <AlertModal
-        isOpen={deleteOpen}
-        onClose={() => setDeleteOpen(false)}
-        onConfirm={() => deleteMutation.mutate(data.id)}
-        loading={deleteMutation.isPending}
-      />
+    <RowActions
+      items={[{ label: 'Update', icon: Icons.edit, onSelect: () => setEditOpen(true) }]}
+      // The dialog closes whether the delete worked or not.
+      onDelete={(close) => deleteMutation.mutate(data.id, { onSettled: close })}
+      isDeleting={deleteMutation.isPending}
+    >
       <CustomerFormSheet customer={data} open={editOpen} onOpenChange={setEditOpen} />
-      <DropdownMenu modal={false}>
-        <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
-          <span className='sr-only'>Open menu</span>
-          <Icons.ellipsis className='h-4 w-4' />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align='end'>
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          </DropdownMenuGroup>
-          <DropdownMenuGroup>
-            <DropdownMenuItem onClick={() => setEditOpen(true)}>
-              <Icons.edit className='mr-2 h-4 w-4' /> Update
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => setDeleteOpen(true)}>
-              <Icons.trash className='mr-2 h-4 w-4' /> Delete
-            </DropdownMenuItem>
-          </DropdownMenuGroup>
-        </DropdownMenuContent>
-      </DropdownMenu>
-    </>
+    </RowActions>
   );
 }

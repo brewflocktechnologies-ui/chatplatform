@@ -53,6 +53,10 @@ beforeEach(() => {
   useUserStatus.setState({ acceptChats: true });
 });
 
+// Billing-backed tabs show an "API" tag, so their accessible name includes it.
+const linkName = (item: { title: string; api?: boolean }) =>
+  item.api ? `${item.title} API` : item.title;
+
 function openUserMenu() {
   const trigger = screen.getByRole('button', { name: /demo user/i });
   fireEvent.click(trigger);
@@ -62,7 +66,7 @@ describe('AppSidebar', () => {
   it('renders a link for every configured nav item', () => {
     renderSidebar();
     for (const item of navGroups.flatMap((g) => g.items)) {
-      const link = screen.getByRole('link', { name: item.title });
+      const link = screen.getByRole('link', { name: linkName(item) });
       expect(link).toHaveAttribute('href', item.url);
     }
   });
@@ -71,7 +75,7 @@ describe('AppSidebar', () => {
     renderSidebar();
     const billingTabs = ['Customers', 'Company', 'POC Website', 'POC Widget', 'POC Config'];
     for (const item of navGroups.flatMap((g) => g.items)) {
-      const tag = screen.getByRole('link', { name: item.title }).querySelector('sup');
+      const tag = screen.getByRole('link', { name: linkName(item) }).querySelector('sup');
       if (item.api) {
         expect(billingTabs).toContain(item.title);
         expect(tag).toHaveTextContent('API');
@@ -79,7 +83,7 @@ describe('AppSidebar', () => {
         expect(tag).toBeNull();
       }
     }
-    expect(screen.getByRole('link', { name: 'Customers' }).querySelector('sup')).not.toBeNull();
+    expect(screen.getByRole('link', { name: 'Customers API' }).querySelector('sup')).not.toBeNull();
   });
 
   it('renders the group label', () => {
@@ -90,7 +94,7 @@ describe('AppSidebar', () => {
   it('marks only the current route as active', () => {
     usePathname.mockReturnValue('/dashboard/customers');
     renderSidebar();
-    const active = screen.getByRole('link', { name: 'Customers' });
+    const active = screen.getByRole('link', { name: 'Customers API' });
     const inactive = screen.getByRole('link', { name: 'Dashboard' });
     expect(active).toHaveAttribute('data-active');
     expect(inactive).not.toHaveAttribute('data-active');

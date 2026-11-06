@@ -6,7 +6,7 @@ import { PlanAdmin } from './plan-admin';
 export default function PlanListing() {
   const queryClient = getQueryClient();
 
-  void queryClient.prefetchQuery(plansQueryOptions(DEFAULT_PLAN_FILTERS));
+  void queryClient.query(plansQueryOptions(DEFAULT_PLAN_FILTERS)).catch(() => {});
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

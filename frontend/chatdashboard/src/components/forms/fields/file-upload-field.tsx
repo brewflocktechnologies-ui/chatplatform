@@ -10,10 +10,12 @@ export function FileUploadField({
   required,
   maxSize = 5 * 1024 * 1024,
   maxFiles = 1
-}: BaseFieldProps & {
-  maxSize?: number;
-  maxFiles?: number;
-}) {
+}: Readonly<
+  BaseFieldProps & {
+    maxSize?: number;
+    maxFiles?: number;
+  }
+>) {
   const field = useFieldContext<File[] | undefined>();
   const isInvalid = useFieldInvalid();
 

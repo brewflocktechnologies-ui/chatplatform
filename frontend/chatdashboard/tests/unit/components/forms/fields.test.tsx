@@ -45,10 +45,8 @@ function Harness<T extends Record<string, unknown>>({
   );
 }
 
-const submit = async () => {
-  await act(async () => {
-    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
-  });
+const submit = () => {
+  fireEvent.submit(document.querySelector('form') as HTMLFormElement);
 };
 
 describe('TextField', () => {

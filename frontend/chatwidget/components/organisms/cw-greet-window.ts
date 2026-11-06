@@ -9,6 +9,11 @@ import '../molecules/cw-greet-input.js';
 import '../atoms/cw-icon.js';
 import '../atoms/cw-button.js';
 
+const ICON_ALIGNMENT: ReadonlyMap<string, string> = new Map([
+  ['left', 'flex-start'],
+  ['right', 'flex-end'],
+]);
+
 @customElement('cw-greet-window')
 export class CwGreetWindow extends LitElement {
   @property({ type: Object }) config?: GreetWindowState;
@@ -25,12 +30,12 @@ export class CwGreetWindow extends LitElement {
   /** When true (default) the window is fixed to the viewport; set false to position it inside a container (used by stories). */
   @property({ type: Boolean }) fixed = true;
 
-  private transition = new EnterLeaveController(this, {
+  private readonly transition = new EnterLeaveController(this, {
     enterMs: () => 300,
     leaveMs: () => 300,
   });
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`
@@ -131,27 +136,75 @@ export class CwGreetWindow extends LitElement {
     this.transition.setTarget(shouldShow);
   }
 
+  /** The greeting picture, or the named icon when there is none. */
+  private renderIcon(g: GreetWindowState) {
+    if (g.imageUrl) {
+      return html`
+        <img
+          src="${g.imageUrl}"
+          alt="${g.imageAlt || 'Greeting image'}"
+          class="${getAnimClass(g.iconAnimation)}"
+          style="display: block; margin: ${g.iconAlign === 'center' ? '0 auto' : '0'}; height: ${(g.imageHeight || 70)}px; width: ${g.imageWidth ? `${g.imageWidth}px` : 'auto'}; object-fit: contain; padding: ${g.imagePadding || '0px'}"
+        />
+      `;
+    }
+    return html`
+      <div
+        class="${getAnimClass(g.iconAnimation)}"
+        style="color: ${g.iconColor || 'var(--cw-accent, #0b5fff)'}; display: flex; align-items: center; justify-content: center"
+      >
+        <cw-icon .name="${g.lucideIcon || 'Sparkles'}" .size="${g.iconSize || 48}"></cw-icon>
+      </div>
+    `;
+  }
+
+  private renderText(g: GreetWindowState) {
+    return html`
+      <div style="display: flex; flex-direction: column; gap: 8px; text-align: ${g.textAlign || 'center'}; width: 100%">
+        <h3 style="margin: 0; font-size: ${(g.fontSize || 16)}px; font-weight: 700; color: ${g.titleColor || 'var(--cw-ink, #101828)'}; line-height: 1.35">
+          ${g.title || 'Hi there! 👋'}
+        </h3>
+        ${g.description
+          ? html`
+              <p style="margin: 0; font-size: 14px; color: ${g.descriptionColor || '#475569'}; line-height: 1.45">
+                ${g.description}
+              </p>
+            `
+          : ''
+        }
+      </div>
+    `;
+  }
+
+  private renderInputBox(g: GreetWindowState) {
+    const inputBox = g.inputBox;
+    if (!inputBox?.enabled) return '';
+    return html`
+      <cw-greet-input
+        .config="${inputBox}"
+        .visible="${this.visible && (inputBox.visible ?? true)}"
+        .accentColor="${g.iconColor || 'var(--cw-accent, #0b5fff)'}"
+      ></cw-greet-input>
+    `;
+  }
+
   render() {
     const g = this.config;
-    const cb = this.chatbarConfig;
-    const bb = this.bubbleConfig;
 
     if (!this.transition.render || !g) return html``;
 
     const phase = this.transition.phase;
     const isLeaving = phase === 'leave';
     const isHidden = phase === 'enter' || phase === 'leave';
-    const openingSec = g.animationOpeningSec !== undefined ? g.animationOpeningSec : 0.3;
-    const closingSec = g.animationClosingSec !== undefined ? g.animationClosingSec : 0.3;
+    const openingSec = g.animationOpeningSec ?? 0.3;
+    const closingSec = g.animationClosingSec ?? 0.3;
     const durationSec = isLeaving ? closingSec : openingSec;
     const transitionDelay = phase === 'enter' ? '150ms' : '0ms';
 
     const bottomPx = this.bottomPx ?? 12;
-
     const rightPx = this.rightPx ?? 16;
-
     const widthVal = g.width || 320;
-    const iconAlign = g.iconAlign === 'left' ? 'flex-start' : g.iconAlign === 'right' ? 'flex-end' : 'center';
+    const iconAlign = ICON_ALIGNMENT.get(g.iconAlign) ?? 'center';
     const maxHeightPx = this.maxHeightPx || `calc(100% - ${(bottomPx + 24)}px)`;
 
     return html`
@@ -181,52 +234,14 @@ export class CwGreetWindow extends LitElement {
 
           <!-- Icon / Image Area (Lucide icon default on top) -->
           <div style="width: 100%; display: flex; align-items: center; margin-bottom: 16px; justify-content: ${iconAlign}">
-            ${g.imageUrl
-              ? html`
-                  <img
-                    src="${g.imageUrl}"
-                    alt="${g.imageAlt || 'Greeting image'}"
-                    class="${getAnimClass(g.iconAnimation)}"
-                    style="display: block; margin: ${g.iconAlign === 'center' ? '0 auto' : '0'}; height: ${(g.imageHeight || 70)}px; width: ${g.imageWidth ? `${g.imageWidth}px` : 'auto'}; object-fit: contain; padding: ${g.imagePadding || '0px'}"
-                  />
-                `
-              : html`
-                  <div
-                    class="${getAnimClass(g.iconAnimation)}"
-                    style="color: ${g.iconColor || 'var(--cw-accent, #0b5fff)'}; display: flex; align-items: center; justify-content: center"
-                  >
-                    <cw-icon .name="${g.lucideIcon || 'Sparkles'}" .size="${g.iconSize || 48}"></cw-icon>
-                  </div>
-                `
-            }
+            ${this.renderIcon(g)}
           </div>
 
-          <div style="display: flex; flex-direction: column; gap: 8px; text-align: ${g.textAlign || 'center'}; width: 100%">
-            <h3 style="margin: 0; font-size: ${(g.fontSize || 16)}px; font-weight: 700; color: ${g.titleColor || 'var(--cw-ink, #101828)'}; line-height: 1.35">
-              ${g.title || 'Hi there! 👋'}
-            </h3>
-            ${g.description
-              ? html`
-                  <p style="margin: 0; font-size: 14px; color: ${g.descriptionColor || '#475569'}; line-height: 1.45">
-                    ${g.description}
-                  </p>
-                `
-              : ''
-            }
-          </div>
+          ${this.renderText(g)}
         </div>
 
         <!-- Optional Input Box -->
-        ${g.inputBox && g.inputBox.enabled
-          ? html`
-              <cw-greet-input
-                .config="${g.inputBox}"
-                .visible="${this.visible && (g.inputBox.visible !== undefined ? g.inputBox.visible : true)}"
-                .accentColor="${g.iconColor || 'var(--cw-accent, #0b5fff)'}"
-              ></cw-greet-input>
-            `
-          : ''
-        }
+        ${this.renderInputBox(g)}
       </div>
     `;
   }

@@ -65,15 +65,15 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       },
 
       onUpdateName: ({ senderName }) => {
-        if (!senderName || !senderName.trim()) return;
+        if (!senderName?.trim()) return;
         const newName = senderName.trim();
         const state = get();
 
         // If a conversation for this user name already exists, do not duplicate or rename
-        const existing = state.conversations.find(
+        const alreadyExists = state.conversations.some(
           (c) => c.name.toLowerCase() === newName.toLowerCase()
         );
-        if (existing) {
+        if (alreadyExists) {
           return;
         }
 
@@ -256,17 +256,9 @@ export const useChatStore = create<ChatState>()((set, get) => ({
       const authorName = (senderName || message.author || 'Visitor').trim();
 
       // Look up target by user name (each user name is a separate user)
-      let target = state.conversations.find(
+      const target = state.conversations.find(
         (c) => c.name.toLowerCase() === authorName.toLowerCase()
       );
-
-      // If not found by name, check if matching conversationId has this same user name
-      if (!target && conversationId) {
-        const byId = state.conversations.find((c) => c.id === conversationId);
-        if (byId && byId.name.toLowerCase() === authorName.toLowerCase()) {
-          target = byId;
-        }
-      }
 
       // If target does not exist (new user name!), create a NEW separate user conversation
       // NEVER overwrite or rename any existing user!
@@ -326,7 +318,7 @@ export const useChatStore = create<ChatState>()((set, get) => ({
 
       // Treat as separate user section if name doesn't match
       const existing = state.conversations.find((c) => c.id === conversationId);
-      if (existing && existing.name.toLowerCase() === trimmed.toLowerCase()) {
+      if (existing?.name.toLowerCase() === trimmed.toLowerCase()) {
         return state;
       }
 

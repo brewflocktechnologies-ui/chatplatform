@@ -2,6 +2,7 @@ import type { SearchParams } from 'nuqs/server';
 import PageContainer from '@/components/layout/page-container';
 import { KeepLastGood } from '@/components/layout/keep-last-good';
 import { searchParamsCache } from '@/lib/searchparams';
+import { billingRequest } from '@/lib/billing/client';
 import { endpoints, origins } from '@/config/api-endpoints';
 import { PocWebsiteFormSheetTrigger } from '@/features/poc-website/components/poc-website-form-sheet';
 import { PocWebsiteTable, type PocWebsite } from './poc-website-table';
@@ -11,17 +12,19 @@ export const metadata = {
 };
 
 // Only these are sent to the API; an unknown sort field makes it error out.
-const SORT_FIELDS = ['domain', 'dateAdded'];
+const SORT_FIELDS = new Set(['domain', 'dateAdded']);
 
-type PageProps = { searchParams: Promise<SearchParams> };
+type PageProps = { readonly searchParams: Promise<SearchParams> };
 
 /** `sort` arrives from the table as a JSON array like [{"id":"domain","desc":false}]. */
 function toSortParam(raw: string | null) {
   try {
     const [first] = JSON.parse(raw ?? '[]') as { id: string; desc: boolean }[];
-    return first && SORT_FIELDS.includes(first.id)
-      ? `${first.id},${first.desc ? 'desc' : 'asc'}`
-      : undefined;
+    if (!first || !SORT_FIELDS.has(first.id)) {
+      return undefined;
+    }
+    const order = first.desc ? 'desc' : 'asc';
+    return `${first.id},${order}`;
   } catch {
     return undefined;
   }
@@ -34,19 +37,22 @@ async function loadWebsites(page: number, size: number, sort?: string) {
   });
   if (sort) params.set('sort', sort);
 
-  try {
-    const res = await fetch(`${origins.pocWebsites()}${endpoints.pocWebsites.list}?${params}`, {
-      cache: 'no-store'
-    });
-    if (!res.ok) return { error: `Websites API responded with ${res.status}` };
-    const data: { content: PocWebsite[]; totalPages: number } = await res.json();
-    return { websites: data.content, pageCount: data.totalPages };
-  } catch {
-    return { error: 'Websites API is unreachable' };
+  const res = await billingRequest<{ content: PocWebsite[]; totalPages: number }>(
+    'GET',
+    endpoints.pocWebsites.list,
+    { origin: origins.pocWebsites(), query: params }
+  );
+  if (!res.ok) {
+    return {
+      error: res.status
+        ? `Websites API responded with ${res.status}`
+        : 'Websites API is unreachable'
+    };
   }
+  return { websites: res.data.content, pageCount: res.data.totalPages };
 }
 
-export default async function PocWebsitePage(props: PageProps) {
+export default async function PocWebsitePage(props: Readonly<PageProps>) {
   searchParamsCache.parse(await props.searchParams);
   const result = await loadWebsites(
     searchParamsCache.get('page'),

@@ -8,15 +8,15 @@ export const metadata = {
 };
 
 type PageProps = {
-  searchParams: Promise<SearchParams>;
+  readonly searchParams: Promise<SearchParams>;
 };
 
-export default async function CompanyPage(props: PageProps) {
+export default async function CompanyPage(props: Readonly<PageProps>) {
   const searchParams = await props.searchParams;
   searchParamsCache.parse(searchParams);
 
   return (
-    <PageContainer>
+    <PageContainer srTitle='Company'>
       <CompanyListing />
     </PageContainer>
   );

@@ -26,7 +26,7 @@ export function LoadingButton({
   className,
   children,
   ...props
-}: LoadingButtonProps) {
+}: Readonly<LoadingButtonProps>) {
   const gap = props.size === 'sm' || props.size === 'xs' ? 'gap-1' : 'gap-1.5';
   return (
     <>

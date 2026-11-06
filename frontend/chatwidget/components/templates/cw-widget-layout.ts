@@ -21,6 +21,9 @@ import '../organisms/cw-chat-panel.js';
  * and offsets for surface elements, and accepts activeTrigger as a prop.
  * Contains ZERO store dependencies.
  */
+/** An offset the host actually set: not undefined, null or the empty string. */
+const isSet = (value: unknown) => value !== undefined && value !== null && value !== '';
+
 @customElement('cw-widget-layout')
 export class CwWidgetLayout extends LitElement {
   @property({ type: String }) activeTrigger: 'bubble' | 'chatbar' | 'chatcard' = 'bubble';
@@ -55,16 +58,16 @@ export class CwWidgetLayout extends LitElement {
         : (bs.offsetBottom ?? 12)
     ) || 12;
 
+    const chatbarRight = this.activeTrigger === 'chatcard' ? cbs.cardOffsetRight : cbs.barOffsetRight;
     const triggerRight = Number(
       isChatbarTrigger
-        ? (this.activeTrigger === 'chatcard'
-            ? (cbs.cardOffsetRight ?? cbs.offsetRight ?? 16)
-            : (cbs.barOffsetRight ?? cbs.offsetRight ?? 16))
+        ? (chatbarRight ?? cbs.offsetRight ?? 16)
         : (bs.offsetRight ?? 16)
     ) || 16;
 
+    const chatbarHeight = cbs.layout === 'card' ? 220 : 40;
     const triggerHeight = isChatbarTrigger
-      ? (cbs.height || (cbs.layout === 'card' ? 220 : 40))
+      ? (cbs.height || chatbarHeight)
       : (bs.height || 60);
 
     // -------------------------------------------------------------------------
@@ -78,24 +81,17 @@ export class CwWidgetLayout extends LitElement {
     // -------------------------------------------------------------------------
     // 3. Panel Stacking Math
     // -------------------------------------------------------------------------
-    const rawPanelBottom = (cws.offsetBottom !== undefined && cws.offsetBottom !== null && (cws.offsetBottom as any) !== '')
-      ? Number(cws.offsetBottom)
-      : triggerBottom;
+    const rawPanelBottom = isSet(cws.offsetBottom) ? Number(cws.offsetBottom) : triggerBottom;
+    const panelDefaultBottom = Number.isNaN(rawPanelBottom) ? triggerBottom : rawPanelBottom;
 
-    const panelDefaultBottom = typeof rawPanelBottom === 'number' && !isNaN(rawPanelBottom) ? rawPanelBottom : triggerBottom;
-
+    // The panel sits above the trigger unless the open panel hides the trigger.
+    const trigger = isChatbarTrigger ? cbs : bs;
     let panelBottomPx: number = panelDefaultBottom;
-    if (isChatbarTrigger && !cbs.hideOnOpen) {
-      const gap = cbs.stackGap ?? 12;
-      panelBottomPx = panelDefaultBottom + triggerHeight + gap;
-    } else if (!isChatbarTrigger && bs && !bs.hideOnOpen) {
-      const gap = bs.stackGap ?? 12;
-      panelBottomPx = panelDefaultBottom + triggerHeight + gap;
+    if (trigger && !trigger.hideOnOpen) {
+      panelBottomPx = panelDefaultBottom + triggerHeight + (trigger.stackGap ?? 12);
     }
 
-    const panelRightPx = (cws.offsetRight !== undefined && cws.offsetRight !== null && (cws.offsetRight as any) !== '')
-      ? Number(cws.offsetRight)
-      : 16;
+    const panelRightPx = isSet(cws.offsetRight) ? Number(cws.offsetRight) : 16;
 
     const panelMaxHeightPx = `calc(100% - ${(panelBottomPx + 24)}px)`;
 

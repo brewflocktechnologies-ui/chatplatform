@@ -24,15 +24,15 @@ export class CwChatPanel extends LitElement {
   /** When true (default) the panel is fixed to the viewport; set false to position it inside a container (used by stories). */
   @property({ type: Boolean }) fixed = true;
 
-  private transition = new EnterLeaveController(this, {
-    enterMs: () => (this.chatWindowConfig?.animationOpeningSec !== undefined ? this.chatWindowConfig.animationOpeningSec : 0.3) * 1000,
-    leaveMs: () => (this.chatWindowConfig?.animationClosingSec !== undefined ? this.chatWindowConfig.animationClosingSec : 0.2) * 1000,
+  private readonly transition = new EnterLeaveController(this, {
+    enterMs: () => (this.chatWindowConfig?.animationOpeningSec ?? 0.3) * 1000,
+    leaveMs: () => (this.chatWindowConfig?.animationClosingSec ?? 0.2) * 1000,
   });
 
   /** Guards "focus on open" so it runs once per open instead of every render. */
   private didFocus = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`
@@ -133,16 +133,14 @@ export class CwChatPanel extends LitElement {
     const cw = this.chatWindowConfig;
     const cs = this.chatState;
     const feats = this.features || {};
-    const cb = this.chatbarConfig;
-    const bb = this.bubbleConfig;
 
     if (!this.transition.render || !cw || !cs) return html``;
 
     const phase = this.transition.phase;
     const isLeaving = phase === 'leave';
     const isHidden = phase === 'enter' || phase === 'leave';
-    const openingSec = cw.animationOpeningSec !== undefined ? cw.animationOpeningSec : 0.3;
-    const closingSec = cw.animationClosingSec !== undefined ? cw.animationClosingSec : 0.2;
+    const openingSec = cw.animationOpeningSec ?? 0.3;
+    const closingSec = cw.animationClosingSec ?? 0.2;
     const durationSec = isLeaving ? closingSec : openingSec;
 
     const isExpanded = cs.isExpanded;
@@ -209,7 +207,7 @@ export class CwChatPanel extends LitElement {
                   .confirmLabel="${cs.confirmBox.confirmLabel || 'Confirm'}"
                   .modalCardBg="${cw.modalCardBg || '#ffffff'}"
                   .modalMessageColor="${cw.modalMessageColor || 'var(--cw-ink, #101828)'}"
-                  .modalBorderRadius="${cw.modalBorderRadius !== undefined ? cw.modalBorderRadius : 16}"
+                  .modalBorderRadius="${cw.modalBorderRadius ?? 16}"
                   .cancelBg="${cw.endChatCancelBg || 'var(--cw-surface, #ffffff)'}"
                   .cancelTextColor="${cw.endChatCancelTextColor || 'var(--cw-muted, #667085)'}"
                   .cancelBorderColor="${cw.endChatCancelBorderColor || 'var(--cw-border, #e9ecf1)'}"

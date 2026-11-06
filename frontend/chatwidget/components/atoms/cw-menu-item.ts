@@ -14,7 +14,7 @@ export class CwMenuItem extends LitElement {
   @property({ type: String }) label = '';
   @property({ type: Number }) iconSize = 16;
 
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
       :host {

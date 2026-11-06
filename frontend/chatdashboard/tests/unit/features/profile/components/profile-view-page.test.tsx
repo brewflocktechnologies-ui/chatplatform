@@ -40,7 +40,7 @@ describe('ProfileViewPage', () => {
     const email = screen.getByPlaceholderText('you@example.com');
     fireEvent.change(email, { target: { value: 'bad' } });
     fireEvent.submit(email.closest('form')!);
-    await waitFor(() => expect(screen.getByText('Name is required')).toBeInTheDocument());
+    expect(await screen.findByText('Name is required')).toBeInTheDocument();
     expect(screen.getByText('Enter a valid email address')).toBeInTheDocument();
     expect(h.success).not.toHaveBeenCalled();
   });

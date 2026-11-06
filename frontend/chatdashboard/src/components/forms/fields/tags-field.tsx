@@ -17,7 +17,7 @@ export function TagsField({
   description,
   required,
   placeholder = 'Type and press Enter...'
-}: BaseFieldProps & { placeholder?: string }) {
+}: Readonly<BaseFieldProps & { placeholder?: string }>) {
   const field = useFieldContext<string[]>();
   const isInvalid = useFieldInvalid();
   const [tagInput, setTagInput] = React.useState('');

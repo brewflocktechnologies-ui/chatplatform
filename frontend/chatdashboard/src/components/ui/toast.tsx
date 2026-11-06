@@ -16,15 +16,15 @@ import {
 
 const toast = ToastPrimitive.createToastManager();
 
-function ToastProvider({ ...props }: ToastPrimitive.Provider.Props) {
+function ToastProvider({ ...props }: Readonly<ToastPrimitive.Provider.Props>) {
   return <ToastPrimitive.Provider {...props} />;
 }
 
-function ToastPortal({ ...props }: ToastPrimitive.Portal.Props) {
+function ToastPortal({ ...props }: Readonly<ToastPrimitive.Portal.Props>) {
   return <ToastPrimitive.Portal data-slot='toast-portal' {...props} />;
 }
 
-function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
+function ToastViewport({ className, ...props }: Readonly<ToastPrimitive.Viewport.Props>) {
   return (
     <ToastPrimitive.Viewport
       data-slot='toast-viewport'
@@ -37,7 +37,7 @@ function ToastViewport({ className, ...props }: ToastPrimitive.Viewport.Props) {
   );
 }
 
-function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
+function Toast({ className, ...props }: Readonly<ToastPrimitive.Root.Props>) {
   return (
     <ToastPrimitive.Root
       data-slot='toast'
@@ -64,7 +64,7 @@ function Toast({ className, ...props }: ToastPrimitive.Root.Props) {
   );
 }
 
-function ToastContent({ className, ...props }: ToastPrimitive.Content.Props) {
+function ToastContent({ className, ...props }: Readonly<ToastPrimitive.Content.Props>) {
   return (
     <ToastPrimitive.Content
       data-slot='toast-content'
@@ -77,7 +77,7 @@ function ToastContent({ className, ...props }: ToastPrimitive.Content.Props) {
   );
 }
 
-function ToastTitle({ className, ...props }: ToastPrimitive.Title.Props) {
+function ToastTitle({ className, ...props }: Readonly<ToastPrimitive.Title.Props>) {
   return (
     <ToastPrimitive.Title
       data-slot='toast-title'
@@ -87,7 +87,7 @@ function ToastTitle({ className, ...props }: ToastPrimitive.Title.Props) {
   );
 }
 
-function ToastDescription({ className, ...props }: ToastPrimitive.Description.Props) {
+function ToastDescription({ className, ...props }: Readonly<ToastPrimitive.Description.Props>) {
   return (
     <ToastPrimitive.Description
       data-slot='toast-description'
@@ -101,7 +101,7 @@ function ToastAction({
   className,
   render = <Button variant='outline' size='sm' />,
   ...props
-}: ToastPrimitive.Action.Props) {
+}: Readonly<ToastPrimitive.Action.Props>) {
   return (
     <ToastPrimitive.Action
       data-slot='toast-action'
@@ -117,7 +117,7 @@ function ToastClose({
   children,
   render = <Button variant='ghost' size='icon-sm' />,
   ...props
-}: ToastPrimitive.Close.Props) {
+}: Readonly<ToastPrimitive.Close.Props>) {
   return (
     <ToastPrimitive.Close
       data-slot='toast-close'
@@ -134,7 +134,7 @@ function ToastClose({
   );
 }
 
-function ToastIcon({ type }: { type: string | undefined }) {
+function ToastIcon({ type }: Readonly<{ type: string | undefined }>) {
   let icon: React.ReactNode = null;
 
   if (type === 'success') {
@@ -189,7 +189,11 @@ function ToastList() {
   ));
 }
 
-function Toaster({ children, toastManager = toast, ...props }: ToastPrimitive.Provider.Props) {
+function Toaster({
+  children,
+  toastManager = toast,
+  ...props
+}: Readonly<ToastPrimitive.Provider.Props>) {
   return (
     <ToastProvider toastManager={toastManager} {...props}>
       {children}

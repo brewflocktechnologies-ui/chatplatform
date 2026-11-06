@@ -12,12 +12,12 @@ type PageProps = {
   searchParams: Promise<SearchParams>;
 };
 
-export default async function CustomersPage(props: PageProps) {
+export default async function CustomersPage(props: Readonly<PageProps>) {
   const searchParams = await props.searchParams;
   searchParamsCache.parse(searchParams);
 
   return (
-    <PageContainer infoContent={customersInfoContent}>
+    <PageContainer srTitle='Customers' infoContent={customersInfoContent}>
       <CustomerListingPage />
     </PageContainer>
   );

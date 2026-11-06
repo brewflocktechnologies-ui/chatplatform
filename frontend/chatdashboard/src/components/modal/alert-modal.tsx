@@ -22,7 +22,7 @@ export function AlertModal({
   title = 'Are you sure?',
   description = 'This action cannot be undone.',
   confirmLabel = 'Continue'
-}: AlertModalProps) {
+}: Readonly<AlertModalProps>) {
   const [isMounted, setIsMounted] = useState(false);
 
   useEffect(() => {

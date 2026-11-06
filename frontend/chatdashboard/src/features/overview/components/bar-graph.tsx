@@ -90,10 +90,12 @@ export function BarGraph() {
 }
 
 const CustomHatchedBar = (
-  props: React.SVGProps<SVGRectElement> & {
-    dataKey?: string;
-    isHatched?: boolean;
-  }
+  props: Readonly<
+    React.SVGProps<SVGRectElement> & {
+      dataKey?: string;
+      isHatched?: boolean;
+    }
+  >
 ) => {
   const { fill, x, y, width, height, dataKey } = props;
 

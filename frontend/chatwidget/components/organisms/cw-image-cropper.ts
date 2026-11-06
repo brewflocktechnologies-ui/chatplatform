@@ -4,6 +4,30 @@ import { CORE_STYLES } from '../../styles/core-styles.js';
 import '../atoms/cw-icon.js';
 import '../atoms/cw-button.js';
 
+type CropShape = 'circle' | 'square' | 'rounded';
+type AspectRatio = '1:1' | '4:3' | '16:9';
+
+const SHAPES: ReadonlyArray<readonly [CropShape, string]> = [
+  ['circle', '⚪ Circle'],
+  ['square', '⬜ Square'],
+  ['rounded', '▢ Rounded'],
+];
+const ASPECTS: readonly AspectRatio[] = ['1:1', '4:3', '16:9'];
+
+// Anything that is not a circle or rounded renders as a plain square corner.
+const SHAPE_RADIUS: ReadonlyMap<string, string> = new Map([
+  ['circle', '50%'],
+  ['rounded', '24px'],
+]);
+
+/** Size of the crop window on the 400x290 preview canvas, for each aspect ratio. */
+function cropFrame(aspectRatio: string): { width: number; height: number } {
+  return {
+    width: aspectRatio === '16:9' ? 320 : 200,
+    height: aspectRatio === '4:3' ? 150 : 200,
+  };
+}
+
 @customElement('cw-image-cropper')
 export class CwImageCropper extends LitElement {
   @property({ type: Boolean }) open = false;
@@ -30,11 +54,11 @@ export class CwImageCropper extends LitElement {
   @state() private offsetX = 0;
   @state() private offsetY = 0;
 
-  @query('#crop-canvas') private canvasElement!: HTMLCanvasElement;
+  @query('#crop-canvas') private readonly canvasElement!: HTMLCanvasElement;
 
   private imageObj: HTMLImageElement | null = null;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {
@@ -302,7 +326,7 @@ export class CwImageCropper extends LitElement {
   }
 
   private handleZoomChange(e: Event) {
-    this.zoom = parseFloat((e.target as HTMLInputElement).value);
+    this.zoom = Number.parseFloat((e.target as HTMLInputElement).value);
     this.drawCanvas();
   }
 
@@ -310,8 +334,7 @@ export class CwImageCropper extends LitElement {
     if (!this.canvasElement || !this.imageObj) return;
 
     const exportCanvas = document.createElement('canvas');
-    const cropW = this.aspectRatio === '16:9' ? 320 : 200;
-    const cropH = this.aspectRatio === '4:3' ? 150 : 200;
+    const { width: cropW, height: cropH } = cropFrame(this.aspectRatio);
     const size = this.exportSize || 250;
 
     exportCanvas.width = size;
@@ -354,18 +377,47 @@ export class CwImageCropper extends LitElement {
     this.dispatchEvent(new CustomEvent('cw:close', { bubbles: true, composed: true }));
   }
 
+  private selectShape(shape: CropShape, resetAspect = false) {
+    this.cropShape = shape;
+    if (resetAspect) this.aspectRatio = '1:1';
+    this.drawCanvas();
+  }
+
+  private selectAspect(ratio: AspectRatio) {
+    this.aspectRatio = ratio;
+    this.drawCanvas();
+  }
+
+  private renderPill(label: string, active: boolean, onSelect: () => void) {
+    return html`
+      <cw-button
+        size="xs"
+        .variant="${active ? 'primary' : 'outline'}"
+        .bg="${active ? this.primaryColor : ''}"
+        label="${label}"
+        @click="${onSelect}"
+      ></cw-button>
+    `;
+  }
+
+  private renderAspectRow() {
+    return html`
+      <div class="control-row">
+        <div class="control-group">
+          <span>Aspect:</span>
+          <div class="btn-pill-group">
+            ${ASPECTS.map((ratio) => this.renderPill(ratio, this.aspectRatio === ratio, () => this.selectAspect(ratio)))}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
   render() {
     if (!this.open) return html``;
 
-    const borderRadiusStyle =
-      this.cropShape === 'circle'
-        ? '50%'
-        : this.cropShape === 'rounded'
-        ? '24px'
-        : '8px';
-
-    const overlayWidth = this.aspectRatio === '16:9' ? 320 : 200;
-    const overlayHeight = this.aspectRatio === '4:3' ? 150 : 200;
+    const borderRadiusStyle = SHAPE_RADIUS.get(this.cropShape) ?? '8px';
+    const { width: overlayWidth, height: overlayHeight } = cropFrame(this.aspectRatio);
 
     return html`
       <div class="modal-backdrop" style="position: ${this.fixed ? 'fixed' : 'absolute'}; background: rgba(9, 13, 22, ${this.backdropOpacity});" @click="${(e: Event) => { if (e.target === e.currentTarget) this.closeModal(); }}">
@@ -434,65 +486,15 @@ export class CwImageCropper extends LitElement {
               <div class="control-group">
                 <span>Shape:</span>
                 <div class="btn-pill-group">
-                  <cw-button
-                    size="xs"
-                    .variant="${this.cropShape === 'circle' ? 'primary' : 'outline'}"
-                    .bg="${this.cropShape === 'circle' ? this.primaryColor : ''}"
-                    label="⚪ Circle"
-                    @click="${() => { this.cropShape = 'circle'; this.aspectRatio = '1:1'; this.drawCanvas(); }}"
-                  ></cw-button>
-                  <cw-button
-                    size="xs"
-                    .variant="${this.cropShape === 'square' ? 'primary' : 'outline'}"
-                    .bg="${this.cropShape === 'square' ? this.primaryColor : ''}"
-                    label="⬜ Square"
-                    @click="${() => { this.cropShape = 'square'; this.drawCanvas(); }}"
-                  ></cw-button>
-                  <cw-button
-                    size="xs"
-                    .variant="${this.cropShape === 'rounded' ? 'primary' : 'outline'}"
-                    .bg="${this.cropShape === 'rounded' ? this.primaryColor : ''}"
-                    label="▢ Rounded"
-                    @click="${() => { this.cropShape = 'rounded'; this.drawCanvas(); }}"
-                  ></cw-button>
+                  ${SHAPES.map(([shape, label]) =>
+                    this.renderPill(label, this.cropShape === shape, () => this.selectShape(shape, shape === 'circle'))
+                  )}
                 </div>
               </div>
             </div>
 
             <!-- Resolution & Aspect Ratio Row -->
-            ${this.showAspectPills
-              ? html`
-                  <div class="control-row">
-                    <div class="control-group">
-                      <span>Aspect:</span>
-                      <div class="btn-pill-group">
-                        <cw-button
-                          size="xs"
-                          .variant="${this.aspectRatio === '1:1' ? 'primary' : 'outline'}"
-                          .bg="${this.aspectRatio === '1:1' ? this.primaryColor : ''}"
-                          label="1:1"
-                          @click="${() => { this.aspectRatio = '1:1'; this.drawCanvas(); }}"
-                        ></cw-button>
-                        <cw-button
-                          size="xs"
-                          .variant="${this.aspectRatio === '4:3' ? 'primary' : 'outline'}"
-                          .bg="${this.aspectRatio === '4:3' ? this.primaryColor : ''}"
-                          label="4:3"
-                          @click="${() => { this.aspectRatio = '4:3'; this.drawCanvas(); }}"
-                        ></cw-button>
-                        <cw-button
-                          size="xs"
-                          .variant="${this.aspectRatio === '16:9' ? 'primary' : 'outline'}"
-                          .bg="${this.aspectRatio === '16:9' ? this.primaryColor : ''}"
-                          label="16:9"
-                          @click="${() => { this.aspectRatio = '16:9'; this.drawCanvas(); }}"
-                        ></cw-button>
-                      </div>
-                    </div>
-                  </div>
-                `
-              : ''
-            }
+            ${this.showAspectPills ? this.renderAspectRow() : ''}
           </div>
 
           <div class="footer">

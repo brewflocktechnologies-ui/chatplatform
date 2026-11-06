@@ -27,19 +27,22 @@ export default function PageContainer({
   access = true,
   accessFallback,
   pageTitle,
+  srTitle,
   pageDescription,
   infoContent,
   pageHeaderAction
-}: {
+}: Readonly<{
   children: React.ReactNode;
   isLoading?: boolean;
   access?: boolean;
   accessFallback?: React.ReactNode;
   pageTitle?: string;
+  /** Page h1 for screen readers when the page shows no visible title. */
+  srTitle?: string;
   pageDescription?: string;
   infoContent?: InfobarContent;
   pageHeaderAction?: React.ReactNode;
-}) {
+}>) {
   if (!access) {
     return (
       <div role='status' className='flex flex-1 items-center justify-center p-4 md:px-6'>
@@ -58,6 +61,7 @@ export default function PageContainer({
 
   return (
     <div className='flex flex-1 flex-col px-4 pt-2 pb-4 md:px-6 md:pt-4'>
+      {!pageTitle && srTitle && <h1 className='sr-only'>{srTitle}</h1>}
       {hasHeader && (
         <div className='mb-4 flex items-start justify-between gap-4'>
           <Heading

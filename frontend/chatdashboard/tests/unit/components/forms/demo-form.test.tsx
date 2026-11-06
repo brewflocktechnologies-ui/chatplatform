@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import DemoForm from '@/components/forms/demo-form';
 
 const alertMock = vi.fn();
@@ -14,10 +14,8 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
-const submitForm = async () => {
-  await act(async () => {
-    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
-  });
+const submitForm = () => {
+  fireEvent.submit(document.querySelector('form') as HTMLFormElement);
 };
 
 const setText = (label: string | RegExp, value: string) =>

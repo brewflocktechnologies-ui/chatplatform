@@ -35,10 +35,9 @@ export default function MockLoginForm() {
         }}
         className='w-full space-y-3'
       >
-        <form.AppField
-          name='name'
-          children={(field) => <field.TextField label='Name' placeholder='Your name' />}
-        />
+        <form.AppField name='name'>
+          {(field) => <field.TextField label='Name' placeholder='Your name' />}
+        </form.AppField>
         <LoadingButton type='submit' className='w-full'>
           Login (Demo)
         </LoadingButton>

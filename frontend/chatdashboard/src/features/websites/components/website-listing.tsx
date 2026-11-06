@@ -21,7 +21,7 @@ export default function WebsiteListingPage() {
 
   const queryClient = getQueryClient();
 
-  void queryClient.prefetchQuery(websitesQueryOptions(filters));
+  void queryClient.query(websitesQueryOptions(filters)).catch(() => {});
 
   return (
     <HydrationBoundary state={dehydrate(queryClient)}>

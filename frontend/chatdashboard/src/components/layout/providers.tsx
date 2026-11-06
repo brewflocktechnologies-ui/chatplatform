@@ -7,17 +7,15 @@ import { MockAuthProvider } from '@/features/auth/mock-auth';
 export default function Providers({
   activeThemeValue,
   children
-}: {
+}: Readonly<{
   activeThemeValue: string;
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <>
-      <ActiveThemeProvider initialTheme={activeThemeValue}>
-        <MockAuthProvider>
-          <QueryProvider>{children}</QueryProvider>
-        </MockAuthProvider>
-      </ActiveThemeProvider>
-    </>
+    <ActiveThemeProvider initialTheme={activeThemeValue}>
+      <MockAuthProvider>
+        <QueryProvider>{children}</QueryProvider>
+      </MockAuthProvider>
+    </ActiveThemeProvider>
   );
 }

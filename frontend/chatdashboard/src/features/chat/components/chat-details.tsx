@@ -1,16 +1,22 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { CannedSection, DetailsTabBar, NotesSection } from './details-panel-parts';
+import { useState, type SyntheticEvent } from 'react';
 import type { Conversation, DetailsTab, ChatNote } from '../utils/types';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Icons } from '@/components/icons';
 import { Badge } from '@/components/ui/badge';
-import { Input } from '@/components/ui/input';
-import { Textarea } from '@/components/ui/textarea';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+
+const ClockIcon = Icons.clock;
+const MapPinIcon = Icons.mapPin;
+const ExternalLinkIcon = Icons.externalLink;
+const InfoIcon = Icons.info;
+const SendIcon = Icons.send;
+const PageIcon = Icons.page;
+const ShareIcon = Icons.share;
 
 function copyToClipboard(text: string, label: string) {
   if (typeof navigator !== 'undefined' && navigator.clipboard) {
@@ -20,12 +26,12 @@ function copyToClipboard(text: string, label: string) {
 }
 
 interface ChatDetailsProps {
-  conversation: Conversation;
-  isOpen: boolean;
-  onToggle: () => void;
-  activeTab: DetailsTab;
-  onTabChange: (tab: DetailsTab) => void;
-  onInsertCanned?: (text: string) => void;
+  readonly conversation: Conversation;
+  readonly isOpen: boolean;
+  readonly onToggle: () => void;
+  readonly activeTab: DetailsTab;
+  readonly onTabChange: (tab: DetailsTab) => void;
+  readonly onInsertCanned?: (text: string) => void;
 }
 
 const DEFAULT_NOTES: Record<string, ChatNote[]> = {
@@ -62,6 +68,18 @@ const CANNED_RESPONSES = [
   }
 ];
 
+const trimDots = (val: string) => {
+  let start = 0;
+  let end = val.length;
+  while (start < end && val[start] === '.') {
+    start++;
+  }
+  while (end > start && val[end - 1] === '.') {
+    end--;
+  }
+  return val.slice(start, end);
+};
+
 export function ChatDetails({
   conversation,
   isOpen,
@@ -69,7 +87,7 @@ export function ChatDetails({
   activeTab,
   onTabChange,
   onInsertCanned
-}: ChatDetailsProps) {
+}: Readonly<ChatDetailsProps>) {
   const [notes, setNotes] = useState<Record<string, ChatNote[]>>(DEFAULT_NOTES);
   const [newNoteText, setNewNoteText] = useState('');
   const [cannedSearch, setCannedSearch] = useState('');
@@ -83,11 +101,15 @@ export function ChatDetails({
   // Generate sensible defaults for visitor attributes if not explicitly provided
   const email =
     conversation.visitorInfo?.email ||
-    `${conversation.name.toLowerCase().replace(/[^a-z0-9]+/g, '.').replace(/^\.+|\.+$/g, '')}@visitor.com`;
+    `${trimDots(conversation.name.toLowerCase().replace(/[^a-z0-9]+/g, '.'))}@visitor.com`;
   const location = conversation.visitorInfo?.location || 'San Francisco, United States';
   const localTime =
     conversation.visitorInfo?.localTime ||
-    new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZoneName: 'short' });
+    new Date().toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      timeZoneName: 'short'
+    });
   const ipAddress = conversation.visitorInfo?.ipAddress || '198.51.100.42';
   const os = conversation.visitorInfo?.os || 'macOS / Chrome 122';
   const browser = conversation.visitorInfo?.browser || 'Chrome 122.0.6261';
@@ -95,7 +117,7 @@ export function ChatDetails({
   const startedUrl = conversation.visitorInfo?.startedUrl || 'https://chatplatform.dev/pricing';
   const chattingTime = conversation.visitorInfo?.chattingTime || '4m 12s';
 
-  const handleAddNote = (e: FormEvent) => {
+  const handleAddNote = (e: SyntheticEvent) => {
     e.preventDefault();
     if (!newNoteText.trim()) return;
 
@@ -132,90 +154,12 @@ export function ChatDetails({
   return (
     <div className='relative flex h-full w-full sm:w-[320px] md:w-[360px] shrink-0 flex-col border-l border-border/60 bg-card/50 overflow-hidden'>
       {/* Top Tab Bar & Utility Actions */}
-      <div className='flex items-center justify-between border-b border-border/60 px-4 h-[56px] shrink-0 bg-background/50'>
-        <div className='flex items-center gap-1'>
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type='button'
-                  aria-label='Visitor Details'
-                  onClick={() => onTabChange('info')}
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer',
-                    activeTab === 'info'
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                  )}
-                />
-              }
-            >
-              <Icons.user className='h-4 w-4' />
-            </TooltipTrigger>
-            <TooltipContent>Visitor Details</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type='button'
-                  aria-label='Notes & Canned Responses'
-                  onClick={() => onTabChange('canned')}
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer',
-                    activeTab === 'canned'
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                  )}
-                />
-              }
-            >
-              <Icons.post className='h-4 w-4' />
-            </TooltipTrigger>
-            <TooltipContent>Notes & Canned Responses</TooltipContent>
-          </Tooltip>
-
-          <Tooltip>
-            <TooltipTrigger
-              render={
-                <button
-                  type='button'
-                  aria-label='Apps & Integrations'
-                  onClick={() => onTabChange('apps')}
-                  className={cn(
-                    'flex h-8 w-8 items-center justify-center rounded-md text-xs font-medium transition-colors cursor-pointer',
-                    activeTab === 'apps'
-                      ? 'bg-primary/10 text-primary font-semibold'
-                      : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground'
-                  )}
-                />
-              }
-            >
-              <Icons.galleryVerticalEnd className='h-4 w-4' />
-            </TooltipTrigger>
-            <TooltipContent>Apps & Integrations</TooltipContent>
-          </Tooltip>
-        </div>
-
-        <Tooltip>
-          <TooltipTrigger
-            render={
-              <Button
-                type='button'
-                variant='ghost'
-                size='icon-sm'
-                onClick={onToggle}
-                className='h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer'
-                aria-label='Hide Details Panel'
-              />
-            }
-          >
-            <Icons.chevronRight className='h-4 w-4' />
-          </TooltipTrigger>
-          <TooltipContent side='left'>Hide Details Panel</TooltipContent>
-        </Tooltip>
-      </div>
+      <DetailsTabBar
+        infoLabel='Visitor Details'
+        activeTab={activeTab}
+        onTabChange={onTabChange}
+        onToggle={onToggle}
+      />
 
       {/* Tab 1: Visitor Details */}
       {activeTab === 'info' && (
@@ -228,7 +172,9 @@ export function ChatDetails({
                 <span
                   className={cn(
                     'h-2 w-2 rounded-full',
-                    conversation.status === 'online' ? 'bg-emerald-500 animate-pulse' : 'bg-muted-foreground/50'
+                    conversation.status === 'online'
+                      ? 'bg-emerald-500 animate-pulse'
+                      : 'bg-muted-foreground/50'
                   )}
                 />
                 <span className='capitalize text-muted-foreground'>{conversation.status}</span>
@@ -258,23 +204,24 @@ export function ChatDetails({
 
             <div className='space-y-1.5 pt-1 text-muted-foreground'>
               <div className='flex items-center gap-2'>
-                <Icons.clock className='h-3.5 w-3.5 shrink-0' />
+                <ClockIcon className='h-3.5 w-3.5 shrink-0' />
                 <span>{localTime}</span>
               </div>
               <div className='flex items-center gap-2'>
-                <Icons.mapPin className='h-3.5 w-3.5 shrink-0' />
+                <MapPinIcon className='h-3.5 w-3.5 shrink-0' />
                 <span className='truncate'>{location}</span>
               </div>
             </div>
 
             <Button
+              type='button'
               variant='outline'
               size='sm'
               className='w-full h-8 text-xs font-normal justify-center border-border/70 text-foreground/80 hover:text-foreground'
               onClick={() => toast.info('Loading past history for this visitor')}
             >
               <span>View all past sessions</span>
-              <Icons.externalLink className='ml-1.5 h-3 w-3' />
+              <ExternalLinkIcon className='ml-1.5 h-3 w-3' />
             </Button>
           </div>
 
@@ -298,7 +245,7 @@ export function ChatDetails({
                 <span className='text-muted-foreground'>Active duration:</span>
                 <div className='flex items-center gap-1 font-medium text-foreground'>
                   <span>{chattingTime}</span>
-                  <Icons.info className='h-3 w-3 text-muted-foreground' />
+                  <InfoIcon className='h-3 w-3 text-muted-foreground' />
                 </div>
               </div>
 
@@ -356,104 +303,44 @@ export function ChatDetails({
       {activeTab === 'canned' && (
         <div className='flex-1 overflow-y-auto p-4 space-y-5 text-xs'>
           {/* Internal Notes Section */}
-          <div className='space-y-3'>
-            <div className='flex items-center justify-between'>
-              <h4 className='text-xs font-semibold text-foreground tracking-tight'>
-                Internal Notes
-              </h4>
-              <Badge variant='secondary' className='text-[10px] h-4.5 px-1.5'>
-                {currentNotes.length}
-              </Badge>
-            </div>
-
-            <form onSubmit={handleAddNote} className='space-y-2'>
-              <Textarea
-                placeholder='Leave a private note about this chat...'
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                className='min-h-[70px] text-xs resize-none'
-              />
-              <div className='flex justify-end'>
-                <Button type='submit' size='sm' className='h-7 text-xs'>
-                  <Icons.add className='mr-1 h-3 w-3' />
-                  Add Note
-                </Button>
-              </div>
-            </form>
-
-            <div className='space-y-2 pt-1'>
-              {currentNotes.length === 0 ? (
-                <p className='text-muted-foreground italic text-[11px]'>No notes recorded yet.</p>
-              ) : (
-                currentNotes.map((note) => (
-                  <div
-                    key={note.id}
-                    className='rounded-lg border border-border/50 bg-background/60 p-2.5 space-y-1'
-                  >
-                    <div className='flex items-center justify-between text-[10px] text-muted-foreground'>
-                      <span className='font-medium text-foreground'>{note.author}</span>
-                      <span>{note.createdAt}</span>
-                    </div>
-                    <p className='text-[11px] text-foreground/90'>{note.text}</p>
-                  </div>
-                ))
-              )}
-            </div>
-          </div>
+          <NotesSection
+            notes={currentNotes}
+            value={newNoteText}
+            onValueChange={setNewNoteText}
+            onSubmit={handleAddNote}
+            placeholder='Leave a private note about this chat...'
+          />
 
           <hr className='border-border/40' />
 
           {/* Canned Responses Section */}
-          <div className='space-y-3'>
-            <div className='flex items-center justify-between'>
-              <h4 className='text-xs font-semibold text-foreground tracking-tight'>
-                Canned Responses
-              </h4>
-            </div>
-
-            <Input
-              placeholder='Search canned responses...'
-              value={cannedSearch}
-              onChange={(e) => setCannedSearch(e.target.value)}
-              className='h-8 text-xs'
-            />
-
-            <div className='space-y-2 pt-1'>
-              {filteredCanned.map((canned, idx) => (
-                <div
-                  key={idx}
-                  className='rounded-lg border border-border/50 bg-background/50 p-2.5 space-y-1.5 hover:bg-muted/40 transition-colors'
+          <CannedSection
+            responses={filteredCanned}
+            search={cannedSearch}
+            onSearchChange={setCannedSearch}
+            renderActions={(canned) => (
+              <div className='flex items-center gap-1.5'>
+                <button
+                  type='button'
+                  onClick={() => handleInsert(canned.text)}
+                  className='text-blue-600 dark:text-blue-400 hover:underline text-[10px] flex items-center gap-0.5 font-medium cursor-pointer'
+                  title='Insert into composer'
                 >
-                  <div className='flex items-center justify-between'>
-                    <span className='font-semibold text-foreground text-[11px]'>
-                      {canned.title}
-                    </span>
-                    <div className='flex items-center gap-1.5'>
-                      <button
-                        type='button'
-                        onClick={() => handleInsert(canned.text)}
-                        className='text-blue-600 dark:text-blue-400 hover:underline text-[10px] flex items-center gap-0.5 font-medium cursor-pointer'
-                        title='Insert into composer'
-                      >
-                        <Icons.send className='h-2.5 w-2.5' />
-                        Insert
-                      </button>
-                      <span className='text-border'>•</span>
-                      <button
-                        type='button'
-                        onClick={() => copyToClipboard(canned.text, canned.title)}
-                        className='text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 font-medium cursor-pointer'
-                      >
-                        <Icons.page className='h-3 w-3' />
-                        Copy
-                      </button>
-                    </div>
-                  </div>
-                  <p className='text-[11px] text-muted-foreground line-clamp-2'>{canned.text}</p>
-                </div>
-              ))}
-            </div>
-          </div>
+                  <SendIcon className='h-2.5 w-2.5' />
+                  Insert
+                </button>
+                <span className='text-border'>•</span>
+                <button
+                  type='button'
+                  onClick={() => copyToClipboard(canned.text, canned.title)}
+                  className='text-muted-foreground hover:text-foreground text-[10px] flex items-center gap-1 font-medium cursor-pointer'
+                >
+                  <PageIcon className='h-3 w-3' />
+                  Copy
+                </button>
+              </div>
+            )}
+          />
         </div>
       )}
 
@@ -566,21 +453,23 @@ export function ChatDetails({
             <h4 className='text-xs font-semibold text-foreground tracking-tight'>Quick Actions</h4>
             <div className='grid grid-cols-2 gap-2'>
               <Button
+                type='button'
                 variant='outline'
                 size='sm'
                 className='h-7 text-[11px] border-border/60 text-muted-foreground hover:text-foreground'
                 onClick={() => toast.success('Transcript exported to email')}
               >
-                <Icons.page className='mr-1 h-3 w-3' />
+                <PageIcon className='mr-1 h-3 w-3' />
                 Export
               </Button>
               <Button
+                type='button'
                 variant='outline'
                 size='sm'
                 className='h-7 text-[11px] border-border/60 text-muted-foreground hover:text-foreground'
                 onClick={() => toast.info('Transfer modal opened')}
               >
-                <Icons.share className='mr-1 h-3 w-3' />
+                <ShareIcon className='mr-1 h-3 w-3' />
                 Transfer
               </Button>
             </div>

@@ -18,7 +18,15 @@ import { deletePlanMutation, updatePlanMutation } from '../api/mutations';
 import type { Plan } from '../api/types';
 import { toPayload } from '../lib/plan-payload';
 
-export function PlanActiveSwitch({ plan }: { plan: Plan }) {
+const EllipsisIcon = Icons.ellipsis;
+const EditIcon = Icons.edit;
+const TrashIcon = Icons.trash;
+
+interface PlanActiveSwitchProps {
+  readonly plan: Plan;
+}
+
+export function PlanActiveSwitch({ plan }: Readonly<PlanActiveSwitchProps>) {
   const mutation = useMutation({
     ...updatePlanMutation,
     onError: (error) => toast.error(error.message || "Couldn't change plan status.")
@@ -37,6 +45,12 @@ export function PlanActiveSwitch({ plan }: { plan: Plan }) {
   );
 }
 
+interface PlanRowActionsProps {
+  readonly plan: Plan;
+  readonly onEdit: (plan: Plan) => void;
+  readonly onDelete: (plan: Plan) => void;
+}
+
 /**
  * Row menu only. The edit sheet and delete dialog live once in the page, so a
  * row re-rendering or moving after a refetch can't tear down an open dialog.
@@ -45,16 +59,12 @@ export function PlanRowActions({
   plan,
   onEdit,
   onDelete
-}: {
-  plan: Plan;
-  onEdit: (plan: Plan) => void;
-  onDelete: (plan: Plan) => void;
-}) {
+}: Readonly<PlanRowActionsProps>) {
   return (
     <DropdownMenu modal={false}>
-      <DropdownMenuTrigger render={<Button variant='ghost' className='h-8 w-8 p-0' />}>
+      <DropdownMenuTrigger render={<Button type='button' variant='ghost' className='h-8 w-8 p-0' />}>
         <span className='sr-only'>Open menu for {plan.name}</span>
-        <Icons.ellipsis className='h-4 w-4' />
+        <EllipsisIcon className='h-4 w-4' />
       </DropdownMenuTrigger>
       <DropdownMenuContent align='end'>
         <DropdownMenuGroup>
@@ -62,10 +72,10 @@ export function PlanRowActions({
         </DropdownMenuGroup>
         <DropdownMenuGroup>
           <DropdownMenuItem onClick={() => onEdit(plan)}>
-            <Icons.edit className='mr-2 h-4 w-4' /> Edit
+            <EditIcon className='mr-2 h-4 w-4' /> Edit
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => onDelete(plan)}>
-            <Icons.trash className='mr-2 h-4 w-4' /> Delete
+            <TrashIcon className='mr-2 h-4 w-4' /> Delete
           </DropdownMenuItem>
         </DropdownMenuGroup>
       </DropdownMenuContent>
@@ -73,15 +83,17 @@ export function PlanRowActions({
   );
 }
 
+interface PlanDeleteModalProps {
+  readonly plan: Plan | null;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+}
+
 export function PlanDeleteModal({
   plan,
   open,
   onOpenChange
-}: {
-  plan: Plan | null;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
-}) {
+}: Readonly<PlanDeleteModalProps>) {
   const mutation = useMutation({
     ...deletePlanMutation,
     onSuccess: (data, vars, ctx, mutation) => {

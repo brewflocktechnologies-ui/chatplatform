@@ -16,7 +16,7 @@ type pageProps = {
   searchParams: Promise<SearchParams>;
 };
 
-export default async function Page(props: pageProps) {
+export default async function Page(props: Readonly<pageProps>) {
   const searchParams = await props.searchParams;
   searchParamsCache.parse(searchParams);
 

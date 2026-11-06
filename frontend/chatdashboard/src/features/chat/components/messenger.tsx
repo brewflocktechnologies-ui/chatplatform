@@ -1,6 +1,7 @@
 'use client';
 
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react';
+import { DetailsRail } from './details-rail';
+import { type SyntheticEvent, useCallback, useEffect, useRef, useState } from 'react';
 import { useReducedMotion } from 'motion/react';
 import { useChatStore } from '../utils/store';
 import type { Attachment, Message, DetailsTab } from '../utils/types';
@@ -10,9 +11,9 @@ import { ChatDetails } from './chat-details';
 import { chatDashboardSocket } from '../services/chat-socket-client';
 import { chatSocketUrl } from '@/config/api-endpoints';
 import { Icons } from '@/components/icons';
-import { Button } from '@/components/ui/button';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { cn, randomId } from '@/lib/utils';
+
+const ChatIcon = Icons.chat;
 
 export function Messenger() {
   const {
@@ -98,7 +99,7 @@ export function Messenger() {
   }, []);
 
   const handleSubmit = useCallback(
-    (e: FormEvent<HTMLFormElement>) => {
+    (e: SyntheticEvent<HTMLFormElement>) => {
       e.preventDefault();
       const active = getActiveConversation();
       if ((!draft.trim() && attachments.length === 0) || !active) return;
@@ -152,6 +153,7 @@ export function Messenger() {
 
   return (
     <div className='flex h-full w-full overflow-hidden bg-background'>
+      <h1 className='sr-only'>Live chat dashboard</h1>
       {/* 1. Left Conversations Sidebar */}
       <ConversationList
         conversations={conversations}
@@ -180,7 +182,7 @@ export function Messenger() {
           </div>
           <div className='flex flex-1 flex-col items-center justify-center gap-4 p-6 text-center'>
             <div className='bg-primary/10 text-primary flex h-16 w-16 items-center justify-center rounded-2xl shadow-xs'>
-              <Icons.chat className='h-8 w-8' />
+              <ChatIcon className='h-8 w-8' />
             </div>
             <div className='max-w-md space-y-1.5'>
               <h3 className='text-foreground text-base font-bold sm:text-lg'>Live Chat Platform</h3>
@@ -218,85 +220,13 @@ export function Messenger() {
 
       {/* 4. Sleek Reopen Rail when details panel is collapsed */}
       {activeConversation && !isDetailsOpen && (
-        <div className='flex h-full w-10 flex-col items-center border-l border-border/60 bg-card/40 shrink-0'>
-          <div className='flex h-[56px] w-full items-center justify-center border-b border-border/60 shrink-0'>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <Button
-                    variant='ghost'
-                    size='icon-sm'
-                    onClick={() => setIsDetailsOpen(true)}
-                    className='h-8 w-8 text-muted-foreground hover:text-foreground cursor-pointer'
-                    aria-label='Open Details Panel'
-                  />
-                }
-              >
-                <Icons.chevronLeft className='h-4 w-4' />
-              </TooltipTrigger>
-              <TooltipContent side='left'>Open Details Panel</TooltipContent>
-            </Tooltip>
-          </div>
-
-          <div className='mt-3 flex flex-col gap-2'>
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type='button'
-                    aria-label='Visitor Details'
-                    onClick={() => {
-                      setDetailsTab('info');
-                      setIsDetailsOpen(true);
-                    }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
-                  />
-                }
-              >
-                <Icons.user className='h-3.5 w-3.5' />
-              </TooltipTrigger>
-              <TooltipContent side='left'>Visitor Details</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type='button'
-                    aria-label='Notes & Canned Responses'
-                    onClick={() => {
-                      setDetailsTab('canned');
-                      setIsDetailsOpen(true);
-                    }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
-                  />
-                }
-              >
-                <Icons.post className='h-3.5 w-3.5' />
-              </TooltipTrigger>
-              <TooltipContent side='left'>Notes & Canned Responses</TooltipContent>
-            </Tooltip>
-
-            <Tooltip>
-              <TooltipTrigger
-                render={
-                  <button
-                    type='button'
-                    aria-label='Apps & Integrations'
-                    onClick={() => {
-                      setDetailsTab('apps');
-                      setIsDetailsOpen(true);
-                    }}
-                    className='flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/60 hover:text-foreground transition-colors cursor-pointer'
-                  />
-                }
-              >
-                <Icons.galleryVerticalEnd className='h-3.5 w-3.5' />
-              </TooltipTrigger>
-              <TooltipContent side='left'>Apps & Integrations</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
+        <DetailsRail
+          infoLabel='Visitor Details'
+          onOpen={(tab) => {
+            if (tab) setDetailsTab(tab);
+            setIsDetailsOpen(true);
+          }}
+        />
       )}
     </div>
   );

@@ -17,8 +17,8 @@ export interface DismissOptions {
 }
 
 export class DismissController implements ReactiveController {
-  private host: ReactiveControllerHost & HTMLElement;
-  private options: DismissOptions;
+  private readonly host: ReactiveControllerHost & HTMLElement;
+  private readonly options: DismissOptions;
   private listening = false;
   private rafId = 0;
 
@@ -28,7 +28,7 @@ export class DismissController implements ReactiveController {
     host.addController(this);
   }
 
-  private handleOutsidePointer = (e: PointerEvent | MouseEvent) => {
+  private readonly handleOutsidePointer = (e: PointerEvent | MouseEvent) => {
     const isEnabled = typeof this.options.enabled === 'function' ? this.options.enabled() : (this.options.enabled ?? true);
     if (!isEnabled) return;
 

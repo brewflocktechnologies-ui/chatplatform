@@ -21,6 +21,41 @@ import {
 import { getParentTheme } from '../../utils/theme.js';
 import '../templates/cw-widget-layout.js';
 
+const KNOWN_TOKENS = [
+      '--cw-accent', '--cw-accent-deep', '--cw-accent-soft', '--cw-accent-tint',
+      '--cw-surface', '--cw-bg', '--cw-ink', '--cw-muted', '--cw-border', '--cw-grad',
+      '--cw-success', '--cw-warning', '--cw-error', '--cw-focus-ring', '--cw-font-family',
+      '--cw-font-size-xs', '--cw-font-size-sm', '--cw-font-size-md', '--cw-font-size-lg',
+      '--cw-font-size-xl', '--cw-font-size-2xl', '--cw-space-xs', '--cw-space-sm',
+      '--cw-space-md', '--cw-space-lg', '--cw-radius-sm', '--cw-radius-md',
+      '--cw-radius-lg', '--cw-radius-full'
+    ];
+
+/** The widget's `--cw-*` custom properties (declared on the host or among the known tokens). */
+function collectCssVars(styles: CSSStyleDeclaration): Record<string, string> {
+  const cssVars: Record<string, string> = {};
+
+  if (styles && typeof styles.length === 'number') {
+    for (const prop of Array.from(styles as unknown as ArrayLike<string>)) {
+      if (prop.startsWith('--cw-')) {
+        cssVars[prop] = styles.getPropertyValue(prop).trim();
+      }
+    }
+  }
+
+  for (const token of KNOWN_TOKENS) {
+    const val = styles?.getPropertyValue ? styles.getPropertyValue(token).trim() : '';
+    if (val) cssVars[token] = val;
+  }
+  return cssVars;
+}
+
+/** The trigger shown when nothing overrides it: the chat bar or card when enabled, else the bubble. */
+function defaultTrigger(cbs?: { enabled?: boolean; layout?: string } | null) {
+  if (!cbs?.enabled) return 'bubble';
+  return cbs.layout === 'card' ? 'chatcard' : 'chatbar';
+}
+
 /**
  * cw-widget-root
  * Page component representing the live chat widget page container.
@@ -255,43 +290,51 @@ export class CwWidgetRoot extends LitElement {
   private unsubAll?: () => void;
   private eventListeners: Array<[string, EventListener]> = [];
 
-  private toggleListener = () => this.handleToggleWidget();
-  private closeListener = () => this.handleCloseWidget();
-  private onKeydown = (e: KeyboardEvent) => this.handleKeydown(e);
+  private readonly toggleListener = () => this.handleToggleWidget();
+  private readonly closeListener = () => this.handleCloseWidget();
+  private readonly onKeydown = (e: KeyboardEvent) => this.handleKeydown(e);
 
   /** Resolves the host theme on demand; null when the widget uses its own colors. */
   private applyThemeCache() {
     this.cachedTheme = this.useWebsiteTheme !== false ? getParentTheme() : null;
   }
 
-  async connectedCallback() {
+  // Lit calls this and ignores its result, so it must not return a promise.
+  connectedCallback() {
     super.connectedCallback();
+    void this.bootstrap();
+  }
 
+  private async bootstrap() {
     try {
       await initStore();
     } catch (err) {
       console.warn('CwWidgetRoot initStore warning:', err);
-    } finally {
-      this.applyThemeCache();
-      this.unsubAll = subscribeAll(() => {
-        this.rev++;
-      });
-
-      window.addEventListener('toggle-contact-widget', this.toggleListener);
-      window.addEventListener('close-contact-widget', this.closeListener);
-
-      this.addEventListener('keydown', this.onKeydown);
-
-      this.registerLeafEvents();
-      chatStore.initSocket(
-        this.socketUrl,
-        this.tenantId,
-        this.conversationId,
-        this.visitorName
-      );
-      this.initialized = true;
-      this.requestUpdate();
     }
+
+    // Removed while the store was loading: disconnectedCallback already ran and found
+    // nothing to undo, so wiring up now would leak listeners, a subscription and a socket.
+    if (!this.isConnected) return;
+
+    this.applyThemeCache();
+    this.unsubAll = subscribeAll(() => {
+      this.rev++;
+    });
+
+    window.addEventListener('toggle-contact-widget', this.toggleListener);
+    window.addEventListener('close-contact-widget', this.closeListener);
+
+    this.addEventListener('keydown', this.onKeydown);
+
+    this.registerLeafEvents();
+    chatStore.initSocket(
+      this.socketUrl,
+      this.tenantId,
+      this.conversationId,
+      this.visitorName
+    );
+    this.initialized = true;
+    this.requestUpdate();
   }
 
   disconnectedCallback() {
@@ -318,51 +361,59 @@ export class CwWidgetRoot extends LitElement {
     // Push greet delay / enablement changes into the store and re-schedule timers
     const greetDelayProps = ['greetOpeningDelaySec', 'greetInputOpeningDelaySec', 'enableGreetWindow', 'enableInputCard'] as const;
     if (greetDelayProps.some(p => changedProperties.has(p))) {
-      const gw = greetWindowStore.get();
-      if (gw) {
-        if (this.enableGreetWindow !== undefined) gw.enabled = this.enableGreetWindow;
-        if (this.greetOpeningDelaySec !== undefined) gw.openingTimeAfterInitialLoadSec = this.greetOpeningDelaySec;
-        if (gw.inputBox) {
-          if (this.enableInputCard !== undefined) gw.inputBox.enabled = this.enableInputCard;
-          if (this.greetInputOpeningDelaySec !== undefined) gw.inputBox.openingTimeAfterInitialLoadSec = this.greetInputOpeningDelaySec;
-        }
-        setupGreetTimers();
-      }
+      this.syncGreetSettings();
     }
     if (changedProperties.has('prechatEnabled') || changedProperties.has('postchatEnabled')) {
-      const fs = featuresStore.get();
-      if (this.prechatEnabled !== undefined) fs.prechatEnabled = this.prechatEnabled;
-      if (this.postchatEnabled !== undefined) fs.postchatEnabled = this.postchatEnabled;
-
-      // Reset the chat session so the toggle takes effect immediately on the very next open
-      const cs = chatStore.get();
-      const cws = chatWindowStore.get();
-      const welcomeEnabled = cws?.welcome?.enabled !== false;
-      const wasOpen = this.panelOpen;
-
-      // Close and reset state
-      cs.panelOpen = false;
-      cs.menuOpen = false;
-      cs.attachOpen = false;
-      cs.emojiOpen = false;
-      cs.confirmBox = null;
-      cs.state = welcomeEnabled ? 'welcome' : 'active';
-      this.panelOpen = false;
-
-      // If panel was open when user toggled, reopen immediately showing the new flow
-      if (wasOpen) {
-        requestAnimationFrame(() => {
-          const isPrechat = featuresStore.get().prechatEnabled;
-          cs.state = isPrechat ? 'prechat' : (welcomeEnabled ? 'welcome' : 'active');
-          cs.panelOpen = true;
-          this.panelOpen = true;
-          this.requestUpdate();
-        });
-      }
+      this.resetChatFlow();
     }
   }
 
-  static styles = css`
+  private syncGreetSettings() {
+    const gw = greetWindowStore.get();
+    if (!gw) return;
+    if (this.enableGreetWindow !== undefined) gw.enabled = this.enableGreetWindow;
+    if (this.greetOpeningDelaySec !== undefined) gw.openingTimeAfterInitialLoadSec = this.greetOpeningDelaySec;
+    if (gw.inputBox) {
+      if (this.enableInputCard !== undefined) gw.inputBox.enabled = this.enableInputCard;
+      if (this.greetInputOpeningDelaySec !== undefined) gw.inputBox.openingTimeAfterInitialLoadSec = this.greetInputOpeningDelaySec;
+    }
+    setupGreetTimers();
+  }
+
+  private resetChatFlow() {
+    const fs = featuresStore.get();
+    if (this.prechatEnabled !== undefined) fs.prechatEnabled = this.prechatEnabled;
+    if (this.postchatEnabled !== undefined) fs.postchatEnabled = this.postchatEnabled;
+
+    // Reset the chat session so the toggle takes effect immediately on the very next open
+    const cs = chatStore.get();
+    const cws = chatWindowStore.get();
+    const welcomeEnabled = cws?.welcome?.enabled !== false;
+    const wasOpen = this.panelOpen;
+    const startState = welcomeEnabled ? 'welcome' : 'active';
+
+    // Close and reset state
+    cs.panelOpen = false;
+    cs.menuOpen = false;
+    cs.attachOpen = false;
+    cs.emojiOpen = false;
+    cs.confirmBox = null;
+    cs.state = startState;
+    this.panelOpen = false;
+
+    // If panel was open when user toggled, reopen immediately showing the new flow
+    if (wasOpen) {
+      requestAnimationFrame(() => {
+        const isPrechat = featuresStore.get().prechatEnabled;
+        cs.state = isPrechat ? 'prechat' : startState;
+        cs.panelOpen = true;
+        this.panelOpen = true;
+        this.requestUpdate();
+      });
+    }
+  }
+
+  static readonly styles = css`
     :host {
       display: block;
       font-family: inherit;
@@ -488,20 +539,20 @@ export class CwWidgetRoot extends LitElement {
       const focusables = this.collectFocusables();
       if (!focusables.length) return;
       const first = focusables[0];
-      const last = focusables[focusables.length - 1];
+      const last = focusables.at(-1) as HTMLElement;
       const path = e.composedPath();
       /* v8 ignore next -- composedPath() always returns at least the event target */
       const target = (path[0] as HTMLElement) || null;
 
-      if (!path.includes(this)) {
+      const wrapForward = !path.includes(this) || (!e.shiftKey && target === last);
+      const wrapBack = e.shiftKey && target === first;
+
+      if (wrapForward) {
         e.preventDefault();
         first.focus();
-      } else if (e.shiftKey && target === first) {
+      } else if (wrapBack) {
         e.preventDefault();
         last.focus();
-      } else if (!e.shiftKey && target === last) {
-        e.preventDefault();
-        first.focus();
       }
     }
   }
@@ -528,7 +579,7 @@ export class CwWidgetRoot extends LitElement {
 
   private checkCardToBarCollapse() {
     const cbs = chatbarStore.get();
-    const currentTrigger = this.activeTriggerOverride || this.triggerType || (cbs?.enabled ? (cbs.layout === 'card' ? 'chatcard' : 'chatbar') : 'bubble');
+    const currentTrigger = this.activeTriggerOverride || this.triggerType || defaultTrigger(cbs);
     const hasVisitorMsg = this.userHasSentMessage || chatStore.get()?.messages?.some(m => m.senderType === 'VISITOR');
     if (hasVisitorMsg && currentTrigger === 'chatcard') {
       this.activeTriggerOverride = 'chatbar';
@@ -563,30 +614,7 @@ export class CwWidgetRoot extends LitElement {
    */
   getDebugInfo() {
     const styles = typeof getComputedStyle !== 'undefined' ? getComputedStyle(this) : ({} as CSSStyleDeclaration);
-    const cssVars: Record<string, string> = {};
-
-    if (styles && typeof styles.length === 'number') {
-      for (let i = 0; i < styles.length; i++) {
-        const prop = styles[i];
-        if (prop.startsWith('--cw-')) {
-          cssVars[prop] = styles.getPropertyValue(prop).trim();
-        }
-      }
-    }
-
-    const KnownTokens = [
-      '--cw-accent', '--cw-accent-deep', '--cw-accent-soft', '--cw-accent-tint',
-      '--cw-surface', '--cw-bg', '--cw-ink', '--cw-muted', '--cw-border', '--cw-grad',
-      '--cw-success', '--cw-warning', '--cw-error', '--cw-focus-ring', '--cw-font-family',
-      '--cw-font-size-xs', '--cw-font-size-sm', '--cw-font-size-md', '--cw-font-size-lg',
-      '--cw-font-size-xl', '--cw-font-size-2xl', '--cw-space-xs', '--cw-space-sm',
-      '--cw-space-md', '--cw-space-lg', '--cw-radius-sm', '--cw-radius-md',
-      '--cw-radius-lg', '--cw-radius-full'
-    ];
-    for (const token of KnownTokens) {
-      const val = styles?.getPropertyValue ? styles.getPropertyValue(token).trim() : '';
-      if (val) cssVars[token] = val;
-    }
+    const cssVars = collectCssVars(styles);
 
     const bs = bubbleStore.get();
     const cbs = chatbarStore.get();
@@ -595,7 +623,7 @@ export class CwWidgetRoot extends LitElement {
     const fs = featuresStore.get();
     const cs = chatStore.get();
 
-    const activeTrigger = this.activeTriggerOverride || this.triggerType || (cbs?.enabled ? (cbs.layout === 'card' ? 'chatcard' : 'chatbar') : 'bubble');
+    const activeTrigger = this.activeTriggerOverride || this.triggerType || defaultTrigger(cbs);
     const effectiveCbs = computeEffectiveChatbarConfig(this, cbs, activeTrigger, this.cachedTheme);
     const effectiveBs = computeEffectiveBubbleConfig(this, bs, this.cachedTheme);
     const activeOffsetBottom = activeTrigger === 'bubble' ? effectiveBs.offsetBottom : effectiveCbs.offsetBottom;
@@ -635,7 +663,7 @@ export class CwWidgetRoot extends LitElement {
     const fs = featuresStore.get();
     const cs = chatStore.get();
 
-    const activeTrigger = this.activeTriggerOverride || this.triggerType || (cbs.enabled ? (cbs.layout === 'card' ? 'chatcard' : 'chatbar') : 'bubble');
+    const activeTrigger = this.activeTriggerOverride || this.triggerType || defaultTrigger(cbs);
 
     const effectiveCbs = computeEffectiveChatbarConfig(this, cbs, activeTrigger, this.cachedTheme);
     const effectiveBs = computeEffectiveBubbleConfig(this, bs, this.cachedTheme);

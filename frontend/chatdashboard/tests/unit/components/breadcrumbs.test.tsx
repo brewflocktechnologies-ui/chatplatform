@@ -29,6 +29,16 @@ describe('Breadcrumbs', () => {
     expect(current.tagName).not.toBe('A');
   });
 
+  it('keeps every list child an <li>, including the current page', () => {
+    usePathname.mockReturnValue('/dashboard/customers');
+    const { container } = render(<Breadcrumbs />);
+    const list = container.querySelector('ol')!;
+    expect(list.children.length).toBeGreaterThan(0);
+    for (const child of Array.from(list.children)) expect(child.tagName).toBe('LI');
+    // The current page lives inside its own list item.
+    expect(screen.getByText('Customers').closest('li')).not.toBeNull();
+  });
+
   it('renders a single page crumb for /dashboard', () => {
     usePathname.mockReturnValue('/dashboard');
     render(<Breadcrumbs />);

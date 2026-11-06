@@ -1,6 +1,15 @@
 import type { Locator, Page } from '@playwright/test';
 
 /**
+ * Accessible name of a sidebar link: the nav title, plus " API" for the tabs that read the
+ * billing API (the visible "API" tag is part of the name, so the label contains the visible text).
+ */
+export function navLinkName(title: string): RegExp {
+  const escaped = title.replaceAll(/[\\^$.*+?()[\]{}|]/g, String.raw`\$&`);
+  return new RegExp(`^${escaped}( API)?$`);
+}
+
+/**
  * The chrome every dashboard page shares: sidebar navigation (nav-config.ts),
  * the footer user menu, and the kbar command palette.
  */
@@ -8,13 +17,13 @@ export class DashboardShell {
   constructor(readonly page: Page) {}
 
   /**
-   * Sidebar entries render as links whose accessible name is the nav title.
+   * Sidebar entries render as links whose accessible name is the nav title (see `navLinkName`).
    * Scoped to the sidebar menu — the breadcrumb repeats some link names.
    */
   navLink(title: string): Locator {
     return this.page
       .locator('a[data-sidebar="menu-button"]')
-      .and(this.page.getByRole('link', { name: title, exact: true }));
+      .and(this.page.getByRole('link', { name: navLinkName(title) }));
   }
 
   async navigateTo(title: string, expectedPath: string): Promise<void> {

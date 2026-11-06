@@ -82,7 +82,13 @@ export default function TrafficView() {
             <p className='text-muted-foreground mb-3 text-sm sm:mb-4'>
               Showing data for: <strong className='text-foreground'>{selectedFilter}</strong>
             </p>
-            <div className='overflow-x-auto'>
+            <section
+              className='focus-visible:ring-ring overflow-x-auto rounded-sm focus-visible:ring-2 focus-visible:outline-none'
+              aria-label='Visitor traffic table'
+              // Scrolls sideways on narrow screens, so the keyboard must be able to focus it
+              // (WCAG 2.1.1); there is no interactive child to take focus instead.
+              tabIndex={0}
+            >
               <table className='mt-2 w-full min-w-[640px] text-left text-sm'>
                 <thead className='border-border text-muted-foreground border-y text-xs uppercase'>
                   <tr>
@@ -95,9 +101,9 @@ export default function TrafficView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredData.map((user, idx) => (
+                  {filteredData.map((user) => (
                     <tr
-                      key={idx}
+                      key={`${user.name}-${user.group}`}
                       onClick={() => {
                         setSelectedCustomer(user);
                         setProfileExpanded(true);
@@ -117,7 +123,7 @@ export default function TrafficView() {
                   ))}
                 </tbody>
               </table>
-            </div>
+            </section>
           </div>
         </div>
       </div>

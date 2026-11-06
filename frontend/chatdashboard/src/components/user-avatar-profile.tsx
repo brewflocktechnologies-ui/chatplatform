@@ -1,13 +1,13 @@
 import { Avatar, AvatarBadge, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface UserAvatarProfileProps {
-  className?: string;
-  showInfo?: boolean;
-  badgeClassName?: string;
-  user: {
-    imageUrl?: string;
-    fullName?: string | null;
-    emailAddresses: Array<{ emailAddress: string }>;
+  readonly className?: string;
+  readonly showInfo?: boolean;
+  readonly badgeClassName?: string;
+  readonly user: {
+    readonly imageUrl?: string;
+    readonly fullName?: string | null;
+    readonly emailAddresses: ReadonlyArray<{ readonly emailAddress: string }>;
   } | null;
 }
 
@@ -16,7 +16,7 @@ export function UserAvatarProfile({
   showInfo = false,
   badgeClassName,
   user
-}: UserAvatarProfileProps) {
+}: Readonly<UserAvatarProfileProps>) {
   return (
     <div className='flex items-center gap-2 group-data-[collapsible=icon]:contents'>
       <Avatar className={`${className || ''} shrink-0`}>

@@ -5,7 +5,7 @@ import { LoadingButton } from '@/components/ui/loading-button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FieldGroup } from '@/components/ui/field';
 import { useAppForm } from '@/lib/form';
-import { categoryOptions } from '@/features/products/constants/product-options';
+import { ProductFields } from './product-fields';
 import { productSchema, type ProductFormValues } from '@/features/products/schemas/product';
 import { useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
@@ -16,10 +16,10 @@ import type { Product } from '../api/types';
 export default function ProductForm({
   initialData,
   pageTitle
-}: {
+}: Readonly<{
   initialData: Product | null;
   pageTitle: string;
-}) {
+}>) {
   const router = useRouter();
   const isEdit = !!initialData;
 
@@ -88,9 +88,8 @@ export default function ProductForm({
           }}
         >
           <FieldGroup>
-            <form.AppField
-              name='image'
-              children={(field) => (
+            <form.AppField name='image'>
+              {(field) => (
                 <field.FileUploadField
                   label='Product Image'
                   description='Upload a product image'
@@ -98,46 +97,14 @@ export default function ProductForm({
                   maxFiles={4}
                 />
               )}
-            />
+            </form.AppField>
 
             <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-              <form.AppField
-                name='name'
-                children={(field) => (
-                  <field.TextField label='Product Name' required placeholder='Enter product name' />
-                )}
-              />
-
-              <form.AppField
-                name='category'
-                children={(field) => (
-                  <field.SelectField
-                    label='Category'
-                    required
-                    options={categoryOptions}
-                    placeholder='Select category'
-                  />
-                )}
-              />
-
-              <form.AppField
-                name='price'
-                children={(field) => (
-                  <field.TextField
-                    label='Price'
-                    required
-                    type='number'
-                    min={0}
-                    step={0.01}
-                    placeholder='Enter price'
-                  />
-                )}
-              />
+              <ProductFields form={form} />
             </div>
 
-            <form.AppField
-              name='description'
-              children={(field) => (
+            <form.AppField name='description'>
+              {(field) => (
                 <field.TextareaField
                   label='Description'
                   required
@@ -146,7 +113,7 @@ export default function ProductForm({
                   rows={4}
                 />
               )}
-            />
+            </form.AppField>
           </FieldGroup>
 
           <div className='flex justify-end gap-2'>

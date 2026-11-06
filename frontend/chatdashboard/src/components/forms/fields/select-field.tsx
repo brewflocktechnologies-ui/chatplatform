@@ -17,10 +17,12 @@ export function SelectField({
   required,
   placeholder = 'Select',
   options
-}: BaseFieldProps & {
-  placeholder?: string;
-  options: { value: string; label: string; disabled?: boolean }[];
-}) {
+}: Readonly<
+  BaseFieldProps & {
+    placeholder?: string;
+    options: { value: string; label: string; disabled?: boolean }[];
+  }
+>) {
   const field = useFieldContext<string>();
   const isInvalid = useFieldInvalid();
 

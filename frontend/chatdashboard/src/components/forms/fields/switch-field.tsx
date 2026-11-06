@@ -10,7 +10,7 @@ import {
 import { Switch } from '@/components/ui/switch';
 import { useFieldContext, useFieldInvalid, type BaseFieldProps } from '@/lib/form-context';
 
-export function SwitchField({ label, description, required }: BaseFieldProps) {
+export function SwitchField({ label, description, required }: Readonly<BaseFieldProps>) {
   const field = useFieldContext<boolean>();
   const isInvalid = useFieldInvalid();
 

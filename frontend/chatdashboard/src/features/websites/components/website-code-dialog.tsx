@@ -44,7 +44,11 @@ interface WebsiteCodeDialogProps {
   onOpenChange: (open: boolean) => void;
 }
 
-export function WebsiteCodeDialog({ website, open, onOpenChange }: WebsiteCodeDialogProps) {
+export function WebsiteCodeDialog({
+  website,
+  open,
+  onOpenChange
+}: Readonly<WebsiteCodeDialogProps>) {
   const [step, setStep] = useState(0);
   const [copied, setCopied] = useState(false);
 

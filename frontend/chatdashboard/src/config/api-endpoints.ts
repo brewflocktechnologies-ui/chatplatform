@@ -13,7 +13,13 @@
 const BILLING_DEV_FALLBACK = 'https://billing-service-eta.vercel.app';
 const SHARED_BILLING_ORIGIN = 'https://billing-service-iota.vercel.app';
 
-const trimSlashes = (url: string) => url.replace(/\/+$/, '');
+const trimSlashes = (url: string) => {
+  let end = url.length;
+  while (end > 0 && url[end - 1] === '/') {
+    end--;
+  }
+  return url.slice(0, end);
+};
 
 export const origins = {
   /** BILLING_API_URL; required in production, falls back to a dev deployment locally. */

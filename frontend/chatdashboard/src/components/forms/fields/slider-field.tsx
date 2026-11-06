@@ -10,11 +10,13 @@ export function SliderField({
   min = 0,
   max = 100,
   step = 1
-}: Omit<BaseFieldProps, 'required'> & {
-  min?: number;
-  max?: number;
-  step?: number;
-}) {
+}: Readonly<
+  Omit<BaseFieldProps, 'required'> & {
+    min?: number;
+    max?: number;
+    step?: number;
+  }
+>) {
   const field = useFieldContext<number>();
   const labelId = `${field.name}-label`;
 

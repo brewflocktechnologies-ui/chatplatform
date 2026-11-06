@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { useFieldContext, type BaseFieldProps } from '@/lib/form-context';
 
 /** Native color picker with a hex text input beside it. */
-export function ColorField({ label, description }: Omit<BaseFieldProps, 'required'>) {
+export function ColorField({ label, description }: Readonly<Omit<BaseFieldProps, 'required'>>) {
   const field = useFieldContext<string>();
 
   return (

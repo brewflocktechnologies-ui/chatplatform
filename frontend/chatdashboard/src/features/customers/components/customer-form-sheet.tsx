@@ -1,21 +1,12 @@
 'use client';
 
-import { useState } from 'react';
-import { Button } from '@/components/ui/button';
-import { FormGrid, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
+import { FormSheet, FormSheetTrigger, entitySheetProps } from '@/components/forms/form-sheet';
+import { FormGrid } from '@/components/forms/form-grid';
+import { LocationFields } from '@/components/forms/location-fields';
 import { useAppForm } from '@/lib/form';
-import { LoadingButton } from '@/components/ui/loading-button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet';
-import { Icons } from '@/components/icons';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { toast } from 'sonner';
+
+import { useQueryClient } from '@tanstack/react-query';
+import { useCreateUpdateMutations } from '@/hooks/use-create-update-mutations';
 import { invalidateEntity } from '@/lib/cache/invalidation';
 import { createCustomerMutation, updateCustomerMutation } from '../api/mutations';
 import { CustomerApiError } from '../api/errors';
@@ -23,38 +14,30 @@ import type { Customer, CustomerMutationPayload } from '../api/types';
 import { customerSchema, type CustomerFormValues } from '../schemas/customer';
 
 interface CustomerFormSheetProps {
-  customer?: Customer;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly customer?: Customer;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 const errorMessage = (error: unknown, fallback: string) =>
   error instanceof CustomerApiError ? error.message : fallback;
 
-export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerFormSheetProps) {
+export function CustomerFormSheet({
+  customer,
+  open,
+  onOpenChange
+}: Readonly<CustomerFormSheetProps>) {
   const isEdit = !!customer;
   const queryClient = useQueryClient();
 
-  const createMutation = useMutation({
-    ...createCustomerMutation,
-    // Overriding onSuccess replaces the base invalidation — re-do it here.
-    onSuccess: () => {
-      invalidateEntity('customers', queryClient);
-      toast.success('Customer created');
-      onOpenChange(false);
-      form.reset();
-    },
-    onError: (error) => toast.error(errorMessage(error, "Couldn't create customer. Try again."))
-  });
-
-  const updateMutation = useMutation({
-    ...updateCustomerMutation,
-    onSuccess: () => {
-      invalidateEntity('customers', queryClient);
-      toast.success('Customer updated');
-      onOpenChange(false);
-    },
-    onError: (error) => toast.error(errorMessage(error, "Couldn't update customer. Try again."))
+  const { save, isPending } = useCreateUpdateMutations({
+    noun: 'customer',
+    create: createCustomerMutation,
+    update: updateCustomerMutation,
+    onSaved: () => invalidateEntity('customers', queryClient),
+    onOpenChange,
+    onCreated: () => form.reset(),
+    errorMessage
   });
 
   const a = customer?.billingAddress;
@@ -90,117 +73,49 @@ export function CustomerFormSheet({ customer, open, onOpenChange }: CustomerForm
           country: text(value.country)
         }
       };
-      try {
-        if (isEdit) {
-          await updateMutation.mutateAsync({ id: customer.id, values: payload });
-        } else {
-          await createMutation.mutateAsync(payload);
-        }
-      } catch {
-        // Already reported by the mutation's onError.
-      }
+      await save(customer?.id, payload);
     }
   });
 
-  const isPending = createMutation.isPending || updateMutation.isPending;
-
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className={WIDE_FORM_MODAL}>
-        <SheetHeader>
-          <SheetTitle>{isEdit ? 'Edit Customer' : 'New Customer'}</SheetTitle>
-          <SheetDescription>
-            {isEdit
-              ? 'Update the customer details below.'
-              : 'Fill in the details to create a new customer.'}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className='flex-1 overflow-auto'>
-          <form
-            id='customer-form-sheet'
-            className='space-y-4 p-4 md:p-4'
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-          >
-            <FormGrid>
-              <form.AppField
-                name='email'
-                children={(field) => (
-                  <field.TextField
-                    label='Email'
-                    type='email'
-                    required
-                    placeholder='billing@acme.com'
-                  />
-                )}
-              />
-              <form.AppField
-                name='externalId'
-                children={(field) => (
-                  <field.TextField
-                    label='External ID'
-                    placeholder='cus_123'
-                    description='The customer id in your payment system.'
-                  />
-                )}
-              />
-              <form.AppField
-                name='line1'
-                children={(field) => (
-                  <field.TextField label='Address Line 1' placeholder='45 Mount Road' />
-                )}
-              />
-              <form.AppField
-                name='line2'
-                children={(field) => (
-                  <field.TextField label='Address Line 2' placeholder='Suite 12' />
-                )}
-              />
-              <form.AppField
-                name='city'
-                children={(field) => <field.TextField label='City' placeholder='Bengaluru' />}
-              />
-              <form.AppField
-                name='state'
-                children={(field) => <field.TextField label='State' placeholder='Karnataka' />}
-              />
-              <form.AppField
-                name='postalCode'
-                children={(field) => <field.TextField label='Postal Code' placeholder='560001' />}
-              />
-              <form.AppField
-                name='country'
-                children={(field) => <field.TextField label='Country' placeholder='India' />}
-              />
-            </FormGrid>
-          </form>
-        </div>
-
-        <SheetFooter>
-          <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <LoadingButton loading={isPending} type='submit' form='customer-form-sheet'>
-            {isEdit ? 'Update Customer' : 'Create Customer'}
-          </LoadingButton>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+    <FormSheet
+      {...entitySheetProps('Customer', isEdit)}
+      open={open}
+      onOpenChange={onOpenChange}
+      onSubmit={() => form.handleSubmit()}
+      isPending={isPending}
+    >
+      <FormGrid>
+        <form.AppField name='email'>
+          {(field) => (
+            <field.TextField label='Email' type='email' required placeholder='billing@acme.com' />
+          )}
+        </form.AppField>
+        <form.AppField name='externalId'>
+          {(field) => (
+            <field.TextField
+              label='External ID'
+              placeholder='cus_123'
+              description='The customer id in your payment system.'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='line1'>
+          {(field) => <field.TextField label='Address Line 1' placeholder='45 Mount Road' />}
+        </form.AppField>
+        <form.AppField name='line2'>
+          {(field) => <field.TextField label='Address Line 2' placeholder='Suite 12' />}
+        </form.AppField>
+        <LocationFields form={form} />
+      </FormGrid>
+    </FormSheet>
   );
 }
 
 export function CustomerFormSheetTrigger() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <Button onClick={() => setOpen(true)}>
-        <Icons.add className='mr-2 h-4 w-4' /> Add Customer
-      </Button>
-      <CustomerFormSheet open={open} onOpenChange={setOpen} />
-    </>
+    <FormSheetTrigger label='Add Customer'>
+      {(open, setOpen) => <CustomerFormSheet open={open} onOpenChange={setOpen} />}
+    </FormSheetTrigger>
   );
 }

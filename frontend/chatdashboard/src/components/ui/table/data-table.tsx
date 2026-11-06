@@ -16,17 +16,17 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 
 interface DataTableProps<TData> extends React.ComponentProps<'div'> {
-  table: TanstackTable<TData>;
-  actionBar?: React.ReactNode;
+  readonly table: TanstackTable<TData>;
+  readonly actionBar?: React.ReactNode;
   /** Never squeeze columns below their `size`; scroll horizontally instead. */
-  minTableWidth?: boolean;
+  readonly minTableWidth?: boolean;
   /** Nothing loaded yet: show placeholder rows instead of "No results.". */
-  isLoading?: boolean;
+  readonly isLoading?: boolean;
   /** The last load failed; with no rows to show, offers a retry. */
-  isError?: boolean;
-  onRetry?: () => void;
+  readonly isError?: boolean;
+  readonly onRetry?: () => void;
   /** Rows are on screen while a newer copy loads behind them. */
-  isRefreshing?: boolean;
+  readonly isRefreshing?: boolean;
 }
 
 export function DataTable<TData>({
@@ -38,9 +38,65 @@ export function DataTable<TData>({
   onRetry,
   isRefreshing,
   children
-}: DataTableProps<TData>) {
+}: Readonly<DataTableProps<TData>>) {
   const hasRows = table.getRowModel().rows.length > 0;
   const columnCount = table.getAllColumns().length;
+
+  const renderTableBody = () => {
+    if (table.getRowModel().rows?.length) {
+      return table.getRowModel().rows.map((row) => (
+        <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+          {row.getVisibleCells().map((cell) => (
+            <TableCell
+              key={cell.id}
+              style={{
+                ...getCommonPinningStyles({ column: cell.column })
+              }}
+            >
+              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+            </TableCell>
+          ))}
+        </TableRow>
+      ));
+    }
+
+    if (isLoading) {
+      return Array.from({ length: 6 }, (_, i) => (
+        <TableRow key={i} data-slot='loading-row'>
+          {Array.from({ length: columnCount }, (_, j) => (
+            <TableCell key={j}>
+              <Skeleton className='h-4 w-full max-w-40' />
+            </TableCell>
+          ))}
+        </TableRow>
+      ));
+    }
+
+    if (isError) {
+      return (
+        <TableRow>
+          <TableCell colSpan={columnCount} className='h-24 text-center'>
+            <div className='flex flex-col items-center gap-2'>
+              <span className='text-muted-foreground'>Couldn&apos;t load data.</span>
+              {onRetry && (
+                <Button type='button' variant='outline' size='sm' onClick={onRetry}>
+                  Retry
+                </Button>
+              )}
+            </div>
+          </TableCell>
+        </TableRow>
+      );
+    }
+
+    return (
+      <TableRow>
+        <TableCell colSpan={columnCount} className='h-24 text-center'>
+          No results.
+        </TableCell>
+      </TableRow>
+    );
+  };
 
   return (
     <div className='flex flex-1 flex-col space-y-4' aria-busy={isLoading || isRefreshing}>
@@ -61,10 +117,9 @@ export function DataTable<TData>({
       <div className='relative flex flex-1'>
         <div className='absolute inset-0 flex overflow-hidden rounded-lg border'>
           {isRefreshing && (
-            <div
-              role='status'
+            <output
               aria-label='Refreshing'
-              className='bg-primary/60 absolute inset-x-0 top-0 z-20 h-0.5 animate-pulse'
+              className='bg-primary/60 absolute inset-x-0 top-0 z-20 block h-0.5 animate-pulse'
             />
           )}
           {/* The Table wrapper scrolls horizontally, which would make it the sticky
@@ -94,51 +149,7 @@ export function DataTable<TData>({
                   usually taller than the rows, so the table shouldn't end
                   without a line. */}
               <TableBody className='[&_tr:last-child]:border-b'>
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell
-                          key={cell.id}
-                          style={{
-                            ...getCommonPinningStyles({ column: cell.column })
-                          }}
-                        >
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : isLoading ? (
-                  Array.from({ length: 6 }, (_, i) => (
-                    <TableRow key={i} data-slot='loading-row'>
-                      {Array.from({ length: columnCount }, (_, j) => (
-                        <TableCell key={j}>
-                          <Skeleton className='h-4 w-full max-w-40' />
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : isError ? (
-                  <TableRow>
-                    <TableCell colSpan={columnCount} className='h-24 text-center'>
-                      <div className='flex flex-col items-center gap-2'>
-                        <span className='text-muted-foreground'>Couldn&apos;t load data.</span>
-                        {onRetry && (
-                          <Button type='button' variant='outline' size='sm' onClick={onRetry}>
-                            Retry
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={columnCount} className='h-24 text-center'>
-                      No results.
-                    </TableCell>
-                  </TableRow>
-                )}
+                {renderTableBody()}
               </TableBody>
             </Table>
             <ScrollBar orientation='horizontal' />

@@ -1,9 +1,7 @@
 import { queryOptions } from '@tanstack/react-query';
 import { entityRoots } from '@/lib/cache/keys';
 import { getWidgetConfig, getWidgetConfigs } from './service';
-import type { WidgetConfig } from './types';
-
-export type { WidgetConfig };
+export type { WidgetConfig } from './types';
 
 export const widgetConfigKeys = {
   all: entityRoots.widgetConfigs,

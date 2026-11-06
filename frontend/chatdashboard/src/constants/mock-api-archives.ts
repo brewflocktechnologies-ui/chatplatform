@@ -1,4 +1,57 @@
-import type { ArchivedChat } from '@/features/archives/types';
+import type { ArchivedChat, ChatMessage, CustomerInfo, PreChatFormData } from '@/features/archives/types';
+
+const DAN_AVATAR = '/avatars/dan.jpg';
+
+const agentMsg = (id: string, text: string, timestamp: string, author = 'Dan'): ChatMessage => ({
+  id,
+  sender: 'agent',
+  author,
+  avatar: DAN_AVATAR,
+  text,
+  timestamp,
+  type: 'text'
+});
+
+const visitorMsg = (
+  id: string,
+  author: string,
+  initials: string,
+  text: string,
+  timestamp: string
+): ChatMessage => ({
+  id,
+  sender: 'visitor',
+  author,
+  initials,
+  text,
+  timestamp,
+  type: 'text'
+});
+
+const systemClosedMsg = (id: string, timestamp: string, text?: string): ChatMessage => ({
+  id,
+  sender: 'system',
+  author: 'System',
+  timestamp,
+  type: 'system-closed',
+  ...(text ? { text } : {})
+});
+
+const CUSTOMER_TEST_1011: CustomerInfo = {
+  id: 'cust-5',
+  name: 'Test 10.11',
+  email: 'xddd@xd.en',
+  initials: 'T',
+  avatarBg: 'bg-purple-600',
+  localTime: '06:54 am local time',
+  location: 'Krakow, Lesser Poland, Poland',
+  allChatsCount: 14
+};
+
+const PRE_CHAT_ELOKI: PreChatFormData = {
+  name: 'Eloki',
+  email: 'elo@elo858is.melos'
+};
 
 export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
   {
@@ -38,31 +91,9 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
       device: 'MacBook Pro'
     },
     messages: [
-      {
-        id: 'm1-1',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'Hello. How may I help you?',
-        timestamp: '04:12 pm',
-        type: 'text'
-      },
-      {
-        id: 'm1-2',
-        sender: 'visitor',
-        author: 'Visitor',
-        initials: 'V',
-        text: 'testing Home',
-        timestamp: '04:13 pm',
-        type: 'text'
-      },
-      {
-        id: 'm1-3',
-        sender: 'system',
-        author: 'System',
-        timestamp: '04:13 pm',
-        type: 'system-closed'
-      }
+      agentMsg('m1-1', 'Hello. How may I help you?', '04:12 pm'),
+      visitorMsg('m1-2', 'Visitor', 'V', 'testing Home', '04:13 pm'),
+      systemClosedMsg('m1-3', '04:13 pm')
     ]
   },
   {
@@ -102,40 +133,10 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
       device: 'Desktop'
     },
     messages: [
-      {
-        id: 'm2-1',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'Hello. How may I help you?',
-        timestamp: '10:05 am',
-        type: 'text'
-      },
-      {
-        id: 'm2-2',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'Hi',
-        timestamp: '10:06 am',
-        type: 'text'
-      },
-      {
-        id: 'm2-3',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'hi',
-        timestamp: '10:06 am',
-        type: 'text'
-      },
-      {
-        id: 'm2-4',
-        sender: 'system',
-        author: 'System',
-        timestamp: '10:06 am',
-        type: 'system-closed'
-      }
+      agentMsg('m2-1', 'Hello. How may I help you?', '10:05 am'),
+      agentMsg('m2-2', 'Hi', '10:06 am'),
+      agentMsg('m2-3', 'hi', '10:06 am'),
+      systemClosedMsg('m2-4', '10:06 am')
     ]
   },
   {
@@ -175,40 +176,10 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
       device: 'Desktop'
     },
     messages: [
-      {
-        id: 'm3-1',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'Hello. How may I help you?',
-        timestamp: '02:40 pm',
-        type: 'text'
-      },
-      {
-        id: 'm3-2',
-        sender: 'visitor',
-        author: 'Visitor',
-        initials: 'V',
-        text: 'xd',
-        timestamp: '02:40 pm',
-        type: 'text'
-      },
-      {
-        id: 'm3-3',
-        sender: 'visitor',
-        author: 'Visitor',
-        initials: 'V',
-        text: 'hey',
-        timestamp: '02:41 pm',
-        type: 'text'
-      },
-      {
-        id: 'm3-4',
-        sender: 'system',
-        author: 'System',
-        timestamp: '02:41 pm',
-        type: 'system-closed'
-      }
+      agentMsg('m3-1', 'Hello. How may I help you?', '02:40 pm'),
+      visitorMsg('m3-2', 'Visitor', 'V', 'xd', '02:40 pm'),
+      visitorMsg('m3-3', 'Visitor', 'V', 'hey', '02:41 pm'),
+      systemClosedMsg('m3-4', '02:41 pm')
     ]
   },
   {
@@ -248,40 +219,10 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
       device: 'Samsung Galaxy S22'
     },
     messages: [
-      {
-        id: 'm4-1',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'Hello. How may I help you?',
-        timestamp: '11:15 am',
-        type: 'text'
-      },
-      {
-        id: 'm4-2',
-        sender: 'visitor',
-        author: 'Visitor',
-        initials: 'V',
-        text: 'elos',
-        timestamp: '11:15 am',
-        type: 'text'
-      },
-      {
-        id: 'm4-3',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'os los',
-        timestamp: '11:16 am',
-        type: 'text'
-      },
-      {
-        id: 'm4-4',
-        sender: 'system',
-        author: 'System',
-        timestamp: '11:16 am',
-        type: 'system-closed'
-      }
+      agentMsg('m4-1', 'Hello. How may I help you?', '11:15 am'),
+      visitorMsg('m4-2', 'Visitor', 'V', 'elos', '11:15 am'),
+      agentMsg('m4-3', 'os los', '11:16 am'),
+      systemClosedMsg('m4-4', '11:16 am')
     ]
   },
   {
@@ -294,16 +235,7 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
     messageCount: 4,
     tags: ['lead', 'botengine-transfer'],
     previousChatId: 'chat-6',
-    customer: {
-      id: 'cust-5',
-      name: 'Test 10.11',
-      email: 'xddd@xd.en',
-      initials: 'T',
-      avatarBg: 'bg-purple-600',
-      localTime: '06:54 am local time',
-      location: 'Krakow, Lesser Poland, Poland',
-      allChatsCount: 14
-    },
+    customer: CUSTOMER_TEST_1011,
     chatInfo: {
       chatId: 'R99GL02NU0',
       chattingTime: '18 s',
@@ -311,10 +243,7 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
       startedUrl: 'https://treative.eu/testchat/',
       group: 'Chat Metrics'
     },
-    preChatForm: {
-      name: 'Eloki',
-      email: 'elo@elo858is.melos'
-    },
+    preChatForm: PRE_CHAT_ELOKI,
     technology: {
       ipAddress: '87.239.22.104',
       os: 'Windows 10',
@@ -322,15 +251,7 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
       device: 'Desktop'
     },
     messages: [
-      {
-        id: 'm5-1',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'Welcome back, let us know if you have any questions.',
-        timestamp: '12:27 pm',
-        type: 'text'
-      },
+      agentMsg('m5-1', 'Welcome back, let us know if you have any questions.', '12:27 pm'),
       {
         id: 'm5-2',
         sender: 'visitor',
@@ -338,37 +259,11 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
         initials: 'T',
         type: 'pre-chat-form',
         timestamp: '12:27 pm',
-        formData: {
-          name: 'Eloki',
-          email: 'elo@elo858is.melos'
-        }
+        formData: PRE_CHAT_ELOKI
       },
-      {
-        id: 'm5-3',
-        sender: 'visitor',
-        author: 'Test 10.11',
-        initials: 'T',
-        text: '777',
-        timestamp: '12:27 pm',
-        type: 'text'
-      },
-      {
-        id: 'm5-4',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'ok',
-        timestamp: '12:27 pm',
-        type: 'text'
-      },
-      {
-        id: 'm5-5',
-        sender: 'system',
-        author: 'System',
-        text: 'Archived - closed by agent • 12:27 pm',
-        timestamp: '12:27 pm',
-        type: 'system-closed'
-      }
+      visitorMsg('m5-3', 'Test 10.11', 'T', '777', '12:27 pm'),
+      agentMsg('m5-4', 'ok', '12:27 pm'),
+      systemClosedMsg('m5-5', '12:27 pm', 'Archived - closed by agent • 12:27 pm')
     ]
   },
   {
@@ -381,16 +276,7 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
     messageCount: 5,
     tags: ['lead'],
     nextChatId: 'chat-5',
-    customer: {
-      id: 'cust-5',
-      name: 'Test 10.11',
-      email: 'xddd@xd.en',
-      initials: 'T',
-      avatarBg: 'bg-purple-600',
-      localTime: '06:54 am local time',
-      location: 'Krakow, Lesser Poland, Poland',
-      allChatsCount: 14
-    },
+    customer: CUSTOMER_TEST_1011,
     chatInfo: {
       chatId: 'Q44PT91AB7',
       chattingTime: '34 s',
@@ -398,10 +284,7 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
       startedUrl: 'https://treative.eu/testchat/',
       group: 'Chat Metrics'
     },
-    preChatForm: {
-      name: 'Eloki',
-      email: 'elo@elo858is.melos'
-    },
+    preChatForm: PRE_CHAT_ELOKI,
     technology: {
       ipAddress: '87.239.22.104',
       os: 'Windows 10',
@@ -409,59 +292,12 @@ export const MOCK_ARCHIVED_CHATS: ArchivedChat[] = [
       device: 'Desktop'
     },
     messages: [
-      {
-        id: 'm6-1',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'Hello. How may I help you?',
-        timestamp: '03:15 pm',
-        type: 'text'
-      },
-      {
-        id: 'm6-2',
-        sender: 'visitor',
-        author: 'Test 10.11',
-        initials: 'T',
-        text: 'sss',
-        timestamp: '03:15 pm',
-        type: 'text'
-      },
-      {
-        id: 'm6-3',
-        sender: 'visitor',
-        author: 'Test 10.11',
-        initials: 'T',
-        text: 's',
-        timestamp: '03:16 pm',
-        type: 'text'
-      },
-      {
-        id: 'm6-4',
-        sender: 'visitor',
-        author: 'Test 10.11',
-        initials: 'T',
-        text: 's',
-        timestamp: '03:16 pm',
-        type: 'text'
-      },
-      {
-        id: 'm6-5',
-        sender: 'agent',
-        author: 'Dan',
-        avatar: '/avatars/dan.jpg',
-        text: 'xd',
-        timestamp: '03:16 pm',
-        type: 'text'
-      },
-      {
-        id: 'm6-6',
-        sender: 'system',
-        author: 'System',
-        text: 'Archived - closed by agent • 03:17 pm',
-        timestamp: '03:17 pm',
-        type: 'system-closed'
-      }
+      agentMsg('m6-1', 'Hello. How may I help you?', '03:15 pm'),
+      visitorMsg('m6-2', 'Test 10.11', 'T', 'sss', '03:15 pm'),
+      visitorMsg('m6-3', 'Test 10.11', 'T', 's', '03:16 pm'),
+      visitorMsg('m6-4', 'Test 10.11', 'T', 's', '03:16 pm'),
+      agentMsg('m6-5', 'xd', '03:16 pm'),
+      systemClosedMsg('m6-6', '03:17 pm', 'Archived - closed by agent • 03:17 pm')
     ]
   }
 ];

@@ -48,6 +48,12 @@ const formatDate = (date: string | Date): string => {
   });
 };
 
+const getActionStyleClass = (style: ActionStyle | undefined): string => {
+  if (style === 'primary') return 'bg-primary/10 text-primary hover:bg-primary/20';
+  if (style === 'danger') return 'bg-destructive/10 text-destructive hover:bg-destructive/20';
+  return 'bg-accent text-muted-foreground hover:bg-accent hover:text-foreground';
+};
+
 const getActionIcon = (actionType: ActionType) => {
   const iconProps = { size: 12, strokeWidth: 2.5 };
   switch (actionType) {
@@ -92,24 +98,19 @@ export const NotificationCard: FC<NotificationCardProps> = ({
           <div className='min-w-0 flex-1 space-y-1'>
             {/* Title with unread indicator */}
             <div className='flex items-center gap-2'>
-              <h3
+              <h2
                 className={cn(
                   'text-[15px] leading-tight font-semibold',
                   isUnread ? 'text-foreground' : 'text-muted-foreground'
                 )}
               >
                 {title}
-              </h3>
+              </h2>
               {isUnread && <div className='h-1.5 w-1.5 flex-shrink-0 rounded-full bg-sky-500' />}
             </div>
 
             {/* Description */}
-            <p
-              className={cn(
-                'mb-0 text-[13px]',
-                isUnread ? 'text-muted-foreground' : 'text-muted-foreground/60'
-              )}
-            >
+            <p className='mb-0 text-[13px] text-muted-foreground'>
               {body}
             </p>
           </div>
@@ -147,11 +148,7 @@ export const NotificationCard: FC<NotificationCardProps> = ({
                     onClick={() => onAction?.(id, action.id, action.type)}
                     className={cn(
                       'flex items-center gap-1.5 rounded-lg px-4 py-1.5 text-xs font-normal transition',
-                      action.style === 'primary'
-                        ? 'bg-primary/10 text-primary hover:bg-primary/20'
-                        : action.style === 'danger'
-                          ? 'bg-destructive/10 text-destructive hover:bg-destructive/20'
-                          : 'bg-accent text-muted-foreground hover:bg-accent hover:text-foreground',
+                      getActionStyleClass(action.style),
                       showLoading && 'opacity-50',
                       isExecuted && 'cursor-not-allowed opacity-60'
                     )}
@@ -176,7 +173,7 @@ export const NotificationCard: FC<NotificationCardProps> = ({
 
           {/* Timestamp */}
           {createdAt && (
-            <span className='text-muted-foreground/60 inline-block text-[11px]'>
+            <span className='text-muted-foreground inline-block text-[11px]'>
               {formatDate(createdAt)}
             </span>
           )}

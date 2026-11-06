@@ -82,7 +82,7 @@ export function PokemonInfo() {
                     <span className='text-muted-foreground capitalize'>{s.stat.name}</span>
                     <span className='font-medium'>{s.base_stat}</span>
                   </div>
-                  <Progress value={Math.min(s.base_stat, 150) / 1.5} />
+                  <Progress aria-label={`${s.stat.name} base stat`} value={Math.min(s.base_stat, 150) / 1.5} />
                 </div>
               ))}
             </div>

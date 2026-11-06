@@ -19,9 +19,7 @@ import type {
   BubbleState,
   GreetWindowState,
   ChatbarState,
-  FullStore,
-  InputBoxConfig,
-  WelcomeConfig
+  FullStore
 } from './types.js';
 
 export type {
@@ -458,7 +456,7 @@ export const chatStore = {
 
   flag(key: string, defaultValue = true): boolean {
     const s = getStore().chat;
-    return s.flags[key] !== undefined ? s.flags[key] : defaultValue;
+    return s.flags[key] ?? defaultValue;
   },
 
   initSocket(url?: string, tenantId?: string, conversationId?: string, visitorName?: string) {
@@ -622,9 +620,9 @@ export const chatStore = {
       cb.height = 40;
       cb.width = 255;
       cb.offsetRight =
-        cb.barOffsetRight !== undefined && cb.barOffsetRight !== null ? cb.barOffsetRight : 16;
+        cb.barOffsetRight ?? 16;
       cb.offsetBottom =
-        cb.barOffsetBottom !== undefined && cb.barOffsetBottom !== null ? cb.barOffsetBottom : 12;
+        cb.barOffsetBottom ?? 12;
       emit('store:chatbar');
     }
   },
@@ -643,7 +641,7 @@ export const chatStore = {
   confirmEnd(overridePostchatEnabled?: boolean) {
     const s = getStore().chat;
     const fs = getStore().features;
-    const isPostchatEnabled = overridePostchatEnabled !== undefined ? overridePostchatEnabled : (fs.postchatEnabled ?? false);
+    const isPostchatEnabled = overridePostchatEnabled ?? fs.postchatEnabled ?? false;
     s.state = isPostchatEnabled ? 'postchat' : 'closed';
     s.confirmBox = null;
     emit('store:chat');
@@ -667,7 +665,7 @@ export const chatStore = {
   startFromWelcome(overridePrechatEnabled?: boolean) {
     const s = getStore().chat;
     const fs = getStore().features;
-    const isPrechatEnabled = overridePrechatEnabled !== undefined ? overridePrechatEnabled : (fs.prechatEnabled ?? false);
+    const isPrechatEnabled = overridePrechatEnabled ?? fs.prechatEnabled ?? false;
     s.panelOpen = true;
     s.state = isPrechatEnabled ? 'prechat' : 'active';
     emit('store:chat');
@@ -780,7 +778,7 @@ export const chatStore = {
     // Revoke the object URL after the browser has had time to initiate the download.
     setTimeout(() => {
       URL.revokeObjectURL(url);
-      document.body.removeChild(anchor);
+      anchor.remove();
     }, 100);
   },
 
@@ -808,7 +806,7 @@ export const chatStore = {
   submitPostchat(values: Record<string, string>) {
     const s = getStore().chat;
     const cws = getStore().chatWindow;
-    s.lastFeedback = { ...(values || {}) };
+    s.lastFeedback = { ...values };
     s.panelOpen = false;
     s.isExpanded = false;
     s.menuOpen = false;
@@ -851,7 +849,7 @@ export const chatStore = {
 
   uploadImage(input: HTMLInputElement) {
     const s = getStore().chat;
-    if (input.files && input.files[0]) {
+    if (input.files?.[0]) {
       const url = URL.createObjectURL(input.files[0]);
       const msgObj: Message = {
         key: 'img_' + Date.now(),
@@ -905,7 +903,7 @@ export const chatStore = {
    * the bubble renders the real image instead of a stub string.
    */
   sendCroppedImage(dataUrl: string) {
-    if (!dataUrl || !dataUrl.startsWith('data:')) return;
+    if (!dataUrl?.startsWith('data:')) return;
     const s = getStore().chat;
     const msgObj: Message = {
       key: 'img_cropped_' + Date.now(),
@@ -999,6 +997,275 @@ export const chatStore = {
 // Store Initializer (async, fetches remote config safely)
 // ---------------------------------------------------------------------------
 
+type Theme = ReturnType<typeof getParentTheme>;
+
+/** True when a (sanitized) remote config section carries at least one key. */
+function hasKeys(section: unknown): boolean {
+  return !!section && Object.keys(section as object).length > 0;
+}
+
+function applyRemoteBubble(bc: Partial<BubbleState>, theme: Theme, rootAccentColor: string | undefined) {
+  if (bc.useWebsiteTheme) {
+    bc.backgroundColor = theme.primary;
+    bc.gradientType = 'none';
+    if (bc.outlineRing) bc.outlineRing.color = theme.secondary;
+  } else if (rootAccentColor && !bc.backgroundColor) {
+    bc.backgroundColor = rootAccentColor;
+    if (bc.outlineRing && !bc.outlineRing.color) bc.outlineRing.color = rootAccentColor;
+  }
+  Object.assign(store!.bubble, bc);
+  if (bc.position) store!.greetWindow.position = bc.position;
+  emit('store:bubble');
+  emit('store:greetWindow');
+}
+
+/** Colours the greet-window input box from the host theme (`theme`) or the accent colour. */
+function colorGreetInputBox(inputBox: NonNullable<GreetWindowState['inputBox']>, color: string, overwrite: boolean) {
+  if (inputBox.layout === 'separated') {
+    if (overwrite || !inputBox.buttonIconColor) inputBox.buttonIconColor = color;
+  } else if (overwrite || !inputBox.buttonColor) {
+    inputBox.buttonColor = color;
+  }
+}
+
+function applyRemoteGreetWindow(gwc: Partial<GreetWindowState>, theme: Theme, rootAccentColor: string | undefined) {
+  if (gwc.inputBox) {
+    gwc.inputBox = { ...store!.greetWindow.inputBox, ...gwc.inputBox };
+  }
+  if (gwc.useWebsiteTheme) {
+    gwc.iconColor = theme.primary;
+    if (gwc.inputBox) colorGreetInputBox(gwc.inputBox, theme.primary, true);
+  } else if (rootAccentColor) {
+    if (!gwc.iconColor) gwc.iconColor = rootAccentColor;
+    if (gwc.inputBox) colorGreetInputBox(gwc.inputBox, rootAccentColor, false);
+  }
+  Object.assign(store!.greetWindow, gwc);
+  emit('store:greetWindow');
+}
+
+function applyRemoteChatbar(cbc: Partial<ChatbarState>, theme: Theme, rootAccentColor: string | undefined) {
+  if (cbc.useWebsiteTheme) {
+    cbc.bgColor = theme.primary;
+  } else if (rootAccentColor && !cbc.bgColor) {
+    cbc.bgColor = rootAccentColor;
+  }
+  const cb = store!.chatbar;
+  Object.assign(cb, cbc);
+  const right = cb.layout === 'card' ? cb.cardOffsetRight : cb.barOffsetRight;
+  const bottom = cb.layout === 'card' ? cb.cardOffsetBottom : cb.barOffsetBottom;
+  if (right !== undefined && right !== null) cb.offsetRight = right;
+  if (bottom !== undefined && bottom !== null) cb.offsetBottom = bottom;
+  emit('store:chatbar');
+}
+
+/** Chat-window colours that fall back to the host theme's primary colour. */
+function websiteThemeDefaults(theme: Theme): Array<[string, string]> {
+  return [
+    ['accentColor', theme.primary],
+    ['visitorBubbleBg', theme.primary],
+    ['visitorBubbleColor', '#ffffff'],
+    ['headerBg', theme.primary],
+    ['headerTextColor', '#ffffff'],
+    ['headerAvatarBg', 'rgba(255,255,255,0.2)'],
+    ['headerAvatarColor', '#ffffff'],
+    ['agentAvatarBg', theme.primary],
+    ['agentAvatarColor', '#ffffff'],
+    ['inputFocusBorderColor', theme.primary],
+    ['inputFocusShadow', `0 0 0 2px ${theme.primary}26`],
+    ['sendButtonBgActive', theme.primary],
+    ['poweredByColor', theme.primary],
+    ['endChatConfirmBg', theme.primary],
+    ['endChatConfirmTextColor', '#ffffff']
+  ];
+}
+
+const DARK_MODE_CHAT_COLORS: Readonly<Record<string, string>> = {
+  bodyBg: 'var(--cw-bg)',
+  inputBg: 'var(--cw-surface)',
+  agentBubbleBg: 'var(--cw-surface)',
+  agentBubbleColor: 'var(--cw-ink)',
+  agentBubbleBorderColor: 'var(--cw-border)',
+  footerBg: 'var(--cw-bg)',
+  footerTextColor: 'var(--cw-muted)',
+  inputTextColor: 'var(--cw-ink)',
+  inputBorderColor: 'var(--cw-border)',
+  attachButtonBg: 'var(--cw-surface)',
+  attachButtonColor: 'var(--cw-muted)',
+  emojiButtonColor: 'var(--cw-muted)',
+  modalCardBg: 'var(--cw-surface)',
+  modalMessageColor: 'var(--cw-ink)',
+  endChatCancelBg: 'var(--cw-surface)',
+  endChatCancelTextColor: 'var(--cw-muted)',
+  endChatCancelBorderColor: 'var(--cw-border)'
+};
+
+/** Chat-window keys that take the root accent colour when the remote config left them unset. */
+const ACCENT_FALLBACK_KEYS = [
+  'accentColor',
+  'visitorBubbleBg',
+  'headerBg',
+  'agentAvatarBg',
+  'inputFocusBorderColor',
+  'inputFocusShadow',
+  'sendButtonBgActive',
+  'poweredByColor',
+  'endChatConfirmBg'
+] as const;
+
+function applyWebsiteThemeColors(active: Record<string, any>, theme: Theme, isDark: boolean) {
+  for (const [key, value] of websiteThemeDefaults(theme)) {
+    active[key] = active[key] || value;
+  }
+  if (isDark) Object.assign(active, DARK_MODE_CHAT_COLORS);
+}
+
+function applyAccentColors(active: Record<string, any>, cc: Record<string, any>, accent: string) {
+  for (const key of ACCENT_FALLBACK_KEYS) {
+    if (cc[key]) continue;
+    active[key] = key === 'inputFocusShadow' ? `0 0 0 2px ${accent}26` : accent;
+  }
+}
+
+function applyWelcomeTheme(
+  active: Record<string, any>,
+  theme: Theme,
+  rootAccentColor: string | undefined,
+  useWebTheme: boolean
+) {
+  const welcomeObj = active.welcome || store!.chatWindow.welcome;
+  if (!welcomeObj || welcomeObj.bgGradient) return;
+  const welcomeUseTheme = welcomeObj.useWebsiteTheme ?? (useWebTheme && !hasInjectedCustomConfig);
+  if (welcomeUseTheme) {
+    const sec = theme.secondary && theme.secondary !== theme.primary ? theme.secondary : theme.primary;
+    welcomeObj.bgGradient = `linear-gradient(135deg, ${theme.primary}, ${sec})`;
+    welcomeObj.buttonIconColor = welcomeObj.buttonIconColor || theme.primary;
+    active.welcome = welcomeObj;
+  } else if (rootAccentColor) {
+    welcomeObj.bgGradient = `linear-gradient(135deg, ${rootAccentColor}, ${rootAccentColor})`;
+    if (!welcomeObj.buttonIconColor) welcomeObj.buttonIconColor = rootAccentColor;
+    active.welcome = welcomeObj;
+  }
+}
+
+/**
+ * Deep copy through JSON, so only plain data survives: functions and `undefined` are dropped and
+ * dates become strings, which is what a config that gets exported or merged should contain.
+ * `structuredClone` would throw on a function value instead.
+ */
+function jsonClone<T>(value: T): T {
+  return JSON.parse(JSON.stringify(value));
+}
+
+/** Re-derives the themed chat-window config; re-run whenever the host switches light/dark. */
+function applyChatTheme(cc: Record<string, any>, theme: Theme, rootAccentColor: string | undefined) {
+  const isDark = isHostDark();
+  const effectiveChatConfig = {
+    ...store?.chatWindow,
+    ...cc,
+    ...activeInjectedChatWindowConfig
+  };
+  const active = jsonClone(effectiveChatConfig);
+
+  const useWebTheme = cc.useWebsiteTheme ?? (rootAccentColor ? false : active.useWebsiteTheme);
+
+  if (useWebTheme && !hasInjectedCustomConfig) {
+    applyWebsiteThemeColors(active, theme, isDark);
+  } else if (rootAccentColor) {
+    applyAccentColors(active, cc, rootAccentColor);
+  }
+
+  applyWelcomeTheme(active, theme, rootAccentColor, useWebTheme);
+
+  if (isDark && hasKeys(cc.dark)) {
+    Object.assign(active, cc.dark);
+  }
+
+  Object.assign(store!.chatWindow, active);
+  emit('store:chatWindow');
+}
+
+/** Picks the welcome message from a remote `messages` list (active preview key, then 'welcome', then first). */
+function pickWelcomeMessage(messages: any[]) {
+  const activeKey = (typeof window !== 'undefined' && (window as any).activeMessagePreviewKey) || 'welcome';
+  return messages.find((m: any) => m?.key === activeKey) ||
+    messages.find((m: any) => m?.key === 'welcome') ||
+    messages[0];
+}
+
+function toWelcomeMessage(item: any, senderName: string): Message {
+  return {
+    key: item.key || 'welcome',
+    senderType: item.senderType || 'AGENT',
+    senderName,
+    body: item.body || '',
+    created: new Date().toISOString()
+  };
+}
+
+function applyRemoteMessages(rawConfig: any) {
+  if (!Array.isArray(rawConfig.messages) || rawConfig.messages.length === 0) return;
+  const welcomeItem = pickWelcomeMessage(rawConfig.messages);
+  if (!welcomeItem) return;
+  store!.chat.messages = [
+    toWelcomeMessage(welcomeItem, store!.chat.agentName || rawConfig.agentName || 'Sarah')
+  ];
+}
+
+function applyRemoteChat(
+  cc: Record<string, any>,
+  rawConfig: any,
+  theme: Theme,
+  rootAccentColor: string | undefined
+) {
+  const s = store!;
+  if (cc.welcome) {
+    s.chatWindow.welcome = { ...s.chatWindow.welcome, ...cc.welcome };
+  }
+
+  applyChatTheme(cc, theme, rootAccentColor);
+  observeDarkMode(() => applyChatTheme(cc, theme, rootAccentColor));
+
+  // Sync chat agent/client names
+  if (cc.clientName) s.chat.clientName = cc.clientName;
+  if (cc.agentName) {
+    s.chat.agentName = cc.agentName;
+    /* v8 ignore next -- initStore always seeds a welcome message, so messages[0] is never empty here */
+    if (s.chat.messages[0]) s.chat.messages[0].senderName = cc.agentName;
+  }
+  applyRemoteMessages(rawConfig);
+  if (!s.chat.hasSentMessage && (s.chatWindow.welcome?.enabled !== false || cc.welcome?.enabled !== false)) {
+    s.chat.state = 'welcome';
+  }
+  emit('store:chat');
+}
+
+function applyRemoteConfig(rawConfig: any, theme: Theme) {
+  // Untrusted remote config: strip CSS-injection payloads before merging.
+  const rootAccentColor = rawConfig.accentColor;
+  const bubbleConfig = sanitizeConfig(rawConfig.bubbleConfig).value;
+  const greetWindowConfig = sanitizeConfig(rawConfig.greetWindowConfig).value;
+  const chatbarConfig = sanitizeConfig(rawConfig.chatbarConfig).value;
+  const chatConfig = sanitizeConfig(rawConfig.chatConfig).value;
+  const featuresConfig = sanitizeConfig(rawConfig.featuresConfig).value;
+
+  if (hasKeys(bubbleConfig)) {
+    applyRemoteBubble(bubbleConfig as Partial<BubbleState>, theme, rootAccentColor);
+  }
+  if (hasKeys(greetWindowConfig)) {
+    applyRemoteGreetWindow(greetWindowConfig as Partial<GreetWindowState>, theme, rootAccentColor);
+  }
+  if (hasKeys(chatbarConfig)) {
+    applyRemoteChatbar(chatbarConfig as Partial<ChatbarState>, theme, rootAccentColor);
+  }
+  if (hasKeys(chatConfig)) {
+    applyRemoteChat(chatConfig as Record<string, any>, rawConfig, theme, rootAccentColor);
+  }
+  if (hasKeys(featuresConfig)) {
+    Object.assign(store!.features, featuresConfig as Partial<FeaturesState>);
+    emit('store:features');
+  }
+}
+
 export async function initStore(): Promise<void> {
   storeReady = false;
   storeReadyPromise = new Promise((resolve) => {
@@ -1014,7 +1281,7 @@ export async function initStore(): Promise<void> {
     chatWindow: buildDefaultChatWindow(theme),
     features: buildDefaultFeatures(),
     chat: buildDefaultChat(),
-    chatbar: buildDefaultChatbar(theme),
+    chatbar: buildDefaultChatbar(theme)
   };
 
   // Emit initial state
@@ -1026,208 +1293,7 @@ export async function initStore(): Promise<void> {
   emit('store:chatbar');
 
   try {
-    const rawConfig = await fetchClientConfig(clientId);
-
-    // Untrusted remote config: strip CSS-injection payloads before merging.
-    let { accentColor: rootAccentColor, bubbleConfig, chatConfig, chatbarConfig, greetWindowConfig, featuresConfig } = rawConfig;
-    bubbleConfig = sanitizeConfig(bubbleConfig).value;
-    greetWindowConfig = sanitizeConfig(greetWindowConfig).value;
-    chatbarConfig = sanitizeConfig(chatbarConfig).value;
-    chatConfig = sanitizeConfig(chatConfig).value;
-    featuresConfig = sanitizeConfig(featuresConfig).value;
-
-    // Apply bubble config
-    if (bubbleConfig && Object.keys(bubbleConfig).length > 0) {
-      const bc = bubbleConfig as Partial<BubbleState>;
-      if (bc.useWebsiteTheme) {
-        bc.backgroundColor = theme.primary;
-        bc.gradientType = 'none';
-        if (bc.outlineRing) bc.outlineRing.color = theme.secondary;
-      } else if (rootAccentColor && !bc.backgroundColor) {
-        bc.backgroundColor = rootAccentColor;
-        if (bc.outlineRing && !bc.outlineRing.color) bc.outlineRing.color = rootAccentColor;
-      }
-      Object.assign(store.bubble, bc);
-      if (bc.position) store.greetWindow.position = bc.position;
-      emit('store:bubble');
-      emit('store:greetWindow');
-    }
-
-    // Apply greet window config
-    if (greetWindowConfig && Object.keys(greetWindowConfig).length > 0) {
-      const gwc = greetWindowConfig as Partial<GreetWindowState>;
-      if (gwc.inputBox) {
-        gwc.inputBox = { ...store.greetWindow.inputBox, ...gwc.inputBox };
-      }
-      if (gwc.useWebsiteTheme) {
-        gwc.iconColor = theme.primary;
-        if (gwc.inputBox) {
-          if (gwc.inputBox.layout === 'separated') {
-            gwc.inputBox.buttonIconColor = theme.primary;
-          } else {
-            gwc.inputBox.buttonColor = theme.primary;
-          }
-        }
-      } else if (rootAccentColor) {
-        if (!gwc.iconColor) gwc.iconColor = rootAccentColor;
-        if (gwc.inputBox) {
-          if (gwc.inputBox.layout === 'separated') {
-            if (!gwc.inputBox.buttonIconColor) gwc.inputBox.buttonIconColor = rootAccentColor;
-          } else if (!gwc.inputBox.buttonColor) {
-            gwc.inputBox.buttonColor = rootAccentColor;
-          }
-        }
-      }
-      Object.assign(store.greetWindow, gwc);
-      emit('store:greetWindow');
-    }
-
-    // Apply chatbar config
-    if (chatbarConfig && Object.keys(chatbarConfig).length > 0) {
-      const cbc = chatbarConfig as Partial<ChatbarState>;
-      if (cbc.useWebsiteTheme) {
-        cbc.bgColor = theme.primary;
-      } else if (rootAccentColor && !cbc.bgColor) {
-        cbc.bgColor = rootAccentColor;
-      }
-      Object.assign(store.chatbar, cbc);
-      const cb = store.chatbar;
-      if (cb.layout === 'card') {
-        if (cb.cardOffsetRight !== undefined && cb.cardOffsetRight !== null) cb.offsetRight = cb.cardOffsetRight;
-        if (cb.cardOffsetBottom !== undefined && cb.cardOffsetBottom !== null) cb.offsetBottom = cb.cardOffsetBottom;
-      } else {
-        if (cb.barOffsetRight !== undefined && cb.barOffsetRight !== null) cb.offsetRight = cb.barOffsetRight;
-        if (cb.barOffsetBottom !== undefined && cb.barOffsetBottom !== null) cb.offsetBottom = cb.barOffsetBottom;
-      }
-      emit('store:chatbar');
-    }
-
-    // Apply chat config (with theme support + dark mode reactivity)
-    if (chatConfig && Object.keys(chatConfig).length > 0) {
-      const cc = chatConfig as Record<string, any>;
-      if (cc.welcome) {
-        store.chatWindow.welcome = { ...store.chatWindow.welcome, ...cc.welcome };
-      }
-
-      function applyTheme() {
-        const isDark = isHostDark();
-        const effectiveChatConfig = {
-          ...(store?.chatWindow || {}),
-          ...cc,
-          ...activeInjectedChatWindowConfig,
-        };
-        const active = JSON.parse(JSON.stringify(effectiveChatConfig)) as Record<string, any>;
-
-        const useWebTheme = cc.useWebsiteTheme ?? (rootAccentColor ? false : active.useWebsiteTheme);
-
-        if (useWebTheme && !hasInjectedCustomConfig) {
-          active.accentColor = active.accentColor || theme.primary;
-          active.visitorBubbleBg = active.visitorBubbleBg || theme.primary;
-          active.visitorBubbleColor = active.visitorBubbleColor || '#ffffff';
-          active.headerBg = active.headerBg || theme.primary;
-          active.headerTextColor = active.headerTextColor || '#ffffff';
-          active.headerAvatarBg = active.headerAvatarBg || 'rgba(255,255,255,0.2)';
-          active.headerAvatarColor = active.headerAvatarColor || '#ffffff';
-          active.agentAvatarBg = active.agentAvatarBg || theme.primary;
-          active.agentAvatarColor = active.agentAvatarColor || '#ffffff';
-          active.inputFocusBorderColor = active.inputFocusBorderColor || theme.primary;
-          active.inputFocusShadow = active.inputFocusShadow || `0 0 0 2px ${theme.primary}26`;
-          active.sendButtonBgActive = active.sendButtonBgActive || theme.primary;
-          active.poweredByColor = active.poweredByColor || theme.primary;
-          active.endChatConfirmBg = active.endChatConfirmBg || theme.primary;
-          active.endChatConfirmTextColor = active.endChatConfirmTextColor || '#ffffff';
-
-          if (isDark) {
-            active.bodyBg = 'var(--cw-bg)';
-            active.inputBg = 'var(--cw-surface)';
-            active.agentBubbleBg = 'var(--cw-surface)';
-            active.agentBubbleColor = 'var(--cw-ink)';
-            active.agentBubbleBorderColor = 'var(--cw-border)';
-            active.footerBg = 'var(--cw-bg)';
-            active.footerTextColor = 'var(--cw-muted)';
-            active.inputTextColor = 'var(--cw-ink)';
-            active.inputBorderColor = 'var(--cw-border)';
-            active.attachButtonBg = 'var(--cw-surface)';
-            active.attachButtonColor = 'var(--cw-muted)';
-            active.emojiButtonColor = 'var(--cw-muted)';
-            active.modalCardBg = 'var(--cw-surface)';
-            active.modalMessageColor = 'var(--cw-ink)';
-            active.endChatCancelBg = 'var(--cw-surface)';
-            active.endChatCancelTextColor = 'var(--cw-muted)';
-            active.endChatCancelBorderColor = 'var(--cw-border)';
-          }
-        } else if (rootAccentColor) {
-          if (!cc.accentColor) active.accentColor = rootAccentColor;
-          if (!cc.visitorBubbleBg) active.visitorBubbleBg = rootAccentColor;
-          if (!cc.headerBg) active.headerBg = rootAccentColor;
-          if (!cc.agentAvatarBg) active.agentAvatarBg = rootAccentColor;
-          if (!cc.inputFocusBorderColor) active.inputFocusBorderColor = rootAccentColor;
-          if (!cc.inputFocusShadow) active.inputFocusShadow = `0 0 0 2px ${rootAccentColor}26`;
-          if (!cc.sendButtonBgActive) active.sendButtonBgActive = rootAccentColor;
-          if (!cc.poweredByColor) active.poweredByColor = rootAccentColor;
-          if (!cc.endChatConfirmBg) active.endChatConfirmBg = rootAccentColor;
-        }
-
-        const welcomeObj = active.welcome || store!.chatWindow.welcome;
-        if (welcomeObj) {
-          const welcomeUseTheme = welcomeObj.useWebsiteTheme ?? (useWebTheme && !hasInjectedCustomConfig);
-          if (welcomeUseTheme && !welcomeObj.bgGradient) {
-            const sec = theme.secondary && theme.secondary !== theme.primary ? theme.secondary : theme.primary;
-            welcomeObj.bgGradient = `linear-gradient(135deg, ${theme.primary}, ${sec})`;
-            welcomeObj.buttonIconColor = welcomeObj.buttonIconColor || theme.primary;
-            active.welcome = welcomeObj;
-          } else if (rootAccentColor && !welcomeObj.bgGradient) {
-            welcomeObj.bgGradient = `linear-gradient(135deg, ${rootAccentColor}, ${rootAccentColor})`;
-            if (!welcomeObj.buttonIconColor) welcomeObj.buttonIconColor = rootAccentColor;
-            active.welcome = welcomeObj;
-          }
-        }
-
-        if (isDark && cc.dark && Object.keys(cc.dark).length > 0) {
-          Object.assign(active, cc.dark);
-        }
-
-        Object.assign(store!.chatWindow, active);
-        emit('store:chatWindow');
-      }
-
-      applyTheme();
-      observeDarkMode(() => applyTheme());
-
-      // Sync chat agent/client names
-      if (cc.clientName) store.chat.clientName = cc.clientName;
-      if (cc.agentName) {
-        store.chat.agentName = cc.agentName;
-        /* v8 ignore next -- initStore always seeds a welcome message, so messages[0] is never empty here */
-        if (store.chat.messages[0]) store.chat.messages[0].senderName = cc.agentName;
-      }
-      const rawAny = rawConfig as any;
-      if (Array.isArray(rawAny.messages) && rawAny.messages.length > 0) {
-        const activeKey = (typeof window !== 'undefined' && (window as any).activeMessagePreviewKey) || 'welcome';
-        const welcomeItem = rawAny.messages.find((m: any) => m && m.key === activeKey) ||
-                            rawAny.messages.find((m: any) => m && m.key === 'welcome') ||
-                            rawAny.messages[0];
-        if (welcomeItem) {
-          store.chat.messages = [{
-            key: welcomeItem.key || 'welcome',
-            senderType: welcomeItem.senderType || 'AGENT',
-            senderName: store.chat.agentName || rawAny.agentName || 'Sarah',
-            body: welcomeItem.body || '',
-            created: new Date().toISOString()
-          }];
-        }
-      }
-      if (!store.chat.hasSentMessage && (store.chatWindow.welcome?.enabled !== false || cc.welcome?.enabled !== false)) {
-        store.chat.state = 'welcome';
-      }
-      emit('store:chat');
-    }
-
-    // Apply features config
-    if (featuresConfig && Object.keys(featuresConfig).length > 0) {
-      Object.assign(store.features, featuresConfig as Partial<FeaturesState>);
-      emit('store:features');
-    }
+    applyRemoteConfig(await fetchClientConfig(clientId), theme);
   } catch (err) {
     console.warn('initStore fetchClientConfig warning:', err);
   }
@@ -1258,14 +1324,14 @@ export function setupGreetTimers() {
 
   const currentStore = getStore();
   const gw = currentStore?.greetWindow;
-  if (!gw || !gw.enabled) return;
+  if (!gw?.enabled) return;
 
   // Reset visibility so the timers can reveal them
   gw.visible = false;
   if (gw.inputBox) gw.inputBox = { ...gw.inputBox, visible: false };
   emit('store:greetWindow');
 
-  const greetDelay = parseFloat(String(gw.openingTimeAfterInitialLoadSec ?? 2));
+  const greetDelay = Number.parseFloat(String(gw.openingTimeAfterInitialLoadSec ?? 2));
   _greetTimer = setTimeout(() => {
     const s = getStore();
     const curGw = s?.greetWindow;
@@ -1275,8 +1341,8 @@ export function setupGreetTimers() {
     }
   }, greetDelay * 1000);
 
-  if (gw.inputBox && gw.inputBox.enabled) {
-    const inputDelay = parseFloat(String(gw.inputBox.openingTimeAfterInitialLoadSec ?? 4));
+  if (gw.inputBox?.enabled) {
+    const inputDelay = Number.parseFloat(String(gw.inputBox.openingTimeAfterInitialLoadSec ?? 4));
     _inputTimer = setTimeout(() => {
       const s = getStore();
       const curGw = s?.greetWindow;
@@ -1327,148 +1393,130 @@ export function updateStoreConfig(overrides: UpdateStoreConfigOverrides) {
   }
 }
 
+function applyGreetScalarOverrides(store: FullStore, overrides: UpdateStoreConfigOverrides) {
+  const gw = store.greetWindow;
+  if (overrides.enableGreetWindow !== undefined) gw.enabled = overrides.enableGreetWindow;
+  if (overrides.greetDelaySec !== undefined) gw.openingTimeAfterInitialLoadSec = overrides.greetDelaySec;
+  if (overrides.greetAnimOpenSec !== undefined) gw.animationOpeningSec = overrides.greetAnimOpenSec;
+  if (overrides.greetAnimCloseSec !== undefined) gw.animationClosingSec = overrides.greetAnimCloseSec;
+
+  const inputBox = gw.inputBox;
+  if (!inputBox) return;
+  if (overrides.enableInputCard !== undefined) inputBox.enabled = overrides.enableInputCard;
+  if (overrides.inputBoxDelaySec !== undefined) inputBox.openingTimeAfterInitialLoadSec = overrides.inputBoxDelaySec;
+  if (overrides.inputBoxAnimOpenSec !== undefined) inputBox.animationOpeningSec = overrides.inputBoxAnimOpenSec;
+}
+
+function applyChatWindowScalarOverrides(store: FullStore, overrides: UpdateStoreConfigOverrides) {
+  const cw = store.chatWindow;
+  if (overrides.enableWelcomeCard !== undefined && cw.welcome) cw.welcome.enabled = overrides.enableWelcomeCard;
+  if (overrides.chatAnimStyle !== undefined) cw.animationStyle = overrides.chatAnimStyle;
+  if (overrides.chatAnimOpenSec !== undefined) cw.animationOpeningSec = overrides.chatAnimOpenSec;
+  if (overrides.chatAnimCloseSec !== undefined) cw.animationClosingSec = overrides.chatAnimCloseSec;
+}
+
+function applyGreetWindowOverride(store: FullStore, override: Partial<GreetWindowState>) {
+  if (override.inputBox && store.greetWindow.inputBox) {
+    store.greetWindow.inputBox = { ...store.greetWindow.inputBox, ...override.inputBox };
+  }
+  const { inputBox, ...rest } = override;
+  Object.assign(store.greetWindow, rest);
+  emit('store:greetWindow');
+}
+
+function applyChatWindowOverride(store: FullStore, override: Partial<ChatWindowState>) {
+  if (override.welcome && store.chatWindow.welcome) {
+    store.chatWindow.welcome = { ...store.chatWindow.welcome, ...override.welcome };
+  }
+  const { welcome, ...rest } = override;
+  Object.assign(store.chatWindow, rest);
+  if (store.chatWindow.welcome?.enabled !== false && !store.chat.hasSentMessage) {
+    store.chat.state = 'welcome';
+    emit('store:chat');
+  }
+  emit('store:chatWindow');
+}
+
+function applyChatOverride(store: FullStore, override: Partial<ChatState>) {
+  if (Array.isArray(override.messages) && override.messages.length > 1) {
+    const welcomeItem = pickWelcomeMessage(override.messages);
+    if (welcomeItem) {
+      override.messages = [toWelcomeMessage(welcomeItem, store.chat.agentName || 'Sarah')];
+    }
+  }
+  Object.assign(store.chat, override);
+  emit('store:chat');
+}
+
+function applyTriggerType(store: FullStore, triggerType: NonNullable<UpdateStoreConfigOverrides['triggerType']>) {
+  if (triggerType === 'chatbar') {
+    store.chatbar = { ...CHATBAR_BAR_PRESET, enabled: true };
+  } else if (triggerType === 'chatcard') {
+    store.chatbar = { ...CHATBAR_CARD_PRESET, enabled: true };
+  }
+  store.chatbar.enabled = triggerType !== 'bubble';
+  store.bubble.enabled = triggerType === 'bubble';
+  emit('store:chatbar');
+  emit('store:bubble');
+}
+
+const GREET_TIMER_KEYS: ReadonlyArray<keyof UpdateStoreConfigOverrides> = [
+  'enableGreetWindow',
+  'enableInputCard',
+  'greetDelaySec',
+  'inputBoxDelaySec'
+];
+
+/** True when the overrides change anything the greet-window timers depend on. */
+function touchesGreetTimers(overrides: UpdateStoreConfigOverrides): boolean {
+  const gw = overrides.greetWindow;
+  const inputBox = gw?.inputBox;
+  return (
+    GREET_TIMER_KEYS.some((k) => overrides[k] !== undefined) ||
+    gw?.openingTimeAfterInitialLoadSec !== undefined ||
+    gw?.enabled !== undefined ||
+    inputBox?.openingTimeAfterInitialLoadSec !== undefined ||
+    inputBox?.enabled !== undefined
+  );
+}
+
+function isObject(value: unknown): value is object {
+  return !!value && typeof value === 'object';
+}
+
 function applyStoreConfig(overrides: UpdateStoreConfigOverrides) {
   const store = getStore();
 
-  if (overrides.enableWelcomeCard !== undefined && store.chatWindow.welcome) {
-    store.chatWindow.welcome.enabled = overrides.enableWelcomeCard;
-  }
+  applyChatWindowScalarOverrides(store, overrides);
+  applyGreetScalarOverrides(store, overrides);
 
-  if (overrides.enableGreetWindow !== undefined) {
-    store.greetWindow.enabled = overrides.enableGreetWindow;
-  }
-
-  if (overrides.enableInputCard !== undefined && store.greetWindow.inputBox) {
-    store.greetWindow.inputBox.enabled = overrides.enableInputCard;
-  }
-
-  if (overrides.greetDelaySec !== undefined) {
-    store.greetWindow.openingTimeAfterInitialLoadSec = overrides.greetDelaySec;
-  }
-
-  if (overrides.greetAnimOpenSec !== undefined) {
-    store.greetWindow.animationOpeningSec = overrides.greetAnimOpenSec;
-  }
-
-  if (overrides.greetAnimCloseSec !== undefined) {
-    store.greetWindow.animationClosingSec = overrides.greetAnimCloseSec;
-  }
-
-  if (overrides.inputBoxDelaySec !== undefined && store.greetWindow.inputBox) {
-    store.greetWindow.inputBox.openingTimeAfterInitialLoadSec = overrides.inputBoxDelaySec;
-  }
-
-  if (overrides.inputBoxAnimOpenSec !== undefined && store.greetWindow.inputBox) {
-    store.greetWindow.inputBox.animationOpeningSec = overrides.inputBoxAnimOpenSec;
-  }
-
-  if (overrides.chatAnimStyle !== undefined) {
-    store.chatWindow.animationStyle = overrides.chatAnimStyle;
-  }
-
-  if (overrides.chatAnimOpenSec !== undefined) {
-    store.chatWindow.animationOpeningSec = overrides.chatAnimOpenSec;
-  }
-
-  if (overrides.chatAnimCloseSec !== undefined) {
-    store.chatWindow.animationClosingSec = overrides.chatAnimCloseSec;
-  }
-
-  if (overrides.bubble && typeof overrides.bubble === 'object') {
+  if (isObject(overrides.bubble)) {
     Object.assign(store.bubble, overrides.bubble);
     emit('store:bubble');
   }
 
-  if (overrides.chatbar && typeof overrides.chatbar === 'object') {
+  if (isObject(overrides.chatbar)) {
     Object.assign(store.chatbar, overrides.chatbar);
     emit('store:chatbar');
   }
 
-  if (overrides.greetWindow && typeof overrides.greetWindow === 'object') {
-    if (overrides.greetWindow.inputBox && store.greetWindow.inputBox) {
-      store.greetWindow.inputBox = {
-        ...store.greetWindow.inputBox,
-        ...overrides.greetWindow.inputBox
-      };
-    }
-    const { inputBox, ...rest } = overrides.greetWindow;
-    Object.assign(store.greetWindow, rest);
-    emit('store:greetWindow');
-  }
+  if (isObject(overrides.greetWindow)) applyGreetWindowOverride(store, overrides.greetWindow);
+  if (isObject(overrides.chatWindow)) applyChatWindowOverride(store, overrides.chatWindow);
+  if (isObject(overrides.chat)) applyChatOverride(store, overrides.chat);
 
-  if (overrides.chatWindow && typeof overrides.chatWindow === 'object') {
-    if (overrides.chatWindow.welcome && store.chatWindow.welcome) {
-      store.chatWindow.welcome = {
-        ...store.chatWindow.welcome,
-        ...overrides.chatWindow.welcome
-      };
-    }
-    const { welcome, ...rest } = overrides.chatWindow;
-    Object.assign(store.chatWindow, rest);
-    if (store.chatWindow.welcome?.enabled !== false && !store.chat.hasSentMessage) {
-      store.chat.state = 'welcome';
-      emit('store:chat');
-    }
-    emit('store:chatWindow');
-  }
-
-  if (overrides.chat && typeof overrides.chat === 'object') {
-    if (Array.isArray(overrides.chat.messages) && overrides.chat.messages.length > 1) {
-      const activeKey = (typeof window !== 'undefined' && (window as any).activeMessagePreviewKey) || 'welcome';
-      const welcomeItem = overrides.chat.messages.find((m: any) => m && m.key === activeKey) ||
-                          overrides.chat.messages.find((m: any) => m && m.key === 'welcome') ||
-                          overrides.chat.messages[0];
-      if (welcomeItem) {
-        overrides.chat.messages = [{
-          key: welcomeItem.key || 'welcome',
-          senderType: welcomeItem.senderType || 'AGENT',
-          senderName: store.chat.agentName || 'Sarah',
-          body: welcomeItem.body || '',
-          created: new Date().toISOString()
-        }];
-      }
-    }
-    Object.assign(store.chat, overrides.chat);
-    emit('store:chat');
-  }
-
-  if (overrides.features && typeof overrides.features === 'object') {
+  if (isObject(overrides.features)) {
     Object.assign(store.features, overrides.features);
     emit('store:features');
   }
 
-  if (overrides.triggerType !== undefined) {
-    if (overrides.triggerType === 'chatbar') {
-      store.chatbar = { ...CHATBAR_BAR_PRESET, enabled: true };
-    } else if (overrides.triggerType === 'chatcard') {
-      store.chatbar = { ...CHATBAR_CARD_PRESET, enabled: true };
-    }
-    store.chatbar.enabled = overrides.triggerType !== 'bubble';
-    store.bubble.enabled = overrides.triggerType === 'bubble';
-    emit('store:chatbar');
-    emit('store:bubble');
-  }
+  if (overrides.triggerType !== undefined) applyTriggerType(store, overrides.triggerType);
 
   emit('store:greetWindow');
   emit('store:chatWindow');
   emit('store:chat');
 
   // Re-schedule greet timers if any delay/enablement override was touched
-  const greetTimerKeys: (keyof UpdateStoreConfigOverrides)[] = [
-    'enableGreetWindow', 'enableInputCard',
-    'greetDelaySec', 'inputBoxDelaySec',
-  ];
-  const greetWindowOverride = overrides.greetWindow;
-  const touchedGreetTimers = greetTimerKeys.some(k => overrides[k] !== undefined) ||
-    (greetWindowOverride && (
-      greetWindowOverride.openingTimeAfterInitialLoadSec !== undefined ||
-      greetWindowOverride.enabled !== undefined ||
-      (greetWindowOverride.inputBox && (
-        greetWindowOverride.inputBox.openingTimeAfterInitialLoadSec !== undefined ||
-        greetWindowOverride.inputBox.enabled !== undefined
-      ))
-    ));
-  if (touchedGreetTimers) {
+  if (touchesGreetTimers(overrides)) {
     setupGreetTimers();
   }
 }
@@ -1483,13 +1531,21 @@ export function exportFullStoreConfig(): Record<string, any> {
   return {
     clientId: store.chat.clientName || 'default',
     clientName: store.chat.clientName || 'Default Widget',
-    features: JSON.parse(JSON.stringify(store.features)),
-    messages: JSON.parse(JSON.stringify(store.chat.messages)),
-    greetWindow: JSON.parse(JSON.stringify(store.greetWindow)),
-    bubble: JSON.parse(JSON.stringify(store.bubble)),
-    chatWindow: JSON.parse(JSON.stringify(store.chatWindow)),
-    chatbar: JSON.parse(JSON.stringify(store.chatbar))
+    features: jsonClone(store.features),
+    messages: jsonClone(store.chat.messages),
+    greetWindow: jsonClone(store.greetWindow),
+    bubble: jsonClone(store.bubble),
+    chatWindow: jsonClone(store.chatWindow),
+    chatbar: jsonClone(store.chatbar)
   };
+}
+
+/** Welcome-only `messages` list for an injected token (active preview key wins), or the token's own list. */
+function injectedMessages(token: Record<string, any>, store: FullStore | null) {
+  if (!Array.isArray(token.messages) || token.messages.length <= 1) return token.messages;
+  const welcomeItem = pickWelcomeMessage(token.messages);
+  if (!welcomeItem) return token.messages;
+  return [toWelcomeMessage(welcomeItem, token.agentName || store?.chat.agentName || 'Sarah')];
 }
 
 /**
@@ -1507,51 +1563,31 @@ export function injectStoreConfig(token: Record<string, any>): void {
 
   const chatWinObj = token.chatWindow || token.chatConfig || {};
   if (Object.keys(chatWinObj).length > 0 || token.accentColor || token.welcome) {
-    const mergedChatWin = {
-      ...(token.accentColor ? { accentColor: token.accentColor } : {}),
-      ...(token.welcome ? { welcome: token.welcome } : {}),
-      ...chatWinObj
-    };
     activeInjectedChatWindowConfig = {
       ...activeInjectedChatWindowConfig,
-      ...mergedChatWin
+      ...(token.accentColor && { accentColor: token.accentColor }),
+      ...(token.welcome && { welcome: token.welcome }),
+      ...chatWinObj
     };
   }
 
-  let processedMessages = token.messages;
-  if (Array.isArray(token.messages) && token.messages.length > 1) {
-    const activeKey = (typeof window !== 'undefined' && (window as any).activeMessagePreviewKey) || 'welcome';
-    const welcomeItem = token.messages.find((m: any) => m && m.key === activeKey) ||
-                        token.messages.find((m: any) => m && m.key === 'welcome') ||
-                        token.messages[0];
-    if (welcomeItem) {
-      processedMessages = [{
-        key: welcomeItem.key || 'welcome',
-        senderType: welcomeItem.senderType || 'AGENT',
-        senderName: token.agentName || store?.chat.agentName || 'Sarah',
-        body: welcomeItem.body || '',
-        created: new Date().toISOString()
-      }];
-    }
-  }
+  const processedMessages = injectedMessages(token, store);
 
-  const overrides: UpdateStoreConfigOverrides = {
+  updateStoreConfig({
     bubble: token.bubble || {},
     chatbar: token.chatbar || {},
     greetWindow: token.greetWindow || {},
     chatWindow: {
-      ...(token.welcome ? { welcome: token.welcome } : {}),
-      ...(token.chatWindow || token.chatConfig || {})
+      ...(token.welcome && { welcome: token.welcome }),
+      ...chatWinObj
     },
     chat: {
-      ...(token.chat || {}),
-      ...(processedMessages ? { messages: processedMessages } : {}),
-      ...(token.clientName ? { clientName: token.clientName } : {}),
-      ...(token.agentName ? { agentName: token.agentName } : {})
+      ...token.chat,
+      ...(processedMessages && { messages: processedMessages }),
+      ...(token.clientName && { clientName: token.clientName }),
+      ...(token.agentName && { agentName: token.agentName })
     }
-  };
-
-  updateStoreConfig(overrides);
+  });
 }
 
 export function _resetStoreForTest(): void {

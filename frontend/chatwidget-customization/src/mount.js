@@ -11,11 +11,14 @@ import scriptsSource from '../scripts.js?raw';
 // • deployed: the widget bundle sits in this remote's own dist/ folder
 //   (copied there by .github/workflows/deploy.yml), resolved relative to
 //   this module — no edits needed when deploying.
-const REMOTE_HOSTNAME = new URL(import.meta.url).hostname;
-const CHAT_WIDGET_HOST =
-  REMOTE_HOSTNAME === 'localhost' || REMOTE_HOSTNAME === '127.0.0.1'
+export function resolveChatWidgetHost(hostname, moduleUrl) {
+  return hostname === 'localhost' || hostname === '127.0.0.1'
     ? 'http://localhost:4173'
-    : new URL('../dist', import.meta.url).href;
+    : new URL('../dist', moduleUrl).href;
+}
+
+const REMOTE_HOSTNAME = new URL(import.meta.url).hostname;
+const CHAT_WIDGET_HOST = resolveChatWidgetHost(REMOTE_HOSTNAME, import.meta.url);
 
 // Origin this remote is served from (e.g. http://localhost:5001). Used so
 // preset/config fetches resolve against the remote, not the host page origin.
@@ -31,6 +34,8 @@ const CDN = {
 };
 
 function runInFrameClassic(doc, code) {
+  // The frame can be torn down (unmounted) before its load event is handled
+  if (typeof doc?.createElement !== 'function') return;
   const s = doc.createElement('script');
   s.textContent = code;
   doc.head.appendChild(s);
@@ -89,7 +94,7 @@ export async function mount(el, options = {}) {
     try {
       const doc = iframe.contentDocument;
       const win = iframe.contentWindow;
-      if (doc && doc.documentElement) {
+      if (doc?.documentElement) {
         if (isDark) {
           doc.documentElement.classList.add('dark');
           doc.body.classList.add('dark', 'dark-mode');
@@ -98,7 +103,7 @@ export async function mount(el, options = {}) {
           doc.body.classList.remove('dark', 'dark-mode');
         }
       }
-      if (win && win.ChatWidgetLit && win.ChatWidgetLit.chatStore) {
+      if (win?.ChatWidgetLit?.chatStore) {
         win.ChatWidgetLit.chatStore.get().darkMode = isDark;
       }
       if (win && typeof win.updateAlpineStores === 'function' && win.cutomizationConfig) {
@@ -106,25 +111,35 @@ export async function mount(el, options = {}) {
       }
     } catch (e) {
       /* cross-origin catch safety */
+      console.debug('[CW] dark-mode sync skipped:', e);
     }
   };
 
   iframe.onload = () => {
-    const doc = iframe.contentDocument;
-    const win = iframe.contentWindow;
+    let doc;
+    let win;
+    try {
+      doc = iframe.contentDocument;
+      win = iframe.contentWindow;
+    } catch (e) {
+      // Cross-origin frame: nothing we can initialise
+      console.debug('[CW] frame not accessible on load:', e);
+      return;
+    }
     if (!doc || !win || win.__CW_INITIALIZED__) return;
     win.__CW_INITIALIZED__ = true;
     win.__CUSTOMIZATION_ASSET_BASE__ = `${REMOTE_ORIGIN}/`;
     win.__CW_OPTIONS__ = options;
 
-    if (options && options.cdnConfig) {
+    if (options?.cdnConfig) {
       win.cutomizationConfig = options.cdnConfig;
     }
 
     try {
-      win.lucide && win.lucide.createIcons();
+      win.lucide?.createIcons();
     } catch (e) {
       /* non-fatal */
+      console.debug('[CW] lucide icons not created:', e);
     }
 
     // Apply dark mode to iframe document as soon as loaded

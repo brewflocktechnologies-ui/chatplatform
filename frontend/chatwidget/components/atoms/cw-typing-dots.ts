@@ -4,7 +4,7 @@ import { REDUCED_MOTION_CSS } from '../../tokens/accessibility.js';
 
 @customElement('cw-typing-dots')
 export class CwTypingDots extends LitElement {
-  static styles = [
+  static readonly styles = [
     REDUCED_MOTION_CSS,
     css`
     :host {

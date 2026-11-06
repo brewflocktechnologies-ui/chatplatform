@@ -10,7 +10,7 @@ type TProductViewPageProps = {
   productId: string;
 };
 
-export default function ProductViewPage({ productId }: TProductViewPageProps) {
+export default function ProductViewPage({ productId }: Readonly<TProductViewPageProps>) {
   if (productId === 'new') {
     return <ProductForm initialData={null} pageTitle='Create New Product' />;
   }
@@ -18,7 +18,7 @@ export default function ProductViewPage({ productId }: TProductViewPageProps) {
   return <EditProductView productId={Number(productId)} />;
 }
 
-function EditProductView({ productId }: { productId: number }) {
+function EditProductView({ productId }: Readonly<{ productId: number }>) {
   const { data } = useSuspenseQuery(productByIdOptions(productId));
 
   if (!data?.success || !data?.product) {

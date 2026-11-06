@@ -10,10 +10,8 @@ import AdvancedFormPatterns from '@/features/forms/components/advanced-form-patt
 beforeEach(() => toastMock.success.mockClear());
 afterEach(cleanup);
 
-const submitForm = async () => {
-  await act(async () => {
-    fireEvent.submit(document.querySelector('form') as HTMLFormElement);
-  });
+const submitForm = () => {
+  fireEvent.submit(document.querySelector('form') as HTMLFormElement);
 };
 const type = (label: string | RegExp, value: string) =>
   fireEvent.change(screen.getByLabelText(label), { target: { value } });

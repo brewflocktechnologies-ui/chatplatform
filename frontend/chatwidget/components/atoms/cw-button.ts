@@ -5,6 +5,46 @@ import { CORE_STYLES } from '../../styles/core-styles.js';
 import { REDUCED_MOTION_CSS } from '../../tokens/accessibility.js';
 import './cw-icon.js';
 
+const ICON_SIZE_BY_BUTTON_SIZE: Readonly<Record<string, number>> = { xs: 12, sm: 14, lg: 20 };
+const DEFAULT_ICON_SIZE = 16;
+
+/** An explicit icon size wins (0 counts as "not set"); otherwise it follows the button size. */
+function resolveIconSize(explicit: number | undefined, buttonSize: string): number {
+  if (explicit) return explicit;
+  return Object.hasOwn(ICON_SIZE_BY_BUTTON_SIZE, buttonSize) ? ICON_SIZE_BY_BUTTON_SIZE[buttonSize] : DEFAULT_ICON_SIZE;
+}
+
+type ButtonBox = {
+  bg: string;
+  color: string;
+  borderColor: string;
+  padding: string;
+  borderRadius: string | number;
+  fullWidth: boolean;
+  width?: number;
+  height?: number;
+};
+
+/** Inline-style overrides for the button, as a `prop: value; ...` string. */
+function buildButtonStyle(box: ButtonBox): string {
+  const style: Record<string, string> = {};
+  if (box.bg) style.backgroundColor = box.bg;
+  if (box.color) style.color = box.color;
+  if (box.borderColor) style.borderColor = box.borderColor;
+  if (box.padding) style.padding = box.padding;
+  if (box.borderRadius) {
+    style.borderRadius = typeof box.borderRadius === 'number' ? `${box.borderRadius}px` : box.borderRadius;
+  }
+  if (box.fullWidth) style.width = '100%';
+  if (box.width !== undefined) style.width = `${box.width}px`;
+  if (box.height !== undefined) style.height = `${box.height}px`;
+  else if (box.padding) style.height = 'auto';
+
+  return Object.entries(style)
+    .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${v}`)
+    .join('; ');
+}
+
 @customElement('cw-button')
 export class CwButton extends LitElement {
   @property({ type: String }) variant: 'primary' | 'secondary' | 'ghost' | 'outline' | 'danger' | 'icon' = 'primary';
@@ -27,7 +67,7 @@ export class CwButton extends LitElement {
   @property({ type: Number }) width?: number;
   @property({ type: Number }) height?: number;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`
@@ -177,24 +217,19 @@ export class CwButton extends LitElement {
     `,
   ];
 
+  /** Accessible name: explicit label, then the visible label, then the icon name for icon-only buttons. */
+  private resolveAriaLabel(isIconOnly: boolean): string | undefined {
+    if (this.ariaLabel) return this.ariaLabel;
+    if (this.label) return this.label;
+    return isIconOnly ? this.icon || 'button' : undefined;
+  }
+
   render() {
     const isIconOnly = this.variant === 'icon' || this.iconPosition === 'only' || (!this.label && !!this.icon);
-    const calculatedIconSize = this.iconSize || (this.size === 'xs' ? 12 : this.size === 'sm' ? 14 : this.size === 'lg' ? 20 : 16);
-
-    const styleObj: Record<string, string> = {};
-    if (this.bg) styleObj.backgroundColor = this.bg;
-    if (this.color) styleObj.color = this.color;
-    if (this.borderColor) styleObj.borderColor = this.borderColor;
-    if (this.padding) styleObj.padding = this.padding;
-    if (this.borderRadius) styleObj.borderRadius = typeof this.borderRadius === 'number' ? `${this.borderRadius}px` : this.borderRadius;
-    if (this.fullWidth) styleObj.width = '100%';
-    if (this.width !== undefined) styleObj.width = `${this.width}px`;
-    if (this.height !== undefined) styleObj.height = `${this.height}px`;
-    else if (this.padding) styleObj.height = 'auto';
-
-    const cssString = Object.entries(styleObj)
-      .map(([k, v]) => `${k.replace(/([A-Z])/g, '-$1').toLowerCase()}: ${v}`)
-      .join('; ');
+    const iconSize = resolveIconSize(this.iconSize, this.size);
+    const showLeadingIcon = !!this.icon && (this.iconPosition === 'left' || isIconOnly);
+    const showTrailingIcon = !!this.icon && this.iconPosition === 'right' && !isIconOnly;
+    const cssString = buildButtonStyle(this);
 
     return html`
       <button
@@ -202,18 +237,18 @@ export class CwButton extends LitElement {
         class="btn variant-${this.variant} size-${this.size} ${this.elevatable ? 'elevatable' : ''} ${this.scalable ? 'scalable' : ''}"
         style="${cssString}"
         ?disabled="${this.disabled}"
-        aria-label="${ifDefined(this.ariaLabel || this.label || (isIconOnly ? this.icon || 'button' : undefined))}"
+        aria-label="${ifDefined(this.resolveAriaLabel(isIconOnly))}"
       >
-        ${this.icon && (this.iconPosition === 'left' || isIconOnly)
-        ? html`<cw-icon .name="${this.icon}" .size="${calculatedIconSize}"></cw-icon>`
+        ${showLeadingIcon
+        ? html`<cw-icon .name="${this.icon}" .size="${iconSize}"></cw-icon>`
         : ''
       }
 
         ${!isIconOnly && this.label ? html`<span>${this.label}</span>` : ''}
         <slot></slot>
 
-        ${this.icon && this.iconPosition === 'right' && !isIconOnly
-        ? html`<cw-icon .name="${this.icon}" .size="${calculatedIconSize}"></cw-icon>`
+        ${showTrailingIcon
+        ? html`<cw-icon .name="${this.icon}" .size="${iconSize}"></cw-icon>`
         : ''
       }
       </button>

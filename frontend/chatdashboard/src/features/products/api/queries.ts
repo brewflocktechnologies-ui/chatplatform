@@ -1,9 +1,9 @@
 import { queryOptions } from '@tanstack/react-query';
 import { entityRoots } from '@/lib/cache/keys';
 import { getProducts, getProductById } from './service';
-import type { Product, ProductFilters } from './types';
+import type { ProductFilters } from './types';
 
-export type { Product };
+export type { Product } from './types';
 
 export const productKeys = {
   all: entityRoots.products,

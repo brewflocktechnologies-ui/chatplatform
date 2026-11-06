@@ -8,12 +8,64 @@ import {
   getCompositeBackground,
   getBoxShadow,
   getInnerShadow,
-  getTooltipBorderRadius,
   hexToRgba
 } from '../../utils/style-helpers.js';
 import '../atoms/cw-icon.js';
 import '../atoms/cw-badge.js';
 import '../atoms/cw-tooltip.js';
+
+type Bubble = BubbleState;
+
+/** Which screen corner the launcher sits in, with its offsets (each has its own default). */
+function placementStyle(settings: Bubble): string {
+  const bottom = settings.offsetBottom ?? 12;
+  const right = settings.offsetRight ?? 16;
+  const left = settings.offsetLeft ?? 16;
+  const top = settings.offsetTop ?? 12;
+
+  switch (settings.position || 'bottom-right') {
+    case 'bottom-left':
+      return `bottom: ${bottom}px; left: ${left}px;`;
+    case 'top-right':
+      return `top: ${top}px; right: ${right}px;`;
+    case 'top-left':
+      return `top: ${top}px; left: ${left}px;`;
+    default:
+      return `bottom: ${bottom}px; right: ${right}px;`;
+  }
+}
+
+function glassStyle(settings: Bubble): string {
+  if (!settings.glass?.enabled) return '';
+  const blur = settings.glass.blur || 10;
+  const opacity = settings.glass.bgOpacity || 0.3;
+  return `backdrop-filter: blur(${blur}px); -webkit-backdrop-filter: blur(${blur}px); background-color: rgba(255, 255, 255, ${opacity});`;
+}
+
+function neonStyle(settings: Bubble): string {
+  if (!settings.neon?.enabled) return '';
+  const color = settings.neon.color || '#22d3ee';
+  const intensity = settings.neon.intensity || 0.8;
+  return `box-shadow: 0 0 ${20 * intensity}px ${color}, inset 0 0 ${10 * intensity}px ${color};`;
+}
+
+function borderStyle(settings: Bubble): string {
+  const b = settings.border || ({} as Partial<Bubble['border']>);
+  return b.width ? `border: ${b.width}px ${b.style || 'solid'} ${b.color || 'transparent'};` : '';
+}
+
+/** The gentle idle float, only while the launcher is untouched and the panel is closed. */
+function idleAnimationStyle(settings: Bubble, interacting: boolean): string {
+  const idle = settings.idleAnim;
+  if (!idle?.enabled || idle.type === 'none' || interacting) return '';
+  return `animation: idleFloat ${idle.duration || 3200}ms ease-in-out infinite;`;
+}
+
+function dotAnimation(type: string | undefined, index: number): string {
+  return type === 'bounce'
+    ? `dotBounce 1.2s cubic-bezier(.2,.8,.2,1) ${index * 0.12}s infinite`
+    : `dotPulse 1.4s cubic-bezier(.2,.8,.2,1) ${index * 0.1}s infinite`;
+}
 
 @customElement('cw-bubble')
 export class CwBubble extends LitElement {
@@ -27,7 +79,7 @@ export class CwBubble extends LitElement {
 
   @state() hovered = false;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     REDUCED_MOTION_CSS,
     css`
@@ -129,6 +181,108 @@ export class CwBubble extends LitElement {
     this.shadowRoot?.querySelector<HTMLElement>('.bubble-wrapper')?.focus();
   }
 
+  private renderOverlays(settings: Bubble) {
+    return html`
+      ${settings.backgroundOverlayType === 'image' && settings.backgroundImageUrl
+        ? html`
+            <div
+              class="overlay-img"
+              style="background-image: url(${settings.backgroundImageUrl}); background-size: ${settings.backgroundImageSize || 'contain'}; opacity: ${settings.backgroundImageOpacity || 0.25}; mix-blend-mode: ${settings.backgroundBlendMode || 'normal'}; border-radius: inherit"
+            ></div>
+          `
+        : ''
+      }
+
+      ${settings.backgroundOverlayType === 'lucide' && settings.backgroundLucideIcon
+        ? html`
+            <div
+              class="overlay-icon"
+              style="color: ${settings.backgroundLucideColor || '#FFFFFF'}; opacity: ${settings.backgroundLucideOpacity || 0.2}; mix-blend-mode: ${settings.backgroundBlendMode || 'normal'}"
+            >
+              <cw-icon .name="${settings.backgroundLucideIcon}" .size="${settings.backgroundLucideSize || 24}"></cw-icon>
+            </div>
+          `
+        : ''
+      }
+    `;
+  }
+
+  /** The launcher glyph: the uploaded image, a custom SVG, or a named icon. */
+  private renderLauncherIcon(settings: Bubble) {
+    if (settings.iconType === 'image' && (settings.iconImageUrl || settings.backgroundImageUrl)) {
+      return html`
+        <img
+          src="${settings.iconImageUrl || settings.backgroundImageUrl}"
+          alt="bubble icon"
+          style="width: 100%; height: 100%; object-fit: ${settings.iconFit || 'cover'}; opacity: ${settings.iconOpacity ?? 1}; mix-blend-mode: ${settings.iconBlend || 'normal'}; border-radius: inherit"
+        />
+      `;
+    }
+    if (settings.iconType === 'customSvg' && settings.customSvg) {
+      return html`
+        <cw-icon .customSvg="${settings.customSvg}" .size="${settings.iconWidth || 26}" .color="${settings.iconColor || '#ffffff'}"></cw-icon>
+      `;
+    }
+    return html`
+      <cw-icon
+        .name="${settings.lucideIcon || settings.backgroundLucideIcon || 'MessageSquare'}"
+        .size="${settings.iconWidth || 26}"
+        .color="${settings.iconColor || '#ffffff'}"
+      ></cw-icon>
+    `;
+  }
+
+  private renderIconContainer(settings: Bubble) {
+    return html`
+      <div class="icon-container">
+        ${this.panelOpen
+          ? html`<cw-icon .name="${'ChevronDown'}" .size="${26}"></cw-icon>`
+          : html`
+              <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%">
+                ${this.renderLauncherIcon(settings)}
+              </div>
+            `
+        }
+      </div>
+    `;
+  }
+
+  private renderDots(settings: Bubble) {
+    return html`
+      <div class="dots-container" style="gap: ${(settings.dots?.spacing || 6)}px">
+        ${[0, 1, 2].map(
+          (i) => html`
+            <span
+              class="dot-span"
+              style="width: ${(settings.dots?.size || 6)}px; height: ${(settings.dots?.size || 6)}px; background-color: ${settings.dots?.color || '#FFFFFF'}; animation: ${dotAnimation(settings.dots?.animation, i)}"
+            ></span>
+          `
+        )}
+      </div>
+    `;
+  }
+
+  private renderTooltip(settings: Bubble) {
+    const t = settings.tooltip;
+    if (!t?.enabled || this.panelOpen || this.hasSentMessage) return '';
+    return html`
+      <cw-tooltip
+        position="${t.position || 'left'}"
+        .text="${t.text || 'Chat with us'}"
+        .position="${(t.position || 'left') as any}"
+        .backgroundColor="${t.backgroundColor || '#ffffff'}"
+        .textColor="${t.textColor || '#374151'}"
+        .fontSize="${t.fontSize || 14}"
+        .padding="${t.padding || '8px 16px'}"
+        .borderRadius="${t.borderRadius}"
+        .boxShadow="${t.boxShadow || '0 4px 12px rgba(0,0,0,0.1)'}"
+        .borderWidth="${t.borderWidth || 0}"
+        .borderColor="${t.borderColor || 'transparent'}"
+        .arrowEnabled="${t.arrowEnabled !== false}"
+      ></cw-tooltip>
+    `;
+  }
+
   render() {
     const settings = this.config;
 
@@ -137,88 +291,14 @@ export class CwBubble extends LitElement {
 
     const widthVal = settings.width || 60;
     const heightVal = settings.height || 60;
-    const pos = settings.position || 'bottom-right';
-    const rawBottom = settings.offsetBottom !== undefined ? settings.offsetBottom : 12;
-    const rawRight = settings.offsetRight !== undefined ? settings.offsetRight : 16;
-    const rawLeft = settings.offsetLeft !== undefined ? settings.offsetLeft : 16;
-    const rawTop = settings.offsetTop !== undefined ? settings.offsetTop : 12;
-
-    let positionStyle = '';
-    if (pos === 'bottom-left') {
-      positionStyle = `bottom: ${rawBottom}px; left: ${rawLeft}px;`;
-    } else if (pos === 'top-right') {
-      positionStyle = `top: ${rawTop}px; right: ${rawRight}px;`;
-    } else if (pos === 'top-left') {
-      positionStyle = `top: ${rawTop}px; left: ${rawLeft}px;`;
-    } else {
-      positionStyle = `bottom: ${rawBottom}px; right: ${rawRight}px;`;
-    }
-
     const borderRadius = getBorderRadius(settings.borderRadius);
     const bg = getCompositeBackground(settings);
     const boxShadow = [getBoxShadow(settings), getInnerShadow(settings as any)].filter(b => b && b !== 'none').join(', ') || 'none';
 
-    const hoverScale = settings.hoverScale !== undefined ? settings.hoverScale : 1.05;
+    const hoverScale = settings.hoverScale ?? 1.05;
     const transform = this.hovered && !this.panelOpen ? `scale(${hoverScale})` : 'scale(1.0)';
-
-    // Glass style
-    let glassStyle = '';
-    if (settings.glass && settings.glass.enabled) {
-      const blur = settings.glass.blur || 10;
-      const opacity = settings.glass.bgOpacity || 0.3;
-      glassStyle = `backdrop-filter: blur(${blur}px); -webkit-backdrop-filter: blur(${blur}px); background-color: rgba(255, 255, 255, ${opacity});`;
-    }
-
-    // Neon style
-    let neonStyle = '';
-    if (settings.neon && settings.neon.enabled) {
-      const color = settings.neon.color || '#22d3ee';
-      const intensity = settings.neon.intensity || 0.8;
-      neonStyle = `box-shadow: 0 0 ${20 * intensity}px ${color}, inset 0 0 ${10 * intensity}px ${color};`;
-    }
-
-    // Border style
-    const b = settings.border || {};
-    const borderStyle = b.width ? `border: ${b.width}px ${b.style || 'solid'} ${b.color || 'transparent'};` : '';
-
-    // Entry anim
-    let entryAnim = '';
-    if (settings.idleAnim && settings.idleAnim.enabled && settings.idleAnim.type !== 'none' && !this.hovered && !this.panelOpen) {
-      const duration = settings.idleAnim.duration || 3200;
-      entryAnim = `animation: idleFloat ${duration}ms ease-in-out infinite;`;
-    }
-
-    // Tooltip
-    const t = settings.tooltip;
-    const showTooltip = t && t.enabled && !this.panelOpen && !this.hasSentMessage;
-    const tPos = t?.position || 'left';
-    const tBorderRadius = getTooltipBorderRadius(t?.borderRadius, tPos);
-
-    let tPosStyle = '';
-    let arrowPosStyle = '';
-    const arrowSize = 8;
-    const tBorderW = t?.borderWidth || 0;
-    const tBorderC = t?.borderColor || 'transparent';
-
-    if (tPos === 'left') {
-      tPosStyle = 'right: calc(100% + 12px); top: 50%; transform: translateY(-50%);';
-      arrowPosStyle = `right: -${arrowSize / 2}px; top: 50%; transform: translateY(-50%) rotate(45deg);`;
-      if (tBorderW > 0) arrowPosStyle += ` border-top: ${tBorderW}px solid ${tBorderC}; border-right: ${tBorderW}px solid ${tBorderC};`;
-    } else if (tPos === 'right') {
-      tPosStyle = 'left: calc(100% + 12px); top: 50%; transform: translateY(-50%);';
-      arrowPosStyle = `left: -${arrowSize / 2}px; top: 50%; transform: translateY(-50%) rotate(45deg);`;
-      if (tBorderW > 0) arrowPosStyle += ` border-bottom: ${tBorderW}px solid ${tBorderC}; border-left: ${tBorderW}px solid ${tBorderC};`;
-    } else if (tPos === 'top') {
-      tPosStyle = 'bottom: calc(100% + 12px); left: 50%; transform: translateX(-50%);';
-      arrowPosStyle = `bottom: -${arrowSize / 2}px; left: 50%; transform: translateX(-50%) rotate(45deg);`;
-      if (tBorderW > 0) arrowPosStyle += ` border-bottom: ${tBorderW}px solid ${tBorderC}; border-right: ${tBorderW}px solid ${tBorderC};`;
-    } else {
-      tPosStyle = 'top: calc(100% + 12px); left: 50%; transform: translateX(-50%);';
-      arrowPosStyle = `top: -${arrowSize / 2}px; left: 50%; transform: translateX(-50%) rotate(45deg);`;
-      if (tBorderW > 0) arrowPosStyle += ` border-top: ${tBorderW}px solid ${tBorderC}; border-left: ${tBorderW}px solid ${tBorderC};`;
-    }
-
-    const showHoverDots = settings.dots && settings.dots.animation && settings.dots.animation !== 'none' && this.hovered && !this.panelOpen;
+    const entryAnim = idleAnimationStyle(settings, this.hovered || this.panelOpen);
+    const showHoverDots = !!(settings.dots?.animation && settings.dots.animation !== 'none' && this.hovered && !this.panelOpen);
 
     return html`
       <div
@@ -226,81 +306,17 @@ export class CwBubble extends LitElement {
         role="button"
         tabindex="0"
         aria-label="${this.panelOpen ? 'Close chat' : 'Open chat'}"
-        style="position: ${this.fixed ? 'fixed' : 'absolute'}; width: ${widthVal}px; height: ${heightVal}px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); ${positionStyle} border-radius: ${borderRadius}; background: ${bg}; background-blend-mode: ${settings.backgroundBlendMode || 'normal'}; box-shadow: ${boxShadow}; transform: ${transform}; ${borderStyle} ${glassStyle} ${neonStyle} ${entryAnim}"
+        style="position: ${this.fixed ? 'fixed' : 'absolute'}; width: ${widthVal}px; height: ${heightVal}px; max-width: calc(100% - 24px); max-height: calc(100% - 24px); ${placementStyle(settings)} border-radius: ${borderRadius}; background: ${bg}; background-blend-mode: ${settings.backgroundBlendMode || 'normal'}; box-shadow: ${boxShadow}; transform: ${transform}; ${borderStyle(settings)} ${glassStyle(settings)} ${neonStyle(settings)} ${entryAnim}"
         @mouseenter="${() => (this.hovered = true)}"
         @mouseleave="${() => (this.hovered = false)}"
         @click="${this.handleClick}"
         @keydown="${this.handleKeyDown}"
       >
-        ${settings.backgroundOverlayType === 'image' && settings.backgroundImageUrl
-          ? html`
-              <div
-                class="overlay-img"
-                style="background-image: url(${settings.backgroundImageUrl}); background-size: ${settings.backgroundImageSize || 'contain'}; opacity: ${settings.backgroundImageOpacity || 0.25}; mix-blend-mode: ${settings.backgroundBlendMode || 'normal'}; border-radius: inherit"
-              ></div>
-            `
-          : ''
-        }
+        ${this.renderOverlays(settings)}
 
-        ${settings.backgroundOverlayType === 'lucide' && settings.backgroundLucideIcon
-          ? html`
-              <div
-                class="overlay-icon"
-                style="color: ${settings.backgroundLucideColor || '#FFFFFF'}; opacity: ${settings.backgroundLucideOpacity || 0.2}; mix-blend-mode: ${settings.backgroundBlendMode || 'normal'}"
-              >
-                <cw-icon .name="${settings.backgroundLucideIcon}" .size="${settings.backgroundLucideSize || 24}"></cw-icon>
-              </div>
-            `
-          : ''
-        }
+        ${showHoverDots ? this.renderDots(settings) : this.renderIconContainer(settings)}
 
-        ${!showHoverDots
-          ? html`
-              <div class="icon-container">
-                ${this.panelOpen
-                  ? html`<cw-icon .name="${'ChevronDown'}" .size="${26}"></cw-icon>`
-                  : html`
-                      <div style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%">
-                        ${settings.iconType === 'image' && (settings.iconImageUrl || settings.backgroundImageUrl)
-                          ? html`
-                              <img
-                                src="${settings.iconImageUrl || settings.backgroundImageUrl}"
-                                alt="bubble icon"
-                                style="width: 100%; height: 100%; object-fit: ${settings.iconFit || 'cover'}; opacity: ${settings.iconOpacity !== undefined ? settings.iconOpacity : 1}; mix-blend-mode: ${settings.iconBlend || 'normal'}; border-radius: inherit"
-                              />
-                            `
-                          : settings.iconType === 'customSvg' && settings.customSvg
-                          ? html`
-                              <cw-icon .customSvg="${settings.customSvg}" .size="${settings.iconWidth || 26}" .color="${settings.iconColor || '#ffffff'}"></cw-icon>
-                            `
-                          : html`
-                              <cw-icon
-                                .name="${settings.lucideIcon || settings.backgroundLucideIcon || 'MessageSquare'}"
-                                .size="${settings.iconWidth || 26}"
-                                .color="${settings.iconColor || '#ffffff'}"
-                              ></cw-icon>
-                            `
-                        }
-                      </div>
-                    `
-                }
-              </div>
-            `
-          : html`
-              <div class="dots-container" style="gap: ${(settings.dots?.spacing || 6)}px">
-                ${[0, 1, 2].map(
-                  (i) => html`
-                    <span
-                      class="dot-span"
-                      style="width: ${(settings.dots?.size || 6)}px; height: ${(settings.dots?.size || 6)}px; background-color: ${settings.dots?.color || '#FFFFFF'}; animation: ${settings.dots?.animation === 'bounce' ? `dotBounce 1.2s cubic-bezier(.2,.8,.2,1) ${i * 0.12}s infinite` : `dotPulse 1.4s cubic-bezier(.2,.8,.2,1) ${i * 0.1}s infinite`}"
-                    ></span>
-                  `
-                )}
-              </div>
-            `
-        }
-
-        ${settings.outlineRing && settings.outlineRing.enabled
+        ${settings.outlineRing?.enabled
           ? html`
               <div
                 style="position: absolute; inset: 0; pointer-events: none; border-radius: inherit; box-shadow: 0 0 0 ${(settings.outlineRing.width || 3)}px ${hexToRgba(settings.outlineRing.color || '#22d3ee', settings.outlineRing.opacity || 0.4)}"
@@ -314,25 +330,7 @@ export class CwBubble extends LitElement {
           : ''
         }
 
-        ${showTooltip
-          ? html`
-              <cw-tooltip
-                position="${t?.position || 'left'}"
-                .text="${t?.text || 'Chat with us'}"
-                .position="${(t?.position || 'left') as any}"
-                .backgroundColor="${t?.backgroundColor || '#ffffff'}"
-                .textColor="${t?.textColor || '#374151'}"
-                .fontSize="${t?.fontSize || 14}"
-                .padding="${t?.padding || '8px 16px'}"
-                .borderRadius="${t?.borderRadius}"
-                .boxShadow="${t?.boxShadow || '0 4px 12px rgba(0,0,0,0.1)'}"
-                .borderWidth="${t?.borderWidth || 0}"
-                .borderColor="${t?.borderColor || 'transparent'}"
-                .arrowEnabled="${t?.arrowEnabled !== false}"
-              ></cw-tooltip>
-            `
-          : ''
-        }
+        ${this.renderTooltip(settings)}
       </div>
     `;
   }

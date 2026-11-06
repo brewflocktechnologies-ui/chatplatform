@@ -1,21 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { FormSheet, FormSheetTrigger } from '@/components/forms/form-sheet';
 import { useRouter } from 'next/navigation';
 import { useMutation } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { Button } from '@/components/ui/button';
-import { FormGrid, FormRow, WIDE_FORM_MODAL } from '@/components/forms/form-grid';
-import { LoadingButton } from '@/components/ui/loading-button';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle
-} from '@/components/ui/sheet';
-import { Icons } from '@/components/icons';
+import { FormGrid, FormRow } from '@/components/forms/form-grid';
+
 import { useAppForm } from '@/lib/form';
 import { ApiError, unwrap } from '@/lib/billing/errors';
 import { createPocWidget, updatePocWidget } from '../api/service';
@@ -37,9 +27,9 @@ const THEME_OPTIONS = [
 ];
 
 interface PocWidgetFormSheetProps {
-  widget?: PocWidget;
-  open: boolean;
-  onOpenChange: (open: boolean) => void;
+  readonly widget?: PocWidget;
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
 }
 
 const errorMessage = (error: unknown, fallback: string) =>
@@ -48,7 +38,11 @@ const errorMessage = (error: unknown, fallback: string) =>
 // The API stores blank optional text as null.
 const orNull = (value: string) => value.trim() || null;
 
-export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetFormSheetProps) {
+export function PocWidgetFormSheet({
+  widget,
+  open,
+  onOpenChange
+}: Readonly<PocWidgetFormSheetProps>) {
   const isEdit = !!widget;
   const router = useRouter();
 
@@ -134,183 +128,130 @@ export function PocWidgetFormSheet({ widget, open, onOpenChange }: PocWidgetForm
   const isPending = createMutation.isPending || updateMutation.isPending;
 
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side='center' className={WIDE_FORM_MODAL}>
-        <SheetHeader>
-          <SheetTitle>{isEdit ? 'Edit Widget' : 'New Widget'}</SheetTitle>
-          <SheetDescription>
-            {isEdit
-              ? 'Update the widget settings below.'
-              : 'Fill in the details to create a new chat widget.'}
-          </SheetDescription>
-        </SheetHeader>
-
-        <div className='flex-1 overflow-auto'>
-          <form
-            id='poc-widget-form-sheet'
-            className='space-y-4 p-4 md:p-4'
-            onSubmit={(e) => {
-              e.preventDefault();
-              form.handleSubmit();
-            }}
-          >
-            <FormGrid>
-              <FormRow>
-                <form.AppField
-                  name='widgetName'
-                  children={(field) => (
-                    <field.TextField label='Widget Name' required placeholder='Support widget' />
-                  )}
-                />
-              </FormRow>
-              <form.AppField
-                name='companyId'
-                children={(field) => (
-                  <field.TextField label='Company ID' type='number' min={1} required />
-                )}
-              />
-              <form.AppField
-                name='assistantId'
-                children={(field) => (
-                  <field.TextField label='Assistant ID' type='number' min={1} required />
-                )}
-              />
-              <FormRow>
-                <form.AppField
-                  name='websiteUrl'
-                  children={(field) => (
-                    <field.TextField label='Website URL' placeholder='https://example.com' />
-                  )}
-                />
-              </FormRow>
-              <form.AppField
-                name='position'
-                children={(field) => (
-                  <field.SelectField label='Position' required options={POSITION_OPTIONS} />
-                )}
-              />
-              <form.AppField
-                name='theme'
-                children={(field) => (
-                  <field.SelectField label='Theme' required options={THEME_OPTIONS} />
-                )}
-              />
-              <form.AppField
-                name='primaryColor'
-                children={(field) => <field.ColorField label='Primary Color' />}
-              />
-              <form.AppField
-                name='maxFileSizeMb'
-                children={(field) => (
+    <FormSheet
+      open={open}
+      onOpenChange={onOpenChange}
+      title={isEdit ? 'Edit Widget' : 'New Widget'}
+      description={
+        isEdit
+          ? 'Update the widget settings below.'
+          : 'Fill in the details to create a new chat widget.'
+      }
+      formId='poc-widget-form-sheet'
+      onSubmit={() => form.handleSubmit()}
+      isPending={isPending}
+      submitLabel={isEdit ? 'Update Widget' : 'Create Widget'}
+    >
+      <FormGrid>
+        <FormRow>
+          <form.AppField name='widgetName'>
+            {(field) => (
+              <field.TextField label='Widget Name' required placeholder='Support widget' />
+            )}
+          </form.AppField>
+        </FormRow>
+        <form.AppField name='companyId'>
+          {(field) => <field.TextField label='Company ID' type='number' min={1} required />}
+        </form.AppField>
+        <form.AppField name='assistantId'>
+          {(field) => <field.TextField label='Assistant ID' type='number' min={1} required />}
+        </form.AppField>
+        <FormRow>
+          <form.AppField name='websiteUrl'>
+            {(field) => <field.TextField label='Website URL' placeholder='https://example.com' />}
+          </form.AppField>
+        </FormRow>
+        <form.AppField name='position'>
+          {(field) => <field.SelectField label='Position' required options={POSITION_OPTIONS} />}
+        </form.AppField>
+        <form.AppField name='theme'>
+          {(field) => <field.SelectField label='Theme' required options={THEME_OPTIONS} />}
+        </form.AppField>
+        <form.AppField name='primaryColor'>
+          {(field) => <field.ColorField label='Primary Color' />}
+        </form.AppField>
+        <form.AppField name='maxFileSizeMb'>
+          {(field) => (
+            <field.TextField
+              label='Max File Size (MB)'
+              type='number'
+              min={1}
+              description='Applies when file upload is enabled.'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='greetingMessage'>
+          {(field) => <field.TextareaField label='Greeting Message' />}
+        </form.AppField>
+        <form.AppField name='offlineMessage'>
+          {(field) => <field.TextareaField label='Offline Message' />}
+        </form.AppField>
+        <form.AppField name='showAgentName'>
+          {(field) => (
+            <field.SwitchField
+              label='Show agent name'
+              description='Display the agent name on replies.'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='showTypingIndicator'>
+          {(field) => (
+            <field.SwitchField
+              label='Typing indicator'
+              description='Show when an agent is typing.'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='enableFileUpload'>
+          {(field) => (
+            <field.SwitchField label='File upload' description='Let visitors attach files.' />
+          )}
+        </form.AppField>
+        <form.AppField name='enableSoundNotification'>
+          {(field) => (
+            <field.SwitchField
+              label='Sound notification'
+              description='Play a sound on new messages.'
+            />
+          )}
+        </form.AppField>
+        <form.AppField name='autoPopup'>
+          {(field) => (
+            <field.SwitchField label='Auto popup' description='Open the widget automatically.' />
+          )}
+        </form.AppField>
+        <form.Subscribe selector={(state) => state.values.autoPopup}>
+          {(autoPopup) =>
+            autoPopup && (
+              <form.AppField name='popupDelaySeconds'>
+                {(field) => (
                   <field.TextField
-                    label='Max File Size (MB)'
+                    label='Popup Delay (seconds)'
                     type='number'
-                    min={1}
-                    description='Applies when file upload is enabled.'
+                    min={0}
+                    placeholder='5'
                   />
                 )}
-              />
-              <form.AppField
-                name='greetingMessage'
-                children={(field) => <field.TextareaField label='Greeting Message' />}
-              />
-              <form.AppField
-                name='offlineMessage'
-                children={(field) => <field.TextareaField label='Offline Message' />}
-              />
-              <form.AppField
-                name='showAgentName'
-                children={(field) => (
-                  <field.SwitchField
-                    label='Show agent name'
-                    description='Display the agent name on replies.'
-                  />
-                )}
-              />
-              <form.AppField
-                name='showTypingIndicator'
-                children={(field) => (
-                  <field.SwitchField
-                    label='Typing indicator'
-                    description='Show when an agent is typing.'
-                  />
-                )}
-              />
-              <form.AppField
-                name='enableFileUpload'
-                children={(field) => (
-                  <field.SwitchField label='File upload' description='Let visitors attach files.' />
-                )}
-              />
-              <form.AppField
-                name='enableSoundNotification'
-                children={(field) => (
-                  <field.SwitchField
-                    label='Sound notification'
-                    description='Play a sound on new messages.'
-                  />
-                )}
-              />
-              <form.AppField
-                name='autoPopup'
-                children={(field) => (
-                  <field.SwitchField
-                    label='Auto popup'
-                    description='Open the widget automatically.'
-                  />
-                )}
-              />
-              <form.Subscribe selector={(state) => state.values.autoPopup}>
-                {(autoPopup) =>
-                  autoPopup && (
-                    <form.AppField
-                      name='popupDelaySeconds'
-                      children={(field) => (
-                        <field.TextField
-                          label='Popup Delay (seconds)'
-                          type='number'
-                          min={0}
-                          placeholder='5'
-                        />
-                      )}
-                    />
-                  )
-                }
-              </form.Subscribe>
-              <FormRow>
-                <form.AppField
-                  name='isActive'
-                  children={(field) => (
-                    <field.SwitchField label='Active' description='Serve this widget on the site.' />
-                  )}
-                />
-              </FormRow>
-            </FormGrid>
-          </form>
-        </div>
-
-        <SheetFooter>
-          <Button type='button' variant='outline' onClick={() => onOpenChange(false)}>
-            Cancel
-          </Button>
-          <LoadingButton loading={isPending} type='submit' form='poc-widget-form-sheet'>
-            {isEdit ? 'Update Widget' : 'Create Widget'}
-          </LoadingButton>
-        </SheetFooter>
-      </SheetContent>
-    </Sheet>
+              </form.AppField>
+            )
+          }
+        </form.Subscribe>
+        <FormRow>
+          <form.AppField name='isActive'>
+            {(field) => (
+              <field.SwitchField label='Active' description='Serve this widget on the site.' />
+            )}
+          </form.AppField>
+        </FormRow>
+      </FormGrid>
+    </FormSheet>
   );
 }
 
 export function PocWidgetFormSheetTrigger() {
-  const [open, setOpen] = useState(false);
-
   return (
-    <>
-      <Button onClick={() => setOpen(true)}>
-        <Icons.add className='mr-2 h-4 w-4' /> Add Widget
-      </Button>
-      <PocWidgetFormSheet open={open} onOpenChange={setOpen} />
-    </>
+    <FormSheetTrigger label='Add Widget'>
+      {(open, setOpen) => <PocWidgetFormSheet open={open} onOpenChange={setOpen} />}
+    </FormSheetTrigger>
   );
 }

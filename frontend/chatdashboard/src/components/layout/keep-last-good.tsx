@@ -15,7 +15,12 @@ import { Button } from '@/components/ui/button';
  *
  * Pass the content as children on success and `error` (with no children) on failure.
  */
-export function KeepLastGood({ error, children }: { error?: string; children?: React.ReactNode }) {
+interface KeepLastGoodProps {
+  readonly error?: string;
+  readonly children?: React.ReactNode;
+}
+
+export function KeepLastGood({ error, children }: Readonly<KeepLastGoodProps>) {
   const router = useRouter();
   const [lastGood, setLastGood] = React.useState<React.ReactNode>(error ? null : children);
   // Remember each successful render (React's "store information from previous renders" pattern).

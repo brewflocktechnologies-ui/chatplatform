@@ -10,7 +10,7 @@ export const metadata = {
   title: 'Dashboard: POC Config'
 };
 
-type PageProps = { searchParams: Promise<SearchParams> };
+type PageProps = { readonly searchParams: Promise<SearchParams> };
 
 /** `sort` arrives from the table as a JSON array like [{"id":"configName","desc":false}]. */
 function toSort(raw: string | null) {
@@ -27,7 +27,7 @@ function toSort(raw: string | null) {
   }
 }
 
-export default async function PocConfigPage(props: PageProps) {
+export default async function PocConfigPage(props: Readonly<PageProps>) {
   searchParamsCache.parse(await props.searchParams);
   const result = await loadConfigs(
     searchParamsCache.get('page'),

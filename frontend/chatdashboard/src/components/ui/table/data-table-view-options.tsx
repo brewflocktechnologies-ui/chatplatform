@@ -21,19 +21,16 @@ function columnLabel<TData>(column: Column<TData>) {
   const { meta, header } = column.columnDef;
   if (meta?.label) return meta.label;
   if (typeof header === 'string') return header;
-  return column.id
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .replace(/^./, (c) => c.toUpperCase());
+  return column.id.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/^./, (c) => c.toUpperCase());
 }
 
 interface DataTableViewOptionsProps<TData> {
   table: Table<TData>;
 }
 
-export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps<TData>) {
+export function DataTableViewOptions<TData>({ table }: Readonly<DataTableViewOptionsProps<TData>>) {
   const columns = React.useMemo(
-    () =>
-      table.getAllColumns().filter((column) => column.getCanHide()),
+    () => table.getAllColumns().filter((column) => column.getCanHide()),
     [table]
   );
 
@@ -42,7 +39,7 @@ export function DataTableViewOptions<TData>({ table }: DataTableViewOptionsProps
       <PopoverTrigger
         render={
           <Button
-            aria-label='Toggle columns'
+            aria-label='View columns'
             variant='outline'
             size='sm'
             className='ml-auto hidden h-8 lg:flex'

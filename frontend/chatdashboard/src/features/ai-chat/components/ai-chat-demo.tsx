@@ -28,7 +28,7 @@ type ToolPart = {
   errorText?: string;
 };
 
-function ToolMarker({ part }: { part: ToolPart }) {
+function ToolMarker({ part }: Readonly<{ part: ToolPart }>) {
   const name = part.toolName ?? part.type.replace(/^tool-/, '');
   const running = part.state === 'input-streaming' || part.state === 'input-available';
   const done = part.state === 'output-available';

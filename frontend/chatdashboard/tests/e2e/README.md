@@ -31,6 +31,9 @@ e2e/
     ├── archives.spec.ts         # archived-chat viewer: search, tag filter, sort, notes, panels
     ├── products.spec.ts         # product table, form validation, create/delete, edit page, 404
     ├── forms.spec.ts            # basic / advanced / multi-step / sheet+dialog form demos
+    ├── poc-pages.spec.ts        # POC Website / Widget / Config: shell, add-form validation,
+    │                            #   unreachable-API banner + Retry (read-only; never saves)
+    ├── infobar-fullscreen.spec.ts  # info panel (button, close, Ctrl+I) + fullscreen toggle
     ├── misc-pages.spec.ts       # settings+theme persistence, exclusive, workspaces, icons,
     │                            # react-query demo, 404s, sign-up + alias redirects
     └── responsive-a11y.spec.ts  # mobile sidebar sheet, Ctrl+B collapse, skip link, kbar keyboard

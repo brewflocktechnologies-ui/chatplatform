@@ -9,13 +9,19 @@
 // ---------------------------------------------------------------------------
 
 /** Converts a hex color string to rgba(...). */
+/** Numbers are pixels; strings pass through unchanged; nothing falls back. */
+export function cssLength(value: number | string | null | undefined, fallback: string): string {
+  if (typeof value === 'number') return `${value}px`;
+  return value ?? fallback;
+}
+
 export function hexToRgba(hex: string, alpha = 1): string {
   if (!hex) return '';
   if (hex.startsWith('#')) {
     const v = hex.replace('#', '');
     const normalized = v.length === 3 ? v.split('').map((c) => c + c).join('') : v;
-    const bigint = parseInt(normalized, 16);
-    if (!isNaN(bigint)) {
+    const bigint = Number.parseInt(normalized, 16);
+    if (!Number.isNaN(bigint)) {
       return `rgba(${(bigint >> 16) & 255},${(bigint >> 8) & 255},${bigint & 255},${alpha})`;
     }
   }
@@ -80,13 +86,13 @@ export function getBoxShadow(config: {
   boxShadowBlur?: number;
   boxShadowOpacity?: number;
 }): string {
-  const opacity = config.boxShadowOpacity !== undefined ? config.boxShadowOpacity : 0.25;
+  const opacity = config.boxShadowOpacity ?? 0.25;
   if (opacity <= 0) return 'none';
 
-  const offsetX = config.boxShadowOffsetX !== undefined ? config.boxShadowOffsetX : 0;
-  const offsetY = config.boxShadowOffsetY !== undefined ? config.boxShadowOffsetY : 8;
-  const blur = config.boxShadowBlur !== undefined ? config.boxShadowBlur : 20;
-  const spread = config.boxShadowSpread !== undefined ? config.boxShadowSpread : 0;
+  const offsetX = config.boxShadowOffsetX ?? 0;
+  const offsetY = config.boxShadowOffsetY ?? 8;
+  const blur = config.boxShadowBlur ?? 20;
+  const spread = config.boxShadowSpread ?? 0;
 
   return `${offsetX}px ${offsetY}px ${blur}px ${spread}px rgba(0,0,0,${opacity})`;
 }
@@ -94,7 +100,7 @@ export function getBoxShadow(config: {
 export function getInnerShadow(config: {
   innerShadow?: { enabled?: boolean; blur?: number; opacity?: number };
 }): string {
-  if (!config.innerShadow || !config.innerShadow.enabled) return '';
+  if (!config.innerShadow?.enabled) return '';
   return `inset 0 6px ${config.innerShadow.blur ?? 12}px rgba(0,0,0,${config.innerShadow.opacity ?? 0.25})`;
 }
 
@@ -206,8 +212,41 @@ export function formatTime(isoString: string | undefined): string {
     return str;
   }
   const d = new Date(str);
-  if (isNaN(d.getTime())) {
+  if (Number.isNaN(d.getTime())) {
     return new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
   return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+const READABLE_LIGHT = '#ffffff';
+const READABLE_DARK = '#18181b';
+const MIN_TEXT_CONTRAST = 4.5;
+
+function relativeLuminance(hex: string): number | null {
+  const m = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim());
+  if (!m) return null;
+  const digits = m[1].length === 3 ? [...m[1]].map((c) => c + c).join('') : m[1];
+  const [r, g, b] = [0, 2, 4].map((i) => {
+    const channel = Number.parseInt(digits.slice(i, i + 2), 16) / 255;
+    return channel <= 0.03928 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+function contrastRatio(a: number, b: number): number {
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+/**
+ * The text colour to use on `background`: `preferred` when it is readable there, otherwise white or
+ * near-black, whichever reads better. Colours that aren't hex are left alone.
+ */
+export function legibleOn(background: string | undefined, preferred: string | undefined) {
+  const bg = background ? relativeLuminance(background) : null;
+  if (bg === null) return preferred;
+  const fg = preferred ? relativeLuminance(preferred) : null;
+  if (fg !== null && contrastRatio(bg, fg) >= MIN_TEXT_CONTRAST) return preferred;
+  const light = relativeLuminance(READABLE_LIGHT) as number;
+  const dark = relativeLuminance(READABLE_DARK) as number;
+  return contrastRatio(bg, light) >= contrastRatio(bg, dark) ? READABLE_LIGHT : READABLE_DARK;
 }

@@ -6,6 +6,16 @@ import '../molecules/cw-avatar.js';
 import '../atoms/cw-icon.js';
 import '../atoms/cw-button.js';
 
+/** A call feature is on when it, or its master switch, is set on the features or the config. */
+function callEnabled(
+  feats: FeaturesState,
+  cwFeats: Partial<FeaturesState> | undefined,
+  enabledKey: 'voiceCallEnabled' | 'videoCallEnabled',
+  masterKey: 'voiceCallMaster' | 'videoCallMaster'
+) {
+  return !!(feats[enabledKey] ?? feats[masterKey] ?? cwFeats?.[enabledKey] ?? cwFeats?.[masterKey]);
+}
+
 @customElement('cw-chat-header')
 export class CwChatHeader extends LitElement {
   @property({ type: Object }) config?: ChatWindowState;
@@ -16,7 +26,7 @@ export class CwChatHeader extends LitElement {
   @property({ type: String }) state = 'active';
   @property({ type: Number }) rev = 0;
 
-  static styles = [
+  static readonly styles = [
     CORE_STYLES,
     css`
       :host {
@@ -107,17 +117,18 @@ export class CwChatHeader extends LitElement {
     const feats = this.features || {};
     const headerTextColor = cw.headerTextColor || '#ffffff';
 
-    const showVoice = !!(feats.voiceCallEnabled ?? feats.voiceCallMaster ?? cw.features?.voiceCallEnabled ?? cw.features?.voiceCallMaster);
-    const showVideo = !!(feats.videoCallEnabled ?? feats.videoCallMaster ?? cw.features?.videoCallEnabled ?? cw.features?.videoCallMaster);
+    const showVoice = callEnabled(feats, cw.features, 'voiceCallEnabled', 'voiceCallMaster');
+    const showVideo = callEnabled(feats, cw.features, 'videoCallEnabled', 'videoCallMaster');
 
     const showCloseSession = feats.closeChatVisitor || cw.features?.closeChatVisitor;
 
     const currentAgentName = this.agentName || cw.agentName || '';
     const currentClientName = this.clientName || cw.clientName || 'Support';
 
-    const subtitleText = currentState === 'active'
-      ? currentAgentName ? `${currentAgentName} · Online` : 'Online'
-      : 'Online';
+    const agentOnline = currentState === 'active' && currentAgentName;
+    const subtitleText = agentOnline ? `${currentAgentName} · Online` : 'Online';
+    const expandIcon = this.isExpanded ? 'Minimize2' : 'Maximize2';
+    const expandLabel = this.isExpanded ? 'Collapse chat' : 'Expand chat';
 
     return html`
       <header
@@ -131,10 +142,10 @@ export class CwChatHeader extends LitElement {
                   <cw-button
                     variant="icon"
                     size="xs"
-                    .icon="${this.isExpanded ? 'Minimize2' : 'Maximize2'}"
+                    .icon="${expandIcon}"
                     .iconSize="${16}"
                     .color="${headerTextColor}"
-                    .label="${this.isExpanded ? 'Collapse chat' : 'Expand chat'}"
+                    .label="${expandLabel}"
                     @click="${this.toggleExpand}"
                   ></cw-button>
                 </div>

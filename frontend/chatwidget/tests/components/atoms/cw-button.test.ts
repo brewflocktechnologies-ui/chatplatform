@@ -110,3 +110,72 @@ describe('CwButton Atom Component', () => {
     expect(btn.getAttribute('style')).not.toContain('border-radius');
   });
 });
+
+describe('CwButton resolved output', () => {
+  const mount = async (props: Partial<CwButton>): Promise<CwButton> => {
+    document.body.innerHTML = '';
+    const el = new CwButton();
+    Object.assign(el, props);
+    document.body.appendChild(el);
+    await el.updateComplete;
+    return el;
+  };
+  const btn = (el: CwButton) => el.shadowRoot!.querySelector('button')!;
+  const iconSize = (el: CwButton) => (el.shadowRoot!.querySelector('cw-icon') as any)?.size;
+
+  it('sizes the icon from the button size, and lets an explicit size win', async () => {
+    expect(iconSize(await mount({ icon: 'x', size: 'xs' }))).toBe(12);
+    expect(iconSize(await mount({ icon: 'x', size: 'sm' }))).toBe(14);
+    expect(iconSize(await mount({ icon: 'x', size: 'md' }))).toBe(16);
+    expect(iconSize(await mount({ icon: 'x', size: 'lg' }))).toBe(20);
+    expect(iconSize(await mount({ icon: 'x', size: 'lg', iconSize: 30 }))).toBe(30);
+    // 0 means "not set".
+    expect(iconSize(await mount({ icon: 'x', size: 'lg', iconSize: 0 }))).toBe(20);
+    // An unknown size (or an inherited object key) uses the default.
+    expect(iconSize(await mount({ icon: 'x', size: 'huge' as never }))).toBe(16);
+    expect(iconSize(await mount({ icon: 'x', size: 'constructor' as never }))).toBe(16);
+  });
+
+  it('picks the accessible name: explicit, then label, then the icon name, then none', async () => {
+    expect(btn(await mount({ ariaLabel: 'Explicit', label: 'Visible', icon: 'x' })).getAttribute('aria-label')).toBe('Explicit');
+    expect(btn(await mount({ label: 'Visible', icon: 'x' })).getAttribute('aria-label')).toBe('Visible');
+    expect(btn(await mount({ icon: 'send' })).getAttribute('aria-label')).toBe('send');
+    expect(btn(await mount({ variant: 'icon' })).getAttribute('aria-label')).toBe('button');
+    expect(btn(await mount({})).hasAttribute('aria-label')).toBe(false);
+  });
+
+  it('shows the icon on the left, right, or alone', async () => {
+    const left = await mount({ icon: 'x', label: 'Go', iconPosition: 'left' });
+    expect(left.shadowRoot!.querySelectorAll('cw-icon')).toHaveLength(1);
+    expect(left.shadowRoot!.querySelector('span')?.textContent).toBe('Go');
+
+    const right = await mount({ icon: 'x', label: 'Go', iconPosition: 'right' });
+    const inner = btn(right).innerHTML;
+    expect(inner.indexOf('<span')).toBeLessThan(inner.indexOf('<cw-icon'));
+
+    const only = await mount({ icon: 'x', label: 'Go', iconPosition: 'only' });
+    expect(only.shadowRoot!.querySelectorAll('cw-icon')).toHaveLength(1);
+    expect(only.shadowRoot!.querySelector('span')).toBeNull();
+
+    expect((await mount({ label: 'Go' })).shadowRoot!.querySelector('cw-icon')).toBeNull();
+  });
+
+  it('turns the style props into an inline style', async () => {
+    const style = btn(
+      await mount({ bg: 'red', color: '#000', borderColor: 'blue', padding: '2px', borderRadius: '4px', width: 80, height: 30 })
+    ).getAttribute('style');
+    expect(style).toBe('background-color: red; color: #000; border-color: blue; padding: 2px; border-radius: 4px; width: 80px; height: 30px');
+  });
+
+  it('handles numeric radius, full width, zero sizes and the auto-height rule', async () => {
+    expect(btn(await mount({ borderRadius: 12 as never })).getAttribute('style')).toContain('border-radius: 12px');
+    expect(btn(await mount({ fullWidth: true })).getAttribute('style')).toContain('width: 100%');
+    // An explicit width beats full width; zero is a real value.
+    expect(btn(await mount({ fullWidth: true, width: 0 })).getAttribute('style')).toContain('width: 0px');
+    expect(btn(await mount({ height: 0 })).getAttribute('style')).toContain('height: 0px');
+    // Padding without an explicit height lets the height follow the content.
+    expect(btn(await mount({ padding: '1px' })).getAttribute('style')).toContain('height: auto');
+    expect(btn(await mount({ padding: '1px', height: 20 })).getAttribute('style')).toContain('height: 20px');
+    expect(btn(await mount({ borderRadius: '' })).getAttribute('style')).not.toContain('border-radius');
+  });
+});

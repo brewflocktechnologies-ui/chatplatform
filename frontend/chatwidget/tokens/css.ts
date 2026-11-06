@@ -65,7 +65,7 @@ let injected = false;
 export function ensureTokenCss(theme: TokenTheme = DEFAULT_TOKEN_THEME, doc?: Document): void {
   /* v8 ignore next -- the no-document fallback only runs in SSR contexts happy-dom can't simulate */
   const d = doc || (typeof document !== 'undefined' ? document : null);
-  if (injected || !d || !d.head) return;
+  if (injected || !d?.head) return;
   if (d.getElementById('cw-token-css')) {
     injected = true;
     return;

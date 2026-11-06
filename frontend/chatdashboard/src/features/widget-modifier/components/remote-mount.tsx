@@ -17,7 +17,7 @@ interface RemoteMountProps {
 }
 
 // Mounts the federated customization UI (exposed as ./mount) into a div.
-export function RemoteMount({ websiteId, customerId, domain }: RemoteMountProps) {
+export function RemoteMount({ websiteId, customerId, domain }: Readonly<RemoteMountProps>) {
   const { mod, error } = useViteRemote(getWidgetCustomizationMfeUrl(), './mount');
   const containerRef = useRef<HTMLDivElement | null>(null);
 

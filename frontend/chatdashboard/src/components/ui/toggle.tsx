@@ -32,7 +32,7 @@ function Toggle({
   variant = 'default',
   size = 'default',
   ...props
-}: TogglePrimitive.Props & VariantProps<typeof toggleVariants>) {
+}: Readonly<TogglePrimitive.Props & VariantProps<typeof toggleVariants>>) {
   return (
     <TogglePrimitive
       data-slot='toggle'

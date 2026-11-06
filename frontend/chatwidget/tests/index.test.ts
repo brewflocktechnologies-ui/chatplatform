@@ -84,5 +84,6 @@ describe('index entry point', () => {
     await import('../index.js');
     globalThis.window = originalWindow;
     if (defineSpy) defineSpy.mockRestore();
+    expect(globalThis.window).toBe(originalWindow);
   });
 });

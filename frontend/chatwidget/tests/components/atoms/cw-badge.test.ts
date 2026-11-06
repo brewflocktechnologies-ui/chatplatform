@@ -132,3 +132,103 @@ describe('CwBadge Atom Component', () => {
     expect(badge.getAttribute('style')).toContain('padding: 4px');
   });
 });
+
+describe('CwBadge style resolution', () => {
+  const styleOf = async (props: Partial<CwBadge>): Promise<string> => {
+    document.body.innerHTML = '';
+    const el = new CwBadge();
+    document.body.appendChild(el);
+    el.count = 4;
+    Object.assign(el, props);
+    await el.updateComplete;
+    return (el.shadowRoot?.querySelector('.badge') as HTMLElement).getAttribute('style') ?? '';
+  };
+
+  it('uses the documented defaults when nothing is configured', async () => {
+    const style = await styleOf({});
+    expect(style).toContain('top: -6px');
+    expect(style).toContain('right: -6px');
+    expect(style).toContain('padding: 0 4px');
+    expect(style).toContain('border-radius: 9999px');
+    expect(style).toContain('border: 2px solid #ffffff');
+    expect(style).toContain('box-shadow: 0 1px 3px rgba(0,0,0,0.15)');
+    expect(style).toContain('animation: none');
+  });
+
+  it('prefers a property over the config object, and the config over the default', async () => {
+    const config = { offsetX: 9, offsetY: 8, size: 30, borderWidth: 4, padding: 3, borderRadius: 7 };
+    const fromConfig = await styleOf({ config });
+    expect(fromConfig).toContain('right: 9px');
+    expect(fromConfig).toContain('top: 8px');
+    expect(fromConfig).toContain('height: 30px');
+    expect(fromConfig).toContain('border: 4px solid');
+    expect(fromConfig).toContain('padding: 3px');
+    expect(fromConfig).toContain('border-radius: 7px');
+
+    const fromProps = await styleOf({ config, offsetX: 1, offsetY: 2, borderWidth: 0, padding: '5px 6px', borderRadius: '50%' });
+    expect(fromProps).toContain('right: 1px');
+    expect(fromProps).toContain('top: 2px');
+    expect(fromProps).toContain('border: 0px solid');
+    expect(fromProps).toContain('padding: 5px 6px');
+    expect(fromProps).toContain('border-radius: 50%');
+  });
+
+  it('keeps zero as a real value instead of falling back', async () => {
+    const style = await styleOf({ offsetX: 0, offsetY: 0, borderWidth: 0, padding: 0, borderRadius: 0 });
+    expect(style).toContain('top: 0px');
+    expect(style).toContain('right: 0px');
+    expect(style).toContain('border: 0px solid');
+    expect(style).toContain('padding: 0px');
+    expect(style).toContain('border-radius: 0px');
+  });
+
+  it('falls back to the defaults for null values instead of printing "null"', async () => {
+    const style = await styleOf({
+      offsetX: null as unknown as number,
+      offsetY: null as unknown as number,
+      borderWidth: null as unknown as number,
+      padding: null as unknown as string,
+      borderRadius: null as unknown as number
+    });
+    expect(style).not.toContain('null');
+    expect(style).toContain('top: -6px');
+    expect(style).toContain('padding: 0 4px');
+    expect(style).toContain('border-radius: 9999px');
+    expect(style).toContain('border: 2px solid');
+  });
+
+  it('places the badge in each corner and defaults unknown positions to top-right', async () => {
+    expect(await styleOf({ position: 'top-left', offsetX: 1, offsetY: 2 })).toMatch(/top: 2px; left: 1px/);
+    expect(await styleOf({ position: 'bottom-right', offsetX: 1, offsetY: 2 })).toMatch(/bottom: 2px; right: 1px/);
+    expect(await styleOf({ position: 'bottom-left', offsetX: 1, offsetY: 2 })).toMatch(/bottom: 2px; left: 1px/);
+    expect(await styleOf({ position: 'somewhere-else', offsetX: 1, offsetY: 2 })).toMatch(/top: 2px; right: 1px/);
+    // The inherited property names must not be mistaken for a corner.
+    expect(await styleOf({ position: 'constructor', offsetX: 1, offsetY: 2 })).toMatch(/top: 2px; right: 1px/);
+  });
+
+  it('does not offset a relatively or statically positioned badge', async () => {
+    for (const position of ['relative', 'static']) {
+      const style = await styleOf({ position, offsetX: 5, offsetY: 5 });
+      expect(style).toContain(`position: ${position}`);
+      expect(style).not.toMatch(/(^|; )(top|left|right|bottom):/);
+    }
+  });
+
+  it('expands the short animation names and rewrites names inside custom strings', async () => {
+    expect(await styleOf({ animation: 'pulse' })).toContain('animation: badgePulse 1.5s ease-in-out infinite');
+    expect(await styleOf({ animation: 'bounce' })).toContain('animation: badgeBounce 1s infinite');
+    expect(await styleOf({ animation: 'wiggle' })).toContain('animation: badgeWiggle 2.5s ease-in-out infinite');
+    expect(await styleOf({ animation: 'pulse pulse 2s' })).toContain('animation: badgePulse badgePulse 2s');
+    expect(await styleOf({ animation: 'spin 1s' })).toContain('animation: spin 1s');
+    // Only the first matching name is rewritten.
+    expect(await styleOf({ animation: 'pulse bounce' })).toContain('animation: badgePulse bounce');
+    // A name that exists on every object must not be treated as a named animation.
+    expect(await styleOf({ animation: 'constructor' })).toContain('animation: constructor');
+  });
+
+  it('turns a bare colour into a soft shadow and leaves full shadows alone', async () => {
+    expect(await styleOf({ boxShadow: 'red' })).toContain('box-shadow: 0 2px 6px red');
+    expect(await styleOf({ boxShadow: '0 1px 2px blue' })).toContain('box-shadow: 0 1px 2px blue');
+    expect(await styleOf({ boxShadow: 'none' })).toContain('box-shadow: none');
+  });
+});

@@ -11,10 +11,10 @@ import { Icons } from '@/components/icons';
 export function DataTableFilterClear({
   title,
   onReset
-}: {
+}: Readonly<{
   title?: string;
   onReset: (event: React.MouseEvent | React.KeyboardEvent) => void;
-}) {
+}>) {
   return (
     <div
       role='button'

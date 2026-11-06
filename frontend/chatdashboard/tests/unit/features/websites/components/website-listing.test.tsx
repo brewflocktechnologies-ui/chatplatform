@@ -1,13 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
-const { prefetchQuery, get } = vi.hoisted(() => ({
-  prefetchQuery: vi.fn(),
+const { query, get } = vi.hoisted(() => ({
+  query: vi.fn((_options: { queryKey: readonly unknown[] }) => Promise.resolve()),
   get: vi.fn()
 }));
 
 vi.mock('@/lib/query-client', () => ({
-  getQueryClient: () => ({ prefetchQuery })
+  getQueryClient: () => ({ query })
 }));
 vi.mock('@/lib/searchparams', () => ({ searchParamsCache: { get } }));
 vi.mock('@tanstack/react-query', async (importOriginal) => ({
@@ -33,18 +33,14 @@ describe('WebsiteListingPage', () => {
     render(<WebsiteListingPage />);
 
     expect(screen.getByText('websites-table')).toBeInTheDocument();
-    expect(prefetchQuery.mock.calls[0][0].queryKey).toEqual([
-      'websites',
-      'list',
-      { page: 1, limit: 10 }
-    ]);
+    expect(query.mock.calls[0][0].queryKey).toEqual(['websites', 'list', { page: 1, limit: 10 }]);
   });
 
   it('includes search, category and sort when present', () => {
     params({ page: 3, perPage: 5, name: 'ex', category: 'Saas', sort: '[]' });
     render(<WebsiteListingPage />);
 
-    expect(prefetchQuery.mock.calls[0][0].queryKey[2]).toEqual({
+    expect(query.mock.calls[0][0].queryKey[2]).toEqual({
       page: 3,
       limit: 5,
       search: 'ex',

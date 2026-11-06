@@ -5,6 +5,7 @@ import { InfoSidebar } from '@/components/layout/info-sidebar';
 import { InfobarProvider } from '@/components/ui/infobar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { AuthGuard } from '@/features/auth/auth-guard';
+import { AUTH_HINT_COOKIE } from '@/features/auth/auth-hint';
 import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 
@@ -13,13 +14,16 @@ export const metadata: Metadata = {
   description: 'Basic dashboard with Next.js and Shadcn'
 };
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default async function DashboardLayout({
+  children
+}: Readonly<{ children: React.ReactNode }>) {
   // Gate the whole /dashboard segment: redirect to sign-in when signed out.
   // Persisting the sidebar state in the cookie.
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get('sidebar_state')?.value !== 'false';
+  const signedInHint = cookieStore.get(AUTH_HINT_COOKIE)?.value === '1';
   return (
-    <AuthGuard>
+    <AuthGuard signedInHint={signedInHint}>
       <LazyKBar>
         <SidebarProvider defaultOpen={defaultOpen}>
           <a

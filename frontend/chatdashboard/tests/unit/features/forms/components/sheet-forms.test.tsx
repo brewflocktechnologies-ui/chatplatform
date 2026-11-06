@@ -1,6 +1,6 @@
 import React from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { act, cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react';
 
 const toastMock = vi.hoisted(() => {
   const t: any = vi.fn();
@@ -45,9 +45,7 @@ describe('SheetProductForm', () => {
     fireEvent.click(screen.getByRole('button', { name: /add product/i }));
     expect(await screen.findByText('New Product')).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.submit(document.querySelector('#sheet-product-form') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('#sheet-product-form') as HTMLFormElement);
     expect(
       await screen.findByText('Product name must be at least 2 characters')
     ).toBeInTheDocument();
@@ -61,9 +59,7 @@ describe('SheetProductForm', () => {
       target: { value: 'A very nice lamp.' }
     });
     await pickCategory();
-    await act(async () => {
-      fireEvent.submit(document.querySelector('#sheet-product-form') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('#sheet-product-form') as HTMLFormElement);
     await waitFor(() => expect(alertMock).toHaveBeenCalledWith('Product created successfully!'));
     await waitFor(() => expect(screen.queryByText('New Product')).not.toBeInTheDocument());
   });
@@ -89,9 +85,7 @@ describe('SheetFormDemo', () => {
     fireEvent.click(screen.getByRole('button', { name: /add product/i }));
     expect(await screen.findByText('New Product')).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.submit(document.querySelector('#sheet-form-id') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('#sheet-form-id') as HTMLFormElement);
     expect(
       await screen.findByText('Product name must be at least 2 characters')
     ).toBeInTheDocument();
@@ -102,9 +96,7 @@ describe('SheetFormDemo', () => {
       target: { value: 'A very nice lamp.' }
     });
     await pickCategory();
-    await act(async () => {
-      fireEvent.submit(document.querySelector('#sheet-form-id') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('#sheet-form-id') as HTMLFormElement);
     await waitFor(() =>
       expect(toastMock.success).toHaveBeenCalledWith('Product created successfully!', {
         description: 'Lamp has been added.'
@@ -124,18 +116,14 @@ describe('SheetFormDemo', () => {
     fireEvent.click(screen.getByRole('button', { name: /send feedback/i }));
     expect(await screen.findByText('Quick Feedback')).toBeInTheDocument();
 
-    await act(async () => {
-      fireEvent.submit(document.querySelector('#dialog-form-id') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('#dialog-form-id') as HTMLFormElement);
     expect(await screen.findByText('Feedback must be at least 5 characters')).toBeInTheDocument();
     expect(toastMock.success).not.toHaveBeenCalled();
 
     fireEvent.change(screen.getByPlaceholderText('Tell us what you think...'), {
       target: { value: 'Great stuff' }
     });
-    await act(async () => {
-      fireEvent.submit(document.querySelector('#dialog-form-id') as HTMLFormElement);
-    });
+    fireEvent.submit(document.querySelector('#dialog-form-id') as HTMLFormElement);
     await waitFor(() =>
       expect(toastMock.success).toHaveBeenCalledWith('Feedback submitted!', {
         description: 'Rating: 5/10. Thank you!'

@@ -30,10 +30,12 @@ function Attachment({
   size = 'default',
   orientation = 'horizontal',
   ...props
-}: React.ComponentProps<'div'> &
-  VariantProps<typeof attachmentVariants> & {
-    state?: 'idle' | 'uploading' | 'processing' | 'error' | 'done';
-  }) {
+}: Readonly<
+  React.ComponentProps<'div'> &
+    VariantProps<typeof attachmentVariants> & {
+      state?: 'idle' | 'uploading' | 'processing' | 'error' | 'done';
+    }
+>) {
   return (
     <div
       data-slot='attachment'
@@ -66,7 +68,7 @@ function AttachmentMedia({
   className,
   variant = 'icon',
   ...props
-}: React.ComponentProps<'div'> & VariantProps<typeof attachmentMediaVariants>) {
+}: Readonly<React.ComponentProps<'div'> & VariantProps<typeof attachmentMediaVariants>>) {
   return (
     <div
       data-slot='attachment-media'
@@ -77,7 +79,7 @@ function AttachmentMedia({
   );
 }
 
-function AttachmentContent({ className, ...props }: React.ComponentProps<'div'>) {
+function AttachmentContent({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='attachment-content'
@@ -90,7 +92,7 @@ function AttachmentContent({ className, ...props }: React.ComponentProps<'div'>)
   );
 }
 
-function AttachmentTitle({ className, ...props }: React.ComponentProps<'span'>) {
+function AttachmentTitle({ className, ...props }: Readonly<React.ComponentProps<'span'>>) {
   return (
     <span
       data-slot='attachment-title'
@@ -103,7 +105,7 @@ function AttachmentTitle({ className, ...props }: React.ComponentProps<'span'>) 
   );
 }
 
-function AttachmentDescription({ className, ...props }: React.ComponentProps<'span'>) {
+function AttachmentDescription({ className, ...props }: Readonly<React.ComponentProps<'span'>>) {
   return (
     <span
       data-slot='attachment-description'
@@ -117,7 +119,7 @@ function AttachmentDescription({ className, ...props }: React.ComponentProps<'sp
   );
 }
 
-function AttachmentActions({ className, ...props }: React.ComponentProps<'div'>) {
+function AttachmentActions({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='attachment-actions'
@@ -135,7 +137,7 @@ function AttachmentAction({
   variant,
   size = 'icon-xs',
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: Readonly<React.ComponentProps<typeof Button>>) {
   return (
     <Button
       data-slot='attachment-action'
@@ -169,7 +171,7 @@ function AttachmentTrigger({
   });
 }
 
-function AttachmentGroup({ className, ...props }: React.ComponentProps<'div'>) {
+function AttachmentGroup({ className, ...props }: Readonly<React.ComponentProps<'div'>>) {
   return (
     <div
       data-slot='attachment-group'

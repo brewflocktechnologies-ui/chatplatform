@@ -64,18 +64,21 @@ const columns: ColumnDef<PocConfig>[] = [
   },
   {
     id: 'actions',
+    header: () => <span className='sr-only'>Actions</span>,
     cell: ({ row }) => <PocConfigCellAction data={row.original} />
   }
 ];
+
+interface PocConfigTableProps {
+  readonly configs: PocConfig[];
+  readonly pageCount: number;
+}
 
 /** Paging and sorting live in the URL; the server page re-fetches when they change. */
 export function PocConfigTable({
   configs,
   pageCount
-}: {
-  configs: PocConfig[];
-  pageCount: number;
-}) {
+}: Readonly<PocConfigTableProps>) {
   const { table } = useDataTable({
     data: configs,
     columns,
