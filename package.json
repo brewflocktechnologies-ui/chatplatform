@@ -2,7 +2,9 @@
   "name": "@org/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "centrifugo": "C:/Users/macpj/tools/centrifugo/centrifugo.exe --config=localrun/centrifugo/config.json"
+  },
   "private": true,
   "dependencies": {},
   "devDependencies": {
